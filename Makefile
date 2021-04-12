@@ -1,8 +1,10 @@
 
+CXX ?= g++
+CXXFLAGS += -g -Og --std=c++17 -Wall
 all: MCTrans++ MCTrans.pdf
 
 MCTrans++: MCTrans.cpp Centrifugal.cpp Centrifugal.hpp Config.hpp FusionYield.hpp FusionYield.cpp AlphaHeating.cpp AlphaHeating.hpp
-	g++ -g -Og --std=c++17 -Wall -o MCTrans++ MCTrans.cpp Centrifugal.cpp FusionYield.cpp AlphaHeating.cpp
+	$(CXX) $(CXXFLAGS) -o MCTrans++ MCTrans.cpp Centrifugal.cpp FusionYield.cpp AlphaHeating.cpp
 
 MCTrans.pdf: manual/MCTrans.tex manual/macros.tex manual/references.bib
 	make -C manual MCTrans.pdf
