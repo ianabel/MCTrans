@@ -1,0 +1,284 @@
+
+\newcommand{\collop}[1][f_s]{\ensuremath{{C}\hspace{-0.5mm}\left[#1\right]}}
+\newcommand{\vth}[1][s]{\ensuremath{v_{\mathrm{th}_#1}}}
+\newcommand{\vt}{\ensuremath{v_{\mathrm{th}}}}
+\newcommand{\pd}[2]{\ensuremath{ \frac{\partial #1} {\partial #2} } }
+\newcommand{\inpd}[2]{\ensuremath{ \infrac{\partial #1} {\partial #2} } }
+\newcommand{\gyror}[1]{\ensuremath{ {\left< #1 \right>}_{\bm{r}}}}
+\newcommand{\ensav}[1]{\ensuremath{ {\left< #1 \right>}_{\mathrm{turb}}}}  % Ensemble averaging
+\newcommand{\fav}[1]{\ensuremath{\left< #1 \right>_{\psi}}} % Flux surface averaging
+\newcommand{\gyroR}[1]{\ensuremath{{\left< #1 \right>}_{\bm{R}}}}
+
+\providecommand{\eqref}[1]{Eq.\ (\ref{#1})}
+\newcommand{\eqsref}[2]{Eqs.\ (\ref{#1}) and (\ref{#2})}
+\newcommand{\eqsdash}[2]{Eqs.\ (\ref{#1})--(\ref{#2})}
+\newcommand{\Secref}[1]{Section\ \ref{#1}}
+\newcommand{\secref}[1]{Sec.\ \ref{#1}}
+\newcommand{\apref}[1]{Appendix\ \ref{#1}}
+\providecommand{\Apref}[1]{Appendix\ \ref{#1}}
+\newcommand{\Figref}[1]{Fig.\ \ref{#1}}
+\providecommand{\Tref}[1]{Table.\ \ref{#1}}
+
+\providecommand{\Or}[1]{\mathcal{O}#1}
+\providecommand{\Eref}[1]{Equation\ (\ref{#1})}
+\providecommand{\eref}[1]{(\ref{#1})}
+
+
+\newcommand{\uv}[1]{\bm{\hat{#1}}} % uv = unit vector
+\newcommand{\dg}{\cdot\nabla}      % dg = dot grad
+\providecommand{\dv}{\nabla\cdot}
+\providecommand{\curl}{\nabla\times}
+\newcommand{\pb}[2]{\left\{ {#1} \middle., {#2} \right\}} % pb = poisson bracket
+
+% Change the following commands to alter the notation of the document.
+
+\newcommand{\tor}{\phi} % toroidal angle
+\newcommand{\gyr}{\vartheta} % gyroangle
+\newcommand{\pot}{\varphi} % electrostatic potential
+\newcommand{\fpot}{\Phi} % Flow potential
+\newcommand{\pol}{\theta} % Poloidal angle (straight field)
+\newcommand{\gkeps}{\epsilon} % Rho over L, gyrokinetic epsilon
+\newcommand{\aspect}{\epsilon} % Inverse aspect ratio
+\newcommand{\energy}[1][s]{{{\varepsilon}_#1}} % Energy Variable
+\newcommand{\denergy}[1][s]{{\dot{\varepsilon}}_{#1}}
+\newcommand{\torflux}{\Psi} % Toroidal flux
+\newcommand{\source}[1][s]{\ensuremath{{{{S}}_{#1}}}} % General Source
+\newcommand{\gkupot}{\delta \pot'}
+\newcommand{\gkpot}{\chi}
+\newcommand{\psistar}[1][s]{{\psi^*_#1}}
+\newcommand{\psistardot}[1][s]{{\dot{\psi}^*_#1}}
+\newcommand{\magmom}[1][s]{\mu_#1}
+\newcommand{\dmu}[1][s]{\dot{\mu}_#1}
+\newcommand{\jacob}{\mathcal{J}}
+%\newcommand{\idmat}{\bm{\underline{\mathbb{I}}}} % Identity Matrix
+\newcommand{\tu}{\hat{u}_{\parallel s}}
+
+\newcommand{\ddR}[2][s]{\pd{#2}{\bm{R}_{#1}}}
+\newcommand{\dgR}[2][s]{\cdot\ddR[#1]{#2}}
+
+\newcommand{\tcite}[1]{Ref.\ \onlinecite{#1}}
+\providecommand{\tensor}[1]{ {\bm{\mathsf{#1}}}}
+\newcommand{\viscosity}[1][s]{\tensor{\Pi}_#1}
+\newcommand{\idmat}{\tensor{I}}
+\newcommand{\ParticleFlux}[1][s]{\Gamma_{#1}}
+\newcommand{\HeatFlux}[1][s]{q_{#1}}
+\newcommand{\MomentumFlux}[1][s]{\pi^{(\psi\tor)}_{#1}}
+\newcommand{\TotMomFlux}{{\pi}^{(\psi\tor)}_{\mathrm{tot}}}
+\newcommand{\inertia}{J}
+\newcommand{\accel}[1][s]{\bm{a}_{#1}}
+\newcommand{\daccel}[1][s]{\delta \bm{a}_{#1}}
+% partial with respect to time at constant psi
+\newcommand{\ddtpsi}{\left.\pd{}{t}\right|_{\psi}}
+% IOP 
+\newcommand{\oxford}{
+Rudolf Peierls Centre for Theoretical Physics, University of Oxford, Oxford OX1 3PU, UK
+}
+
+\newcommand{\culham}{
+EURATOM/CCFE Fusion Association, Culham Science Centre, Abingdon OX14 3DB, UK
+}
+
+\newcommand{\imperial}{
+Blackett Laboratory, Imperial College, London SW7 2AZ, UK
+}
+
+\newcommand{\maryland}{
+Department of Physics, University of Maryland, College Park, MD 20742-4111, USA
+}
+
+\newcommand{\ireap}{
+Institute of Research in Electronics and Applied Physics, University of Maryland, College Park, MD 20742, USA
+}
+
+\newcommand{\llnl}{
+Lawrence Livermore National Laboratory, Livermore, CA 94550, USA
+}
+
+\newcommand{\merton}{
+Merton College, Oxford, OX1 4JD, UK
+}
+
+\newcommand{\mitpsfc}{
+Plasma Science and Fusion Center, Massachusetts Institute of Technology, Cambridge, MA 02139, USA
+}
+
+\newcommand{\princeton}{
+Princeton Plasma Physics Laboratory, Princeton, NJ 08543, USA
+}
+
+\newcommand{\pcts}{
+Princeton Center for Theoretical Science, Princeton University, Princeton, NJ 08544, USA
+}
+
+\newcommand{\chalmers}{
+Department of Physics, Chalmers University of Technology, G\"oteborg, SE-41296, Sweden
+}
+
+\newcommand{\ippgreifs}{
+Max-Planck-Institut f\"ur Plasmaphysik, 17491 Greifswald, Germany
+}
+
+\newcommand{\neilsbohr}{
+Neils Bohr International Academy, University of Copenhagen, Copenhagen, Denmark
+}
+
+\newcommand{\wint}{\int\hspace{-1.25mm} d^3 \bm{w}}
+\newcommand{\Fneo}[1][s]{F^{\mathrm{(nc)}}_{#1}}
+\newcommand{\FE}{F^{\mathrm{(E)}}_{s}}
+\newcommand{\Fnct}{\tilde{F}^{\mathrm{(nc)}}_{s}}
+\newcommand{\Fstar}[1][s]{F^{*}_{1#1}}
+\newcommand{\Esource}[1][s]{S^{({E})}_{#1}}
+\newcommand{\Psource}[1][s]{S^{({n})}_{#1}}
+\newcommand{\Msource}{S^{({\omega})}}
+\newcommand{\FreeEnergy}{W}
+\newcommand{\perpav}[1]{\left<#1\right>_\perp}
+\newcommand{\timeav}[1]{\left<#1\right>_T}
+\newcommand{\injpow}{P_{\mathrm{inj}}}
+\newcommand{\entropy}[1][]{\widetilde{H}_{#1}}
+\newcommand{\MeanEntropy}[1][]{H_{#1}}
+\newcommand{\deltaEntropy}[1][]{\delta H_{#1}}
+\newcommand{\entropyflux}{\bm{\Gamma}^{({H})}}
+\newcommand{\infrac}[2]{ \left.{#1}\middle/{#2}\right. }
+\newcommand{\binfrac}[2]{\left(\infrac{#1}{#2}\right)}
+\newcommand{\CollEnergy}[1][s]{C^{{(E)}}_#1}
+\newcommand{\ViscousHeat}[1][s]{P^{\mathrm{visc}}_#1}
+\newcommand{\JouleHeat}[1][s]{P^{\mathrm{Ohm}}_#1}
+\newcommand{\PotEng}[1][s]{P^{\mathrm{pot}}_#1}
+\newcommand{\CompHeat}[1][s]{P^{\mathrm{comp}}_#1}
+\newcommand{\TurbInj}[1][s]{P^{\mathrm{drive}}_#1}
+\newcommand{\TurbColl}[1][s]{P^{\mathrm{diss}}_#1}
+\newcommand{\TurbPow}[1][s]{P^{\mathrm{turb}}_#1}
+\newcommand{\EMViscosity}{\pi_{\mathrm{EM}}^{(\psi\tor)}}
+\newcommand{\NeoMomFlux}[1][s]{\pi^{\mathrm{(nc)}}_{#1}}
+\newcommand{\ClassMomFlux}[1][s]{\pi^{\mathrm{(cl)}}_{#1}}
+\newcommand{\vchi}{\bm{V}_\chi}
+\newcommand{\vchiR}{\gyroR{\vchi}}
+\newcommand{\vdrift}[1][s]{\bm{V}_{\mathrm{D}#1}}
+\newcommand{\GammaTurb}{\Gamma_{s}^{\mathrm{turb}}}
+\newcommand{\QTurb}{q_{s}^{\mathrm{turb}}}
+\newcommand{\PiTurb}{\pi_{s}^{\mathrm{turb}}}
+\newcommand{\EProd}{C^{\mathrm{(H)}}}
+\newcommand{\Rentropyflux}{\Gamma^{({H})}}
+\newcommand{\JUflux}{\Gamma^{{(U)}}}
+\newcommand{\CollEntropy}{C^{{(H)}}}
+\newcommand{\EntropySource}{S^{{(H)}}}
+\newcommand{\DebyeLength}{\lambda_{\mathrm{De}}}
+\newcommand{\NotN}[1][s]{N_{#1}}
+\newcommand{\massratio}{\delta}
+
+\newcommand{\delB}{{\ensuremath{\delta\bm{B}}}}
+\newcommand{\delBp}{{\ensuremath{\delta B_\parallel}}}
+\newcommand{\delBpN}[1]{{\ensuremath{\delta B_\parallel^{(#1)}}}}
+\newcommand{\delAp}{{\ensuremath{\delta A_\parallel}}}
+\newcommand{\delApN}[1]{{\ensuremath{\delta A_\parallel^{(#1)}}}}
+\newcommand{\delE}{{\ensuremath{\delta\bm{E}}}}
+\newcommand{\delA}{{\ensuremath{\delta\bm{A}}}}
+\newcommand{\delj}{{\ensuremath{\delta\bm{j}}}}
+\newcommand{\delpot}{{\delta\pot}}
+\newcommand{\MagDelB}{{\delta B}} \newcommand{\bhat}{{\widetilde{\bm{b}}}}
+
+\newcommand{\MeanB}{{\bm{B}}}
+\newcommand{\MeanE}{{\bm{E}}}
+\newcommand{\MeanMagB}{{B}}
+\newcommand{\Meanb}{{\bm{b}}}
+\newcommand{\Meanj}{{\bm{j}}}
+
+\newcommand{\Efield}{{\widetilde{\bm{E}}}}
+\newcommand{\Bfield}{{\widetilde{\bm{B}}}}
+\newcommand{\MagBfield}{{\widetilde{B}}}
+
+\newcommand{\current}{{\widetilde{\bm{j}}}}
+\newcommand{\chargedens}{{\widetilde{\varrho}}}
+\newcommand{\Apot}{{\widetilde{\bm{A}}}}
+\newcommand{\Epot}{{\widetilde{\pot}}}
+\newcommand{\MeanA}{{\bm{A}}}
+\newcommand{\MeanPot}{{\pot}}
+
+% Averages and abbreviations for paper 2
+\newcommand{\bav}[1]{\left<#1\right>_{\parallel}}
+\newcommand{\veff}{\bm{u}_{\mathrm{eff}}}
+\newcommand{\fluctfav}[1]{\left<#1\right>_{\tilde\psi}}
+
+\newcommand{\upar}[1][e]{\delta u_{\parallel #1}}
+\newcommand{\tpsi}{\tilde{\psi}}
+\newcommand{\talpha}{\tilde{\alpha}}
+\newcommand{\tl}{\tilde{l}}
+\newcommand{\ddttwiddles}[1][]{\left.\pd{#1}{t}\right|_{\tilde{\psi},\tilde{\alpha},\tilde{l}}}
+\newcommand{\qpar}{\delta q_{\parallel e}}
+
+\newcommand{\FHat}[1][s]{\widehat{F}_{1#1}}
+\newcommand{\angvel}{\omega}
+\newcommand{\cycfreq}[1][s]{\Omega_{#1}}
+
+\newcommand{\ExEnergy}[1][s]{\widetilde{\varepsilon}_{#1}}
+\newcommand{\ExMagmom}[1][s]{\widetilde{\mu}_{#1}}
+\newcommand{\ExGyr}{\widetilde{\gyr}}
+\newcommand{\dExGyr}{\dot{\widetilde{\gyr}}}
+\newcommand{\dExenergy}[1][s]{{\dot{\widetilde{\varepsilon}}}_{#1}}
+\newcommand{\magmomN}[2][s]{{\mu}_{#2#1}}
+\newcommand{\mmbar}[2][s]{\overbar{\magmomN[#1]{#2}}}
+\newcommand{\dmmbar}[2][s]{\overbar{\delta\magmomN[#1]{#2}}}
+\newcommand{\vA}{v_{\mathrm{A}}} % Alfvèn velocity
+\newcommand{\cS}{c_{\mathrm{s}}} % Alfvèn velocity
+\newcommand{\bpol}{\beta_{\mathrm{pol}}}
+\providecommand{\omstar}[1][]{\ensuremath{\omega_{*#1}}}
+%\newcommand{\Tref}[1]{Table~\ref{#1}}
+%\newcommand{\tref}[1]{table~\ref{#1}}
+
+\newcommand{\chempot}[1][s]{\Upsilon_{#1}}
+\newcommand{\quantconc}[1][s]{n_{\mathrm{Q}#1}}
+
+\newcommand{\vpsi}{\bm{V}_\psi}
+
+\newcommand{\tw}{\widetilde{\bm{w}}}
+\newcommand{\twint}{\int d^{3}\widetilde{\bm{w}}}
+\newcommand{\Magtw}{\widetilde{{w}}}
+
+\newcommand{\dgt}{\cdot\widetilde{\nabla}_\perp}
+
+\newcommand{\MaxVDrift}{\widehat{\bm{V}}_D}
+\newcommand{\ddtpsitwiddles}{\left.\pd{ }{t}\right|_{\tpsi}}
+\newcommand{\Pturb}{P^{\mathrm{turb}}_e}
+\newcommand{\Pmean}{P^{\mathrm{mean}}_e}
+\newcommand{\tvp}{\tilde{V}'}
+\newcommand{\tee}{\tilde{\varepsilon}_e}
+\newcommand{\delNe}{\overbar{\delta n}_e}
+\newcommand{\delTe}{\overbar{\delta T}_e}
+
+\newcommand{\delEnt}[1][s]{{\Delta S_{#1}}}
+
+\newcommand{\overbar}[1]{\mkern 1.5mu\overline{\mkern-1.5mu#1\mkern-1.5mu}\mkern 1.5mu}
+\newcommand{\nustar}[1][e]{\nu^{*}_{#1}}
+\newcommand{\shat}{\hat{s}}
+
+\newcommand{\lincol}[1][\cdot]{\ensuremath{{C}_{L}\hspace{-0.5mm}\left[#1\right]}}
+\newcommand{\npol}{\ensuremath{n^{\mathrm{pol}}_s}}
+\newcommand{\poldrift}{\ensuremath{\bm{V}^{\mathrm{pol}}_s}}
+
+\newcommand{\ash}{\ensuremath{\mathrm{ash}}}
+
+\newcommand{\rhos}{\ensuremath{\rho_{\mathrm{s}}}} % Sound radius
+\newcommand{\cs}{\ensuremath{c_{\mathrm{s}}}} % Sound speed
+
+\newcommand{\gstwo}{{\ttfamily GS2}}
+\newcommand{\trinity}{{\ttfamily TRINITY}}
+
+\RequirePackage{amsmath}
+\makeatletter
+\newcommand*\rel@kern[1]{\kern#1\dimexpr\macc@kerna}
+\newcommand*\widebar[1]{%
+  \begingroup
+  \def\mathaccent##1##2{%
+    \rel@kern{0.8}%
+    \overline{\rel@kern{-0.8}\macc@nucleus\rel@kern{0.2}}%
+    \rel@kern{-0.2}%
+  }%
+  \macc@depth\@ne
+  \let\math@bgroup\@empty \let\math@egroup\macc@set@skewchar
+  \mathsurround\z@ \frozen@everymath{\mathgroup\macc@group\relax}%
+  \macc@set@skewchar\relax
+  \let\mathaccentV\macc@nested@a
+  \macc@nested@a\relax111{#1}%
+  \endgroup
+}
+\makeatother

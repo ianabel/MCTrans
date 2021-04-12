@@ -1,0 +1,28 @@
+# Copyright (c) 2021 Ian G Abel
+# This file is part of the MCTrans software package, for more information and source code availability
+# see http://github.com/ianabel/MCTrans
+
+COPYRIGHT
+
+The following copyright applies to each file in the MCTrans distribution, unless
+otherwise stated in the file:
+
+Copyright (c) 2021 Ian G Abel.
+
+The toml11 library is redistributed under its own licence.
+
+LICENCE
+
+MCTRans is free software; you can redistribute it and/or modify it under the terms
+of the BSD 3-Clause licence, see the LICENCE.md file for details.
+
+MCTrans is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the LICENCE file for more details.
+
+CONTACT INFORMATION
+
+For licencing and other queries about MEQ, please contact Ian Abel via email at iabel-at-umd.edu.
+
+Please see http://github.com/ianabel/MCTrans for more information and source code availability.
+
