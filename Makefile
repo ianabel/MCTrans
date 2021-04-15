@@ -14,3 +14,4 @@ clean:
 	rm MCTrans++ MCTrans.pdf
 
 .PHONY: clean all
+.SUFFIXES:

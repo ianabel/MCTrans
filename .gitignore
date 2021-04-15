@@ -1,6 +1,8 @@
 MCTrans++
-*.report
+/*.conf
+/*.report
 manual/*.log
 manual/*.out
 manual/*.bbl
 manual/*.aux
+manual/*.blg

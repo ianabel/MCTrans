@@ -50,7 +50,6 @@ double ParallelElectronHeatLoss( Plasma const& plasma, Configuration const& conf
 	double x0 = CentrifugalPotential( plasma, conf );
 	// The integral in Pastukhov is, with x = T/e Phi
 	// evaluates to 1 + sqrt(pi/x) * exp(x) * erfc( sqrt(x) )
-	// double PastukhovIntegral = 1; //  + ::sqrt( M_PI / x0 ) * ::exp( x0 ) * std::erfc( ::sqrt( x0 ) );
 	double PastukhovIntegral = 1.0 + ::sqrt( M_PI / x0 ) * ::exp( x0 ) * std::erfc( ::sqrt( x0 ) );
 	return ( M_2_SQRTPI / tau_ee ) * ( 2.0 * R / ( 2.0 * R + 1 ) ) * ( 1.0 / ::log( 4.0 * R + 2.0 ) ) * ( 2./3. + ( 1./x0 ) * PastukhovIntegral ) * ::exp( - x0 );
 }
@@ -236,12 +235,23 @@ void SetMachNumber( Plasma const &plasma, Configuration &conf )
 	conf.MachNumber = ( M_lower + M_upper )/2.0;
 }
 
-void SetTemperature( Plasma &plasma, Configuration const &conf )
+void SetMachFromVoltage( Plasma const& plasma, Configuration &conf )
+{
+	// u = E x B / B^2 
+	// M = u/c_s ~ (V/aB)/cs
+	double cs = SoundSpeed( plasma );
+	double Mach = conf.Voltage / ( conf.PlasmaColumnWidth * conf.CentralCellFieldStrength * cs );
+	conf.MachNumber = Mach;
+}
+
+void SetTemperature( Plasma &plasma, Configuration &conf )
 {
 	// NB This uses power densities in W/m^3
 	auto PowerBalance = [ &plasma, &conf ]( double Te ) {
 		Plasma test_plasma = plasma;
 		test_plasma.ElectronTemperature = Te;
+		// Update Mach Number from new T_e
+		SetMachFromVoltage( test_plasma, conf );
 		double HeatLoss = TotalHeatLoss( test_plasma, conf );
 		double Heating = ViscousHeating( test_plasma, conf ) + conf.AuxiliaryHeating*1e6 / PlasmaVolume( conf );
 		if ( conf.IncludeAlphaHeating ) {
@@ -266,6 +276,7 @@ void SetTemperature( Plasma &plasma, Configuration const &conf )
 	bool rising = false; // At fixed Mach Number, heating the plasma up will increase losses
 	auto [ T_lower, T_upper ] = boost::math::tools::bracket_and_solve_root( PowerBalance, InitialTe, Factor, rising, tol, iters );
 	plasma.ElectronTemperature = ( T_lower + T_upper )/2.0;
+	SetMachFromVoltage( plasma, conf );
 }
 
 double ElectricPotential( Plasma const &plasma, Configuration const& conf )

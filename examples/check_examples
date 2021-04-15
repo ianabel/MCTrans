@@ -1,0 +1,22 @@
+#!/bin/bash
+
+MCTRANS=../MCTrans++
+
+
+function test_case {
+	local INPUT="$CASE.conf"
+	local OUTPUT="$CASE.out"
+	local REF="$CASE.report"
+	$MCTRANS $INPUT > $OUTPUT
+	diff -q $OUTPUT $REF && echo "Reference input $CASE.conf produces expected output";
+	rm -f $OUTPUT;
+}
+
+CASE=Mirror_1keV
+
+test_case
+
+CASE=Breakeven
+
+test_case
+

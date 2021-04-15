@@ -26,7 +26,7 @@ struct Configuration {
 	double WallRadius;
 	double CentralCellFieldStrength;
 	double MachNumber;
-	double Voltage;
+	double Voltage; // in kilovolts
 	double AuxiliaryHeating; // in MW
 	bool ReportNuclear;
 	bool IncludeAlphaHeating;
@@ -55,7 +55,7 @@ constexpr double IonizationCrossSection = 1e-16;
 // Finds the steady-state Mach Number
 void SetMachNumber( Plasma const&, Configuration & );
 // Find T given M (or V)
-void SetTemperature( Plasma &, Configuration const& );
+void SetTemperature( Plasma &, Configuration & );
 
 double PlasmaVolume( Configuration const& );
 double WallArea( Configuration const& );

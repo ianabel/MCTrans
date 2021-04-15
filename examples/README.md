@@ -3,11 +3,12 @@
 
 This directory contains some sample inputs for MCTrans++ and reference outputs.
 To compare reference outputs and the output of your current copy of MCTrans++ the expected behaviour is:
-`
-MCTrans/examples$ ../MCTrans++ Mirror_1keV.conf > Mirror_1kev.out
-MCTrans/examples$ diff -s Mirror_1keV.report Mirror_1keV.out
-Files Mirror_1keV.report and Mirror_1keV.out are identical
-`
+
+> MCTrans/examples$ ../MCTrans++ Mirror_1keV.conf > Mirror_1kev.out
+> MCTrans/examples$ diff -s Mirror_1keV.report Mirror_1keV.out
+> Files Mirror_1keV.report and Mirror_1keV.out are identical
+
+You can also run the `check_examples` script in this directory to check all the examples.
 
 ## Warm Plasma Experiment -- `Mirror_1keV.conf`
 
