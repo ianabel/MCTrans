@@ -12,11 +12,8 @@ function test_case {
 	rm -f $OUTPUT;
 }
 
-CASE=Mirror_1keV
+CASES=(Mirror_1keV Mirror_100kV Breakeven)
 
-test_case
-
-CASE=Breakeven
-
-test_case
-
+for CASE in ${CASES[@]}; do
+	test_case
+done

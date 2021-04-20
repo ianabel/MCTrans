@@ -1,0 +1,57 @@
+The plasma is made up of electrons, Hydrogen and trace, radiating, impurities
+Electron Density is 1e+19 m^-3
+Ion Density is 1e+19 m^-3
+
+Electron Temperature is 1.02 keV
+Ion Temperature is 1.02 keV
+Radius of central cell (first wall) is 0.5 m
+	 Inner radius of the plasma is 0.15 m
+	 Outer radius of the plasma is 0.35 m
+Outer Radius of the plasma at the mirror throat is 0.111 m
+
+Axial Length of the plasma is 0.6 m
+Plasma Volume is 0.188 m^3
+
+Magnetic Field in the Central Cell is 0.3 T
+Magnetic Field at the Mirror Throat is 3 T
+
+Ion Larmor Radius in the central cell is 0.0108 m 
+Typical plasma scale lenghts are ~ 0.1 m  = 9.22 rho_i 
+
+No auxiliary heating was included in this calculation.
+
+Operating Mach number is 5.34
+Alfven Mach number is 0.805
+
+Viscous Heating is 8.25 kW
+Bremsstrahlung losses are 91.5 W
+
+Total potential drop is 100 kV
+Power Required (at the plasma) to support rotation 8.71 kW
+
+Total Stored Energy is 5.3 kJ
+ of which 4.38 kJ is kinetic energy in the rotation
+      and 922 J is thermal energy of the plasma
+Energy Confinement Time is 0.113 s
+Of which
+	Confinement time from parallel losses is 0.389 s
+	Confinement time from perpendicular losses is 0.159 s
+
+Ion-Electron Temperature Equilibration Time is 2.3 s
+
+Dimensionless parameters:
+	 β  = 4.56%
+	 ν* = 0.000511 (ions) 
+	 ρ* = 0.108
+
+Fusion Triple Product 
+	 n T τ = 1.15e+18 keV s /m^3
+
+ === Nuclear Reactions Assuming Deuterium Fuel === 
+ Neutrons per second: 3.45e+09
+
+ === Reactor Output Assuming D/T Reactor Fuel === 
+Fusion Power Output as Alphas:   2.36e-08 MW
+                    as Neutrons: 9.45e-08 MW
+Neutron Wall Loading is 1e-07 MW/m^2
+Total Thermal Power Output is 1.5e-07 MW
