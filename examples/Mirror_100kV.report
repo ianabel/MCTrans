@@ -32,7 +32,7 @@ Power Required (at the plasma) to support rotation 8.71 kW
 Total Stored Energy is 5.3 kJ
  of which 4.38 kJ is kinetic energy in the rotation
       and 922 J is thermal energy of the plasma
-Energy Confinement Time is 0.113 s
+Energy Confinement Time is 0.112 s
 Of which
 	Confinement time from parallel losses is 0.389 s
 	Confinement time from perpendicular losses is 0.159 s
@@ -45,13 +45,13 @@ Dimensionless parameters:
 	 ρ* = 0.108
 
 Fusion Triple Product 
-	 n T τ = 1.15e+18 keV s /m^3
+	 n T τ = 1.14e+18 keV s /m^3
 
  === Nuclear Reactions Assuming Deuterium Fuel === 
  Neutrons per second: 3.45e+09
 
  === Reactor Output Assuming D/T Reactor Fuel === 
 Fusion Power Output as Alphas:   2.36e-08 MW
-                    as Neutrons: 9.45e-08 MW
+                    as Neutrons: 9.44e-08 MW
 Neutron Wall Loading is 1e-07 MW/m^2
 Total Thermal Power Output is 1.5e-07 MW

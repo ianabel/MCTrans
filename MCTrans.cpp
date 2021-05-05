@@ -68,4 +68,27 @@ void MCTransConfig::doMachSolve( MirrorPlasma& plasma ) const
 
 void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 {
+	const double TiTe = plasma.IonTemperature / plasma.ElectronTemperature;
+	// NB This uses power densities in W/m^3
+	auto PowerBalance = [ &plasma, TiTe ]( double Te ) {
+		plasma.ElectronTemperature = Te;
+		plasma.IonTemperature = Te * TiTe;
+
+		// Update Mach Number from new T_e
+		plasma.SetMachFromVoltage();
+		
+		double HeatLoss = plasma.IonHeatLosses() + plasma.ElectronHeatLosses();
+		double Heating = plasma.IonHeating() + plasma.ElectronHeating();
+
+		return Heating - HeatLoss;
+	};
+
+	boost::uintmax_t iters = 1000;
+	boost::math::tools::eps_tolerance<double> tol( 11 ); // only bother getting part in 1024 accuracy
+	double InitialTe = 0.1; // Start cold -- 100eV
+	double Factor = 2.0;
+	bool rising = false; // At fixed Mach Number, heating the plasma up will increase losses
+	auto [ T_lower, T_upper ] = boost::math::tools::bracket_and_solve_root( PowerBalance, InitialTe, Factor, rising, tol, iters );
+	plasma.ElectronTemperature = ( T_lower + T_upper )/2.0;
+	plasma.SetMachFromVoltage();
 }

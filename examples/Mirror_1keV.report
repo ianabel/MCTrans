@@ -2,8 +2,8 @@ The plasma is made up of electrons, Hydrogen and trace, radiating, impurities
 Electron Density is 1e+19 m^-3
 Ion Density is 1e+19 m^-3
 
-Electron Temperature is 0.75 keV
-Ion Temperature is 0.75 keV
+Electron Temperature is 750 eV
+Ion Temperature is 750 eV
 Radius of central cell (first wall) is 0.5 m
 	 Inner radius of the plasma is 0.15 m
 	 Outer radius of the plasma is 0.35 m
@@ -32,7 +32,7 @@ Power Required (at the plasma) to support rotation 7.75 kW
 Total Stored Energy is 4.01 kJ
  of which 3.33 kJ is kinetic energy in the rotation
       and 680 J is thermal energy of the plasma
-Energy Confinement Time is 0.0941 s
+Energy Confinement Time is 0.0931 s
 Of which
 	Confinement time from parallel losses is 0.302 s
 	Confinement time from perpendicular losses is 0.137 s
@@ -45,7 +45,7 @@ Dimensionless parameters:
 	 ρ* = 0.0931
 
 Fusion Triple Product 
-	 n T τ = 7.06e+17 keV s /m^3
+	 n T τ = 6.98e+17 keV s /m^3
 
  === Nuclear Reactions Assuming Deuterium Fuel === 
  Neutrons per second: 5.74e+08
