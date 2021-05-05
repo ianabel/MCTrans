@@ -1,10 +1,9 @@
+#ifndef FUSIONYIELD_HPP
+#define FUSIONYIELD_HPP
 
-#include "Centrifugal.hpp"
+namespace FusionReactions {
+double SigmaAverageDT( double Ti );
+double SigmaAverageDD( double Ti );
+}
 
-
-double FusionAlphaPowerDensity( Plasma const& plasma, Configuration const& conf );
-double NeutronOutput( Plasma const& plasma, Configuration const& conf );
-double ThermalPowerOutput( Plasma const& plasma, Configuration const& conf );
-double NeutronWallLoading( Plasma const& plasma, Configuration const& conf );
-double DDNeutronRate( Plasma const& plasma, Configuration const& conf );
-
+#endif // FUSIONYIELD_HPP
