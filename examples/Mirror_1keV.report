@@ -20,21 +20,21 @@ Typical plasma scale lenghts are ~ 0.1 m  = 10.7 rho_i
 
 No auxiliary heating was included in this calculation.
 
-Operating Mach number is 5.42
-Alfven Mach number is 0.702
+Operating Mach number is 6.5
+Alfven Mach number is 0.842
 
-Viscous Heating is 7.3 kW
+Viscous Heating is 10.5 kW
 Bremsstrahlung losses are 78.5 W
 
-Total potential drop is 87.2 kV
-Power Required (at the plasma) to support rotation 7.75 kW
+Total potential drop is 105 kV
+Power Required (at the plasma) to support rotation 10.5 kW
 
-Total Stored Energy is 4.01 kJ
- of which 3.33 kJ is kinetic energy in the rotation
+Total Stored Energy is 5.46 kJ
+ of which 4.78 kJ is kinetic energy in the rotation
       and 680 J is thermal energy of the plasma
-Energy Confinement Time is 0.0931 s
+Energy Confinement Time is 0.132 s
 Of which
-	Confinement time from parallel losses is 0.302 s
+	Confinement time from parallel losses is 5.87 s
 	Confinement time from perpendicular losses is 0.137 s
 
 Ion-Electron Temperature Equilibration Time is 1.46 s
@@ -45,7 +45,7 @@ Dimensionless parameters:
 	 ρ* = 0.0931
 
 Fusion Triple Product 
-	 n T τ = 6.98e+17 keV s /m^3
+	 n T τ = 9.87e+17 keV s /m^3
 
  === Nuclear Reactions Assuming Deuterium Fuel === 
  Neutrons per second: 5.74e+08
