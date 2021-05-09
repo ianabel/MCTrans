@@ -269,9 +269,8 @@ double MirrorPlasma::ClassicalHeatLosses() const
 double MirrorPlasma::BremsstrahlungLosses() const
 {
 	// NRL formulary with reference values factored out
-	// TODO: BUG HERE FOR COMPAT
 	// Rteurn units are W/m^3
-	return 169 * ::sqrt( 1000 * ElectronTemperature ) * Zeff * Zeff* ElectronDensity * ElectronDensity;
+	return 169 * ::sqrt( 1000 * ElectronTemperature ) * Zeff * ElectronDensity * ElectronDensity;
 }
 
 double MirrorPlasma::Beta() const
