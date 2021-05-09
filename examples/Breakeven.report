@@ -25,32 +25,32 @@ Auxiliary Heating of 2.5e+03 kW was included
  Prompt Alpha Losses towards the end plates give 0.387 MW of energy losses
  The alpha particle slowing-down time is 0.294 s
 
-Operating Mach number is 6.5
-Alfven Mach number is 1.21
+Operating Mach number is 12.4
+Alfven Mach number is 2.3
 
-Viscous Heating is 580 kW
+Viscous Heating is 2.45 MW
 Bremsstrahlung losses are 5.97 MW
 
-Total potential drop is 10 MV
-Power Required (at the plasma) to support rotation 702 kW
+Total potential drop is 19 MV
+Power Required (at the plasma) to support rotation 2.45 MW
 
-Total Stored Energy is 67.3 MJ
- of which 58.9 MJ is kinetic energy in the rotation
+Total Stored Energy is 222 MJ
+ of which 214 MJ is kinetic energy in the rotation
       and 8.37 MJ is thermal energy of the plasma
-Energy Confinement Time is 1.21 s
+Energy Confinement Time is 1.33 s
 Of which
-	Confinement time from parallel losses is 12.5 s
-	Confinement time from perpendicular losses is 30.5 s
+	Confinement time from parallel losses is 1.25e+11 s
+	Confinement time from perpendicular losses is 26.2 s
 
-Ion-Electron Temperature Equilibration Time is 30.9 s
+Ion-Electron Temperature Equilibration Time is 26.5 s
 
 Dimensionless parameters:
 	 β  = 6.91%
-	 ν* = 0.00027 (ions) 
+	 ν* = 0.000315 (ions) 
 	 ρ* = 0.0182
 
 Fusion Triple Product 
-	 n T τ = 2.54e+21 keV s /m^3
+	 n T τ = 2.79e+21 keV s /m^3
 
  === Nuclear Reactions Assuming Deuterium Fuel === 
  Neutrons per second: 3.12e+17

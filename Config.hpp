@@ -34,11 +34,11 @@ class MCTransConfig {
 		} Type;
 
 		std::unique_ptr<MirrorPlasma> Solve() const;
+		std::unique_ptr<MirrorPlasma> ReferencePlasmaState;
 	private:
 		void doMachSolve( MirrorPlasma& plasma ) const;
 		void doTempSolve( MirrorPlasma& plasma ) const;
 
-		std::unique_ptr<MirrorPlasma> ReferencePlasmaState;
 };
 
 #endif // CONFIG_HPP

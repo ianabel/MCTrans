@@ -173,7 +173,6 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 // From NRL Formulary p34
 double MirrorPlasma::LogLambdaElectron() const
 {
-	return 17.;
 	// Convert to NRL Formulary Units
 	double neNRL = ElectronDensity * 1e14; // We use 10^20 / m^3 = 10^14 / cm^3
 	double TeNRL = ElectronTemperature * 1000; // We normalize to 1 keV they use 1 ev
@@ -193,7 +192,6 @@ double MirrorPlasma::ElectronCollisionTime() const
 // NRL Formulary p34
 double MirrorPlasma::LogLambdaIon() const
 {
-	return 18.0;
 	double TiNRL = IonTemperature * 1000;
 	double niNRL = IonDensity * 1e14;
 	double ZIon = pVacuumConfig->IonSpecies.Charge;
@@ -379,7 +377,6 @@ double MirrorPlasma::ElectronHeating() const
 		AlphaHeatingFraction = 1.0;
 		// 1e6 as we are using W/m^3 and the formulary was in MW/m^3
 		Heating += AlphaHeating() * 1e6 * AlphaHeatingFraction;
-
 	}
 	return Heating + IonToElectronHeatTransfer();
 }
