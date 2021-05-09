@@ -277,7 +277,7 @@ double MirrorPlasma::BremsstrahlungLosses() const
 double MirrorPlasma::Beta() const
 {
 	// From Plasma Formulary, so convert to /cm^3 , eV, and Gauss
-	double ne_Formulary = ElectronDensity * 1e-6; //TODO: BUG XXX
+	double ne_Formulary = ElectronDensity * ReferenceDensity * 1e-6;
 	double Te_Formulary = ElectronTemperature * 1e3;
 	double ni_Formulary = IonDensity * ReferenceDensity * 1e-6;
 	double Ti_Formulary = IonTemperature * 1e3;
