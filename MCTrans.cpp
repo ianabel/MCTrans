@@ -50,6 +50,7 @@ void MCTransConfig::doMachSolve( MirrorPlasma& plasma ) const
 	// NB This uses power densities in W/m^3
 	auto PowerBalance = [ &plasma ]( double M ) {
 		plasma.MachNumber = M;
+		plasma.SetAmbipolarPhi();
 
 		double HeatLoss = plasma.IonHeatLosses() + plasma.ElectronHeatLosses();
 		double Heating = plasma.IonHeating() + plasma.ElectronHeating();
@@ -64,6 +65,7 @@ void MCTransConfig::doMachSolve( MirrorPlasma& plasma ) const
 	bool rising = true; // Confinement gets uniformly better for increasing M, and Viscous heating increases with M
 	auto [ M_lower, M_upper ] = boost::math::tools::bracket_and_solve_root( PowerBalance, InitialMach, Factor, rising, tol, iters );
 	plasma.MachNumber = ( M_lower + M_upper )/2.0;
+	plasma.ComputeSteadyStateNeutrals();
 }
 
 void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
@@ -73,6 +75,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	auto PowerBalance = [ &plasma, TiTe ]( double Te ) {
 		plasma.ElectronTemperature = Te;
 		plasma.IonTemperature = Te * TiTe;
+		plasma.SetAmbipolarPhi();
 
 		// Update Mach Number from new T_e
 		plasma.SetMachFromVoltage();
@@ -91,4 +94,5 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	auto [ T_lower, T_upper ] = boost::math::tools::bracket_and_solve_root( PowerBalance, InitialTe, Factor, rising, tol, iters );
 	plasma.ElectronTemperature = ( T_lower + T_upper )/2.0;
 	plasma.SetMachFromVoltage();
+	plasma.ComputeSteadyStateNeutrals();
 }

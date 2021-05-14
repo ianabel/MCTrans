@@ -117,6 +117,10 @@ void MirrorPlasma::PrintReport() const
 		std::cout << "WARNING: Assumption of fixed temperature ratio may be invalid." << std::endl;
 	*/
 
+	std::cout << std::endl;
+	std::cout << "Neutral gas must be provided at a rate of " << NeutralSource * pVacuumConfig->PlasmaVolume() << " particles/s to refuel the plasma" << std::endl;
+	std::cout << "This leads to a steady-state neutral density of " << NeutralDensity * ReferenceDensity << "/m^3" << std::endl;
+
 
 	std::cout << std::endl;
 	std::cout << "Dimensionless parameters:" << std::endl;
@@ -132,6 +136,9 @@ void MirrorPlasma::PrintReport() const
 	
 	std::cout << std::endl;
 
+	if ( pVacuumConfig->ReportMomentumLoss ) {
+		std::cout << "Momentum loss rate along the field line is " << ParallelMomentumLossRate() << " kg m / s^2" << std::endl;
+	}
 
 
 	if ( pVacuumConfig->ReportNuclearDiagnostics ) {

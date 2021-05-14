@@ -10,14 +10,11 @@ constexpr double PermeabilityOfFreeSpace = 1.25663706212e-6; // post-2018 not ex
 constexpr double ElectronCharge = 1.60217662e-19;
 constexpr double ProtonMass = 1.6726219e-27;
 
+constexpr double SpeedOfLight = 2.99792458e8;
+
 // Reference temperature of 1 keV, expressed in Joules
 constexpr double ReferenceTemperature = 1000 * ElectronCharge;
 constexpr double ReferenceDensity = 1e20;
-
-// Reference Cross-section for Charge-Exchange neutral cross-section
-// in cm^2
-constexpr double CXCrossSection = 1e-15;
-constexpr double IonizationCrossSection = 1e-16;
 
 // e in Gaussian Units is e_SI / sqrt( 4 * pi * epsilon_0 )
 // precomuting this to e_SI / (sqrt(4*pi))*(sqrt(epsilon_0)) gives:

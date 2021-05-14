@@ -27,14 +27,17 @@ Precise dependencies have not been exhaustively tested.
 ### Installing
 
  1. Install the Boost library, either using your system package manager or manually. Ensure this is in the global C++ include path.
- 2. Clone the [TOML11](http://github.com/toruniina/toml11) library into a directory of your choice.
+ 2. Clone the [TOML11](http://github.com/toruniina/toml11) library into a directory of your choice (if you clone it into MCTrans/toml11 skip 
+ the next step)
  3. Make sure the MCTrans/toml11 symlink points to your toml11 installation.
  4. Run `make MCTrans++`. 
 
 To compile the manual you will need a copy of pdflatex, bibtex, and revtex4. A pre-compiled copy of the manual is also distributed in this repository.
 
-
 ### Example Configurations
+
+Example configurations live in the `examples/` subdirectory. For each example there is a corresponding example output file named `.report`. 
+There is also a `check_examples.sh` script that will check all the examples still work.
 
 ## Built With
 

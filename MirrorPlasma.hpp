@@ -35,8 +35,13 @@ class MirrorPlasma {
 				double CentralCellFieldStrength;
 				double AuxiliaryHeating;
 
+				double ParallelFudgeFactor;
+				double PerpFudgeFactor;
+				bool AmbipolarPhi;
+
 				bool AlphaHeating;
 				bool ReportNuclearDiagnostics;
+				bool ReportMomentumLoss;
 
 				double PlasmaVolume() const {
 					return M_PI * ( PlasmaColumnWidth + 2 * AxialGapDistance ) * PlasmaColumnWidth * PlasmaLength;
@@ -118,6 +123,11 @@ class MirrorPlasma {
 		std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig;
 
 		void SetMachFromVoltage();
+		void SetAmbipolarPhi();
+
+		void ComputeSteadyStateNeutrals();
+
+		double ParallelMomentumLossRate() const;
 	private:
 
 		double LogLambdaElectron() const;
@@ -138,20 +148,24 @@ class MirrorPlasma {
 		double ClassicalHeatLosses() const;
 		double ParallelHeatLosses() const;
 
-		// double ParallelElectronPastukhovLossRate( double Phi0 ) const;
+		double ParallelElectronPastukhovLossRate( double Phi ) const;
 		double ParallelElectronParticleLoss() const;
 		double ParallelElectronHeatLoss() const;
 
-		// double ParallelIonPastukhovLossRate( double Phi0 ) const;
-		// double ParallelIonParticleLoss() const;
-		// double ParallelIonHeatLoss() const;
+		double ParallelIonPastukhovLossRate( double Phi ) const;
+		double ParallelIonParticleLoss() const;
+		double ParallelIonHeatLoss() const;
 
 		double ParallelKineticEnergyLoss() const;
 
 		double ClassicalIonHeatLoss() const;
+		double ClassicalElectronHeatLoss() const;
 
-		// double AmbipolarPhi() const;
+		double ClassicalElectronParticleLosses() const;
+		double ClassicalIonParticleLosses() const;
 
+		
+		double AmbipolarPhi;
 
 		double ClassicalViscosity() const;
 		double AlfvenMachNumber() const;
@@ -164,6 +178,12 @@ class MirrorPlasma {
 		{
 			double MagneticField = pVacuumConfig->CentralCellFieldStrength;
 			return pVacuumConfig->IonSpecies.Charge * ElectronCharge * MagneticField / ( pVacuumConfig->IonSpecies.Mass * ProtonMass );
+		};
+
+		double ElectronCyclotronFrequency() const
+		{
+			double MagneticField = pVacuumConfig->CentralCellFieldStrength;
+			return ElectronCharge * MagneticField / ElectronMass; 
 		};
 
 		double FusionAlphaPowerDensity() const;
