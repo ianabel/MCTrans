@@ -2,8 +2,8 @@ The plasma is made up of electrons, Hydrogen and trace, radiating, impurities
 Electron Density is 1e+19 m^-3
 Ion Density is 1e+19 m^-3
 
-Electron Temperature is 1.03 keV
-Ion Temperature is 1.03 keV
+Electron Temperature is 
+Ion Temperature is 
 Radius of central cell (first wall) is 0.5 m
 	 Inner radius of the plasma is 0.15 m
 	 Outer radius of the plasma is 0.35 m
@@ -15,43 +15,46 @@ Plasma Volume is 0.188 m^3
 Magnetic Field in the Central Cell is 0.3 T
 Magnetic Field at the Mirror Throat is 3 T
 
-Ion Larmor Radius in the central cell is 0.0109 m 
-Typical plasma scale lenghts are ~ 0.1 m  = 9.16 rho_i 
+Ion Larmor Radius in the central cell is -nan m 
+Typical plasma scale lenghts are ~ 0.1 m  = -nan rho_i 
 
 No auxiliary heating was included in this calculation.
 
-Operating Mach number is 5.31
-Alfven Mach number is 0.805
+Operating Mach number is -nan
+Alfven Mach number is -nan
 
-Viscous Heating is 8.4 kW
-Bremsstrahlung losses are 30.7 W
+Viscous Heating is 
+Bremsstrahlung losses are 
 
-Total potential drop is 100 kV
-Power Required (at the plasma) to support rotation 8.9 kW
+Total potential drop is 
+Power Required (at the plasma) to support rotation 
 
-Total Stored Energy is 5.31 kJ
- of which 4.38 kJ is kinetic energy in the rotation
-      and 933 J is thermal energy of the plasma
-Energy Confinement Time is 0.111 s
+Total Stored Energy is 
+ of which  is kinetic energy in the rotation
+      and  is thermal energy of the plasma
+Energy Confinement Time is -nan s
 Of which
-	Confinement time from parallel losses is 0.389 s
-	Confinement time from perpendicular losses is 0.156 s
+	Confinement time from parallel losses is -nan s
+	Confinement time from perpendicular losses is -nan s
 
-Ion-Electron Temperature Equilibration Time is 2.29 s
+Ion-Electron Temperature Equilibration Time is -nan s
+
+Neutral gas must be provided at a rate of -nan particles/s to refuel the plasma
+This leads to a steady-state neutral density of -nan/m^3
 
 Dimensionless parameters:
-	 β  = 9.23%
-	 ν* = 0.000511 (ions) 
-	 ρ* = 0.109
+	 β  = -nan%
+	 ν* = -nan (ions) 
+	 ρ* = -nan
 
 Fusion Triple Product 
-	 n T τ = 1.14e+18 keV s /m^3
+	 n T τ = -nan keV s /m^3
 
  === Nuclear Reactions Assuming Deuterium Fuel === 
- Neutrons per second: 3.69e+09
+ Neutrons per second: -nan
 
  === Reactor Output Assuming D/T Reactor Fuel === 
-Fusion Power Output as Alphas:   2.54e-08 MW
-                    as Neutrons: 1.02e-07 MW
-Neutron Wall Loading is 1.08e-07 MW/m^2
-Total Thermal Power Output is 1.62e-07 MW
+Fusion Power Output as Alphas:   -nan MW
+                    as Neutrons: -nan MW
+Neutron Wall Loading is -nan MW/m^2
+Total Thermal Power Output is -nan MW
