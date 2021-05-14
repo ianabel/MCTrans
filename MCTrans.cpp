@@ -7,10 +7,13 @@
 #include "Config.hpp"
 #include "MirrorPlasma.hpp"
 
+extern "C" {
+#include <fenv.h>
+}
 
 int main( int argc, char** argv )
 {
-
+	::feenableexcept( FE_DIVBYZERO );
 	std::string fname( "Mirror.conf" );
 	if ( argc == 2 )
 		fname = argv[ 1 ];
@@ -23,6 +26,7 @@ int main( int argc, char** argv )
 	MCTransConfig config( fname );
 
 	std::unique_ptr<MirrorPlasma> result = config.Solve();
+
 	result->PrintReport();
 
 	return 0;
@@ -75,10 +79,10 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	auto PowerBalance = [ &plasma, TiTe ]( double Te ) {
 		plasma.ElectronTemperature = Te;
 		plasma.IonTemperature = Te * TiTe;
-		plasma.SetAmbipolarPhi();
 
 		// Update Mach Number from new T_e
 		plasma.SetMachFromVoltage();
+		plasma.SetAmbipolarPhi();
 		
 		double HeatLoss = plasma.IonHeatLosses() + plasma.ElectronHeatLosses();
 		double Heating = plasma.IonHeating() + plasma.ElectronHeating();

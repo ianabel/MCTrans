@@ -1,7 +1,7 @@
 
 CXX ?= g++
-CXXFLAGS += -g -Og --std=c++20 -Wall
-all: MCTrans++ MCTrans.pdf
+CXXFLAGS += -g -Og --std=c++17 -Wall
+all: MCTrans++
 
 OBJECTS = MCTrans.cpp MirrorPlasma.cpp FusionYield.cpp Report.cpp AlphaHeating.cpp Neutrals.cpp
 HEADERS = MirrorPlasma.hpp FusionYield.hpp Config.hpp Species.hpp PlasmaPhysics.hpp

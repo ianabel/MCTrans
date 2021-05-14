@@ -156,3 +156,4 @@ void MirrorPlasma::PrintReport() const
 	}
 
 }
+

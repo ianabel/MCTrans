@@ -41,7 +41,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	// Sets the fudge factors to 1 if not specified in the config
 	ParallelFudgeFactor = 1.0;
 	PerpFudgeFactor = 1.0;
-	AmbipolarPhi = true; // Do not calculate correction to Phi to make parallel losses ambipolar
+	AmbipolarPhi = false; // Do not calculate correction to Phi to make parallel losses ambipolar
 
 	CentralCellFieldStrength =  mirrorConfig.at( "CentralCellField" ).as_floating();
 
@@ -275,12 +275,14 @@ double MirrorPlasma::ParallelIonHeatLoss() const
 // Sets Phi to the ambipolar Phi required such that ion loss = electron loss
 void MirrorPlasma::SetAmbipolarPhi() 
 {
-	if ( !pVacuumConfig->AmbipolarPhi )
+	AmbipolarPhi = CentrifugalPotential();
+	if ( !pVacuumConfig->AmbipolarPhi ) {
 		AmbipolarPhi = CentrifugalPotential();
-	else {
+	} else {
 		double x0 = CentrifugalPotential();
 		AmbipolarPhi = x0;
 	}
+	return;
 }
 
 double MirrorPlasma::ParallelKineticEnergyLoss() const
