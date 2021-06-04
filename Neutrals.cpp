@@ -44,4 +44,9 @@ void MirrorPlasma::ComputeSteadyStateNeutrals()
 	NeutralSource = ElectronLossRate;
 }
 
-
+/*
+ * To the neutrals the plasma is an onrushing torrent. Moving to the plasma rest fram, the neutrals are a high-energy beam ( width is 
+ * determined by the temperature of the neutral gas, which is low ).
+ *
+ * We can thus use beam stopping coefficients to try and work out the ionization rates..
+ */

@@ -54,7 +54,6 @@ void MCTransConfig::doMachSolve( MirrorPlasma& plasma ) const
 	// NB This uses power densities in W/m^3
 	auto PowerBalance = [ &plasma ]( double M ) {
 		plasma.MachNumber = M;
-		plasma.SetAmbipolarPhi();
 
 		double HeatLoss = plasma.IonHeatLosses() + plasma.ElectronHeatLosses();
 		double Heating = plasma.IonHeating() + plasma.ElectronHeating();
@@ -72,6 +71,7 @@ void MCTransConfig::doMachSolve( MirrorPlasma& plasma ) const
 	plasma.ComputeSteadyStateNeutrals();
 }
 
+/*
 void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 {
 	const double TiTe = plasma.IonTemperature / plasma.ElectronTemperature;
@@ -82,7 +82,6 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 
 		// Update Mach Number from new T_e
 		plasma.SetMachFromVoltage();
-		plasma.SetAmbipolarPhi();
 		
 		double HeatLoss = plasma.IonHeatLosses() + plasma.ElectronHeatLosses();
 		double Heating = plasma.IonHeating() + plasma.ElectronHeating();
@@ -97,6 +96,8 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	bool rising = false; // At fixed Mach Number, heating the plasma up will increase losses
 	auto [ T_lower, T_upper ] = boost::math::tools::bracket_and_solve_root( PowerBalance, InitialTe, Factor, rising, tol, iters );
 	plasma.ElectronTemperature = ( T_lower + T_upper )/2.0;
+	plasma.IonTemperature = TiTe * plasma.ElectronTemperature;
 	plasma.SetMachFromVoltage();
 	plasma.ComputeSteadyStateNeutrals();
 }
+*/

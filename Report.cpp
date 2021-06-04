@@ -4,16 +4,20 @@
 
 void PrintWithUnit( double value, std::string const& unit )
 {
-	if ( ::fabs( value ) > 1e9 || ::fabs( value ) < 1e3 )
-	{
-		std::cout << value << " " << unit;
-		return;
-	}
 
 	if ( ::fabs( value ) > 1e3 && ::fabs( value ) <= 1e6 )
 		std::cout << value/1e3 << " k" << unit;
 	else if ( ::fabs( value ) > 1e6 && ::fabs( value ) <= 1e9 )
 		std::cout << value/1e6 << " M" << unit;
+	else if ( ::fabs( value ) < 1 && ::fabs( value ) >= 1e-3 )
+		std::cout << value*1e3 << " m" << unit;
+	else if ( ::fabs( value ) < 1e-3 && ::fabs( value ) >= 1e-6 )
+		std::cout << value*1e6 << " µ" << unit;
+	else if ( ::fabs( value ) < 1e-6 && ::fabs( value ) >= 1e-9 )
+		std::cout << value*1e9 << " p" << unit;
+	else
+		std::cout << value << " " << unit;
+
 
 	return;
 }
@@ -102,24 +106,32 @@ void MirrorPlasma::PrintReport() const
 	std::cout << "      and "; PrintWithUnit( ThermalStoredEnergy, "J" ); std::cout << " is thermal energy of the plasma" << std::endl;
 
 
-	std::cout << "Energy Confinement Time is " << EnergyConfinementTime() << " s" << std::endl;
+	std::cout << "Energy Confinement Time is "; PrintWithUnit( EnergyConfinementTime(),"s" ); std::cout << std::endl;
 	std::cout << "Of which" << std::endl;
 	
-	std::cout << "\tConfinement time from parallel losses is " << ( 1.5  * ElectronDensity * ElectronTemperature * ReferenceDensity * ReferenceTemperature )/ParallelElectronHeatLoss() << " s" << std::endl;
-	std::cout << "\tConfinement time from perpendicular losses is " << ( 1.5  * IonDensity * IonTemperature * ReferenceDensity * ReferenceTemperature )/ClassicalIonHeatLoss() << " s" << std::endl;
+	double ParallelConfinementTime = ( 1.5  * ElectronDensity * ElectronTemperature + 1.5 * IonDensity * IonTemperature ) * (  ReferenceDensity * ReferenceTemperature )/( ParallelElectronHeatLoss() + ParallelIonHeatLoss() );
+	double PerpConfinementTime = ( 1.5  * IonDensity * IonTemperature * ReferenceDensity * ReferenceTemperature )/ClassicalIonHeatLoss();
+	std::cout << "\tConfinement time from parallel losses is "; PrintWithUnit( ParallelConfinementTime, "s" ); std::cout << std::endl;
+	std::cout << "\tConfinement time from perpendicular losses is "; PrintWithUnit( PerpConfinementTime, "s" ); std::cout << std::endl;
 	std::cout << std::endl;
 
-	double IonElectronEquilibrationTime = CollisionalTemperatureEquilibrationTime();
-	std::cout << "Ion-Electron Temperature Equilibration Time is " << IonElectronEquilibrationTime << " s" << std::endl;
-	double EquilibrationRatio = IonElectronEquilibrationTime / EnergyConfinementTime(); 
-	/*
-	if ( EquilibrationRatio > 0.9 )
-		std::cout << "WARNING: Assumption of fixed temperature ratio may be invalid." << std::endl;
-	*/
+	double ParallelParticleConfinementTime = ( IonDensity * ReferenceDensity ) /(  ParallelIonParticleLoss() );
+	std::cout << "Particle (Ion) Confinement Time ~= "; PrintWithUnit( ParallelParticleConfinementTime, "s" ); std::cout << std::endl;
+	std::cout << std::endl;
+
+	std::cout << "Ion-Electron Temperature Equilibration Time is "; PrintWithUnit( CollisionalTemperatureEquilibrationTime(),"s" ); std::cout << std::endl;
 
 	std::cout << std::endl;
 	std::cout << "Neutral gas must be provided at a rate of " << NeutralSource * pVacuumConfig->PlasmaVolume() << " particles/s to refuel the plasma" << std::endl;
 	std::cout << "This leads to a steady-state neutral density of " << NeutralDensity * ReferenceDensity << "/m^3" << std::endl;
+
+	std::cout << std::endl;
+	double Resistance = ElectricPotential() * ElectricPotential() / (  ViscousHeatingRate + ParallelMomentumLoss );
+	double Capacitance = 2.0*KineticStoredEnergy / ( ElectricPotential() * ElectricPotential() );
+	std::cout << "Electrical Properties of the Plasma:" << std::endl;
+	std::cout << "\tResistance  = "; PrintWithUnit( Resistance,  "Ω" ); std::cout << std::endl;
+	std::cout << "\tCapacitance = "; PrintWithUnit( Capacitance, "F" ); std::cout << std::endl;
+
 
 
 	std::cout << std::endl;

@@ -123,7 +123,7 @@ class MirrorPlasma {
 		std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig;
 
 		void SetMachFromVoltage();
-		void SetAmbipolarPhi();
+		double AmbipolarPhi() const;
 
 		void ComputeSteadyStateNeutrals();
 
@@ -163,9 +163,6 @@ class MirrorPlasma {
 
 		double ClassicalElectronParticleLosses() const;
 		double ClassicalIonParticleLosses() const;
-
-		
-		double AmbipolarPhi;
 
 		double ClassicalViscosity() const;
 		double AlfvenMachNumber() const;

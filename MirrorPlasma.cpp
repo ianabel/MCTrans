@@ -33,7 +33,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 
 	const auto mirrorConfig = toml::find<toml::table>( plasmaConfig, "configuration" );
 
-	if ( mirrorConfig.count( "ReportMomentumLoss" ) )
+	if ( mirrorConfig.count( "ReportMomentumLoss" ) == 1 )
 		ReportMomentumLoss = mirrorConfig.at( "ReportMomentumLoss" ).as_boolean();
 	else 
 		ReportMomentumLoss = false;
@@ -41,7 +41,13 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	// Sets the fudge factors to 1 if not specified in the config
 	ParallelFudgeFactor = 1.0;
 	PerpFudgeFactor = 1.0;
-	AmbipolarPhi = false; // Do not calculate correction to Phi to make parallel losses ambipolar
+
+	if ( mirrorConfig.count( "UseAmbipolarPhi" ) == 1 )
+		AmbipolarPhi = mirrorConfig.at( "UseAmbipolarPhi" ).as_boolean();
+	else 
+		AmbipolarPhi = false;
+
+
 
 	CentralCellFieldStrength =  mirrorConfig.at( "CentralCellField" ).as_floating();
 
@@ -186,9 +192,9 @@ double MirrorPlasma::LogLambdaElectron() const
 	// Convert to NRL Formulary Units
 	double neNRL = ElectronDensity * 1e14; // We use 10^20 / m^3 = 10^14 / cm^3
 	double TeNRL = ElectronTemperature * 1000; // We normalize to 1 keV they use 1 ev
-	// Convert log( ne^.5 Te^-1.25 ) = .5*log(ne) - 1.25 * log(Te) 
-	double logTe = ::log( TeNRL );
-	return 23.5 - 0.5*::log( neNRL ) + 1.25*logTe - ::sqrt( 1e-5 + ( logTe - 2 ) * ( logTe - 2 ) / 16 );
+	// For sensible values of the coulomb logarithm, the lambda_ee value in the NRL formulary
+	// can be simplified to be the same as the middle lambda_ei value.
+	return 24.0 - 0.5*::log( neNRL ) + ::log( TeNRL );
 }
 
 // tau_ee 
@@ -217,72 +223,80 @@ double MirrorPlasma::IonCollisionTime() const
 }
 
 // Leading order contribution to Phi_0 in O(M^2)
+// in units of T_e/e
 double MirrorPlasma::CentrifugalPotential() const
 {
-	return 0.5 * ( 1.0 - 1.0 / pVacuumConfig->MirrorRatio ) * MachNumber * MachNumber / ( pVacuumConfig->IonSpecies.Charge + 1 ); // IonTemperature/ElectronTemperature );
+	double tau = IonTemperature / ElectronTemperature;
+	return -( 0.5/tau ) * ( 1.0 - 1.0 / pVacuumConfig->MirrorRatio ) * MachNumber * MachNumber / ( pVacuumConfig->IonSpecies.Charge / tau + 1 );
 }
 
-// Phi Defined in units of T_e/e
-double MirrorPlasma::ParallelElectronPastukhovLossRate( double Phi ) const
+// Chi_e Defined in units of T_e
+double MirrorPlasma::ParallelElectronPastukhovLossRate( double Chi_e ) const
 {
 	// For consistency, the integral in Pastukhov's paper is 1.0, as the
 	// entire theory is an expansion in M^2 >> 1
 	double R = pVacuumConfig->MirrorRatio;
 	double tau_ee = ElectronCollisionTime();
-	double Sigma = 2.0;
-	double LossRate = ( M_2_SQRTPI / tau_ee ) * Sigma * ElectronDensity * ReferenceDensity * ( 1.0 / ::log( R * Sigma ) ) * ( ::exp( - Phi ) / Phi );
-	return LossRate;
+	double Sigma = 1.0 + Zeff; // Include collisions with ions and impurities as well as self-collisions
+	double LossRate = ( M_2_SQRTPI / tau_ee ) * Sigma * ElectronDensity * ReferenceDensity * ( 1.0 / ::log( R * Sigma ) ) * ( ::exp( - Chi_e ) / Chi_e );
+	return ::fabs( LossRate );
 }
 
 double MirrorPlasma::ParallelElectronParticleLoss() const
 {
-	return ParallelElectronPastukhovLossRate( AmbipolarPhi );
+	double Chi_e = -AmbipolarPhi(); // Ignore small electron mass correction
+	return ParallelElectronPastukhovLossRate( Chi_e );
 }
 
 double MirrorPlasma::ParallelElectronHeatLoss() const
 {
 	// Energy loss per particle is ~ e Phi + T_e
 	// AmbipolarPhi = e Phi / T_e so loss is T_e * ( AmbipolarPhi + 1)
-	return ParallelElectronPastukhovLossRate( AmbipolarPhi ) * ( ElectronTemperature * ReferenceTemperature ) * ( AmbipolarPhi + 1.0 );
+	double Chi_e = -AmbipolarPhi(); // Ignore small electron mass correction
+	// Particle energy is roughly T_e + Chi_e (thermal + potential)
+	return ParallelElectronPastukhovLossRate( Chi_e ) * ( ElectronTemperature * ReferenceTemperature ) * ( Chi_e + 1.0 );
 }
 
-// Phi Defined in units of T_e/e
-double MirrorPlasma::ParallelIonPastukhovLossRate( double Phi ) const
+// Chi_i Defined in units of T_i
+double MirrorPlasma::ParallelIonPastukhovLossRate( double Chi_i ) const
 {
 	// For consistency, the integral in Pastukhov's paper is 1.0, as the
 	// entire theory is an expansion in M^2 >> 1
 	double R = pVacuumConfig->MirrorRatio;
 	double tau_ii = IonCollisionTime();
-	double PhiIon = pVacuumConfig->IonSpecies.Charge * Phi * ( ElectronTemperature/IonTemperature );
 	double Sigma = 1.0;
-	double LossRate = ( M_2_SQRTPI / tau_ii ) * Sigma * IonDensity * ReferenceDensity * ( 1.0 / ::log( R * Sigma ) ) * ( ::exp( - PhiIon ) / PhiIon );
-	return LossRate;
+	double LossRate = ( M_2_SQRTPI / tau_ii ) * Sigma * IonDensity * ReferenceDensity * ( 1.0 / ::log( R * Sigma ) ) * ( ::exp( - Chi_i ) / Chi_i );
+	return ::fabs( LossRate );
 }
 
 double MirrorPlasma::ParallelIonParticleLoss() const
 {
-	return ParallelIonPastukhovLossRate( AmbipolarPhi );
+	// Electrostatic energy + centrifugal potential energy
+	double Chi_i = pVacuumConfig->IonSpecies.Charge * AmbipolarPhi() * ( ElectronTemperature/IonTemperature ) + 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
+	return ParallelIonPastukhovLossRate( Chi_i );
 }
 
 double MirrorPlasma::ParallelIonHeatLoss() const
 {
-	// Energy loss per particle is ~ Z_i e Phi + T_i
-	// AmbipolarPhi is normalised to T_e/e so loss is T_i * ( AmbipolarPhi * (Z/tau) + 1 )
-	double ZOverTau = pVacuumConfig->IonSpecies.Charge * ( ElectronTemperature/IonTemperature );
-	return ParallelIonPastukhovLossRate( AmbipolarPhi ) * ( IonTemperature * ReferenceTemperature ) * ( AmbipolarPhi * ZOverTau  + 1.0 );
+	// Energy loss per particle is ~ Chi_i + T_i
+	double Chi_i = pVacuumConfig->IonSpecies.Charge * AmbipolarPhi() * ( ElectronTemperature/IonTemperature ) + 
+							0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
+	return ParallelIonPastukhovLossRate( Chi_i ) * ( IonTemperature * ReferenceTemperature ) * ( ::fabs( Chi_i )  + 1.0 );
 }
 
 // Sets Phi to the ambipolar Phi required such that ion loss = electron loss
-void MirrorPlasma::SetAmbipolarPhi() 
+double MirrorPlasma::AmbipolarPhi() const
 {
-	AmbipolarPhi = CentrifugalPotential();
-	if ( !pVacuumConfig->AmbipolarPhi ) {
-		AmbipolarPhi = CentrifugalPotential();
-	} else {
-		double x0 = CentrifugalPotential();
-		AmbipolarPhi = x0;
+	double AmbipolarPhi = CentrifugalPotential();
+
+	if ( pVacuumConfig->AmbipolarPhi ) {
+		// Add correction.
+		double Sigma = 1.0 + Zeff;
+		double R = pVacuumConfig->MirrorRatio;
+		AmbipolarPhi += ::log( (  ElectronCollisionTime() / IonCollisionTime() ) * ( ::log( R*Sigma ) / ( Sigma * ::log( R ) ) ) );
 	}
-	return;
+
+	return AmbipolarPhi;
 }
 
 double MirrorPlasma::ParallelKineticEnergyLoss() const
@@ -409,22 +423,24 @@ double MirrorPlasma::AlfvenMachNumber() const
 
 double MirrorPlasma::CollisionalTemperatureEquilibrationTime() const
 {
-	return IonCollisionTime()/( (3./pVacuumConfig->IonSpecies.Mass)*(ElectronMass/ProtonMass) );
+	return ElectronCollisionTime()/( (3./pVacuumConfig->IonSpecies.Mass)*(ElectronMass/ProtonMass) );
 }
 
 double MirrorPlasma::IonToElectronHeatTransfer() const
 {
-	return CollisionalTemperatureEquilibrationTime() * ( IonTemperature - ElectronTemperature ) * ReferenceTemperature;
+	double EnergyDensity = ( ElectronDensity * ReferenceDensity ) * ( IonTemperature - ElectronTemperature ) * ReferenceTemperature;
+	// return EnergyDensity / ( 1e-6 ); // Start by ensuring equal temperatures ( force tau to be 1 µs )
+	return EnergyDensity / CollisionalTemperatureEquilibrationTime();
 }
 
 double MirrorPlasma::IonHeatLosses() const
 {
-	return 2*ClassicalIonHeatLoss() + ParallelIonHeatLoss();
+	return ClassicalIonHeatLoss() + ParallelIonHeatLoss();
 }
 
 double MirrorPlasma::ElectronHeatLosses() const
 {
-	return 2*ParallelElectronHeatLoss() + BremsstrahlungLosses();
+	return ParallelElectronHeatLoss() + BremsstrahlungLosses();
 }
 
 double MirrorPlasma::IonHeating() const
@@ -436,7 +452,7 @@ double MirrorPlasma::IonHeating() const
 
 double MirrorPlasma::ElectronHeating() const
 {
-	double Heating = pVacuumConfig->AuxiliaryHeating;
+	double Heating = pVacuumConfig->AuxiliaryHeating * 1e6; // Auxiliary Heating stored as MW, heating is in W
 	if ( pVacuumConfig->AlphaHeating ) {
 		/*
 		 * If the slowing-down time is longer than the energy confinement time

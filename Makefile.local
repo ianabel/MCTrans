@@ -1,0 +1,4 @@
+
+DEBUG=on
+SUNDIALS_DIR=/home/ian/projects/sundials-install/
+
