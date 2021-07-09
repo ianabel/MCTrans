@@ -21,6 +21,7 @@ To compile and use MCTrans++ you will need a system with the following
  - A C++17 compliant C++ compiler.
  - The Boost C++ Template Library
  - The TOML11 library
+ - The SUNDIALS library
 
 Precise dependencies have not been exhaustively tested. 
 
@@ -30,7 +31,8 @@ Precise dependencies have not been exhaustively tested.
  2. Clone the [TOML11](http://github.com/toruniina/toml11) library into a directory of your choice (if you clone it into MCTrans/toml11 skip 
  the next step)
  3. Make sure the MCTrans/toml11 symlink points to your toml11 installation.
- 4. Run `make MCTrans++`. 
+ 4. Install [Sundials](http://llnl.gov/sundials), edit Makefile.local and set `SUNDIALS_DIR` to the location you have installed the Sundials library to.
+ 5. Run `make MCTrans++`. 
 
 To compile the manual you will need a copy of pdflatex, bibtex, and revtex4. A pre-compiled copy of the manual is also distributed in this repository.
 
@@ -43,6 +45,7 @@ There is also a `check_examples.sh` script that will check all the examples stil
 
 * [Boost](http://boost.org) - C++ Template library that radically extends the STL
 * [TOML11](http://github.com/toruniina/toml11) - For parsing configuration files written in [TOML](https://github.com/toml-lang/toml)
+* [Sundials](http://llnl.gov/sundials) - Suite of libraries from LLNL for numerical solution of ODEs
 
 ## Contributing
 

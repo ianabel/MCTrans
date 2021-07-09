@@ -76,6 +76,11 @@ void MirrorPlasma::PrintReport() const
 	std::cout << "Operating Mach number is " << MachNumber << std::endl;
 	std::cout << "Alfven Mach number is " << AlfvenMachNumber() << std::endl;
 	std::cout << std::endl;
+	double v = SoundSpeed() * MachNumber;
+	std::cout << "Velocity is " << v << " m/s" << std::endl;
+	double Rmid = pVacuumConfig->AxialGapDistance + pVacuumConfig->PlasmaColumnWidth/2.0;
+	std::cout << "Angular Velocity at the plasma centre (R = " << Rmid << " m) is " << v/Rmid << " /s" << std::endl;
+	std::cout << std::endl;
 
 	std::cout << "Viscous Heating is ";
 	PrintWithUnit( ViscousHeating() * pVacuumConfig->PlasmaVolume(),"W" ); std::cout << std::endl;
@@ -121,9 +126,15 @@ void MirrorPlasma::PrintReport() const
 
 	std::cout << "Ion-Electron Temperature Equilibration Time is "; PrintWithUnit( CollisionalTemperatureEquilibrationTime(),"s" ); std::cout << std::endl;
 
+	/*
 	std::cout << std::endl;
 	std::cout << "Neutral gas must be provided at a rate of " << NeutralSource * pVacuumConfig->PlasmaVolume() << " particles/s to refuel the plasma" << std::endl;
 	std::cout << "This leads to a steady-state neutral density of " << NeutralDensity * ReferenceDensity << "/m^3" << std::endl;
+	*/
+
+	std::cout << std::endl;
+	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
+	std::cout << "Plasma must be provided at a rate of " << ElectronLossRate << "electrons /s /m^3 to maintain steady-state" << std::endl;
 
 	std::cout << std::endl;
 	double Resistance = ElectricPotential() * ElectricPotential() / (  ViscousHeatingRate + ParallelMomentumLoss );
@@ -139,6 +150,8 @@ void MirrorPlasma::PrintReport() const
 	std::cout << "\t β  = " << Beta() * 100 << "%" << std::endl;
 	std::cout << "\t ν* = " << NuStar() << " (ions) " << std::endl; 
 	std::cout << "\t ρ* = " << ( 2.0 * IonLarmorRadius() ) / pVacuumConfig->PlasmaColumnWidth << std::endl; 
+	std::cout << "\t Omega_i tau_ii = " << IonCyclotronFrequency()*IonCollisionTime() << std::endl; 
+
 	
 
 	std::cout << std::endl;

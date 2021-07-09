@@ -36,7 +36,7 @@ int KINSysWrapper( N_Vector u, N_Vector F, void* voidPlasma )
 	
 	plasmaPtr->SetMachFromVoltage();
 
-	std::cerr << "Iteration at T_i = " << plasmaPtr->IonTemperature << " ; T_e = " << plasmaPtr->ElectronTemperature << std::endl;
+	// std::cerr << "Iteration at T_i = " << plasmaPtr->IonTemperature << " ; T_e = " << plasmaPtr->ElectronTemperature << std::endl;
 
 
 	try {
@@ -45,8 +45,8 @@ int KINSysWrapper( N_Vector u, N_Vector F, void* voidPlasma )
 		double ElectronHeating  = plasmaPtr->ElectronHeating();
 		double ElectronHeatLoss = plasmaPtr->ElectronHeatLosses();
 
-		std::cerr << " Ion Heating      = " << IonHeating << " ; Ion Heat Loss       = " << IonHeatLoss << std::endl;
-		std::cerr << " Electron Heating = " << IonHeating << " ; Electron Heat Loss  = " << IonHeatLoss << std::endl;
+		// std::cerr << " Ion Heating      = " << IonHeating      << " ; Ion Heat Loss       = " << IonHeatLoss      << std::endl;
+		// std::cerr << " Electron Heating = " << ElectronHeating << " ; Electron Heat Loss  = " << ElectronHeatLoss << std::endl;
 
 		ION_HEAT_BALANCE( F )      = ( IonHeating - IonHeatLoss );
 		ELECTRON_HEAT_BALANCE( F ) = ( ElectronHeating - ElectronHeatLoss );
@@ -89,9 +89,9 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 		throw std::runtime_error( "Could not initialise KINSol" );
 	}
 
-	double ftol = 1.e-6;
-	double scstol = 1.e-6;
-	double jtol = 1.e-6;
+	double ftol = 1.e-9;
+	double scstol = 1.e-9;
+	double jtol = 1.e-9;
 
 	errorFlag = KINSetFuncNormTol( kinMem, ftol );
 	errorFlag = KINSetScaledStepTol( kinMem, scstol );
@@ -112,7 +112,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	N_VConst( 1.0, one );
 
 	errorFlag = KINSetMaxSetupCalls( kinMem, 1 );
-	errorFlag = KINSetPrintLevel( kinMem, 1 );
+	errorFlag = KINSetPrintLevel( kinMem, 0 );
 	errorFlag = KINSol( kinMem, initialCondition, KIN_LINESEARCH, one, one );
 
 	// We've solved and found the answer. Update the plasma object

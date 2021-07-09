@@ -1,0 +1,9 @@
+
+I d omega / dt = 1/r d/dr ( r^3 eta_1 d omega / dr ) + B_z J_r r
+
+V_ext = -Int dr (omega B_z R)
+
+J_r spatial dependence fixed by div j = 0
+
+
+

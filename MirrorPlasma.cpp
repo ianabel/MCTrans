@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 #include <boost/math/tools/roots.hpp>
+#include "TransitionFunction.hpp"
 
 MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value const& plasmaConfig )
 {
@@ -41,6 +42,12 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	// Sets the fudge factors to 1 if not specified in the config
 	ParallelFudgeFactor = 1.0;
 	PerpFudgeFactor = 1.0;
+
+	if ( mirrorConfig.count( "ParallelFudgeFactor" ) )
+		ParallelFudgeFactor = mirrorConfig.at( "ParallelFudgeFactor" ).as_floating();
+	
+	if ( mirrorConfig.count( "PerpFudgeFactor" ) )
+		PerpFudgeFactor = mirrorConfig.at( "PerpFudgeFactor" ).as_floating();
 
 	if ( mirrorConfig.count( "UseAmbipolarPhi" ) == 1 )
 		AmbipolarPhi = mirrorConfig.at( "UseAmbipolarPhi" ).as_boolean();
@@ -239,7 +246,16 @@ double MirrorPlasma::ParallelElectronPastukhovLossRate( double Chi_e ) const
 	double tau_ee = ElectronCollisionTime();
 	double Sigma = 1.0 + Zeff; // Include collisions with ions and impurities as well as self-collisions
 	double LossRate = ( M_2_SQRTPI / tau_ee ) * Sigma * ElectronDensity * ReferenceDensity * ( 1.0 / ::log( R * Sigma ) ) * ( ::exp( - Chi_e ) / Chi_e );
-	return ::fabs( LossRate );
+
+	// To prevent false solutions, apply strong losses if the Mach number drops
+	if ( Chi_e < 1.0 ) {
+		std::cerr << "Chi_e " << Chi_e << " not large. Warning" << std::endl;
+		double BaseLossRate = ElectronDensity * ReferenceDensity * ( SoundSpeed() / pVacuumConfig->PlasmaLength );
+		double smoothing = Transition( Chi_e, .5, 1.0 );
+		return smoothing*BaseLossRate + ( 1-smoothing )*LossRate;
+	}
+
+	return LossRate*pVacuumConfig->ParallelFudgeFactor;
 }
 
 double MirrorPlasma::ParallelElectronParticleLoss() const
@@ -266,7 +282,16 @@ double MirrorPlasma::ParallelIonPastukhovLossRate( double Chi_i ) const
 	double tau_ii = IonCollisionTime();
 	double Sigma = 1.0;
 	double LossRate = ( M_2_SQRTPI / tau_ii ) * Sigma * IonDensity * ReferenceDensity * ( 1.0 / ::log( R * Sigma ) ) * ( ::exp( - Chi_i ) / Chi_i );
-	return ::fabs( LossRate );
+
+	// To prevent false solutions, apply strong losses if the Mach number drops
+	if ( Chi_i < 1.0 ) {
+		std::cerr << "Chi_i " << Chi_i << " not large. Warning" << std::endl;
+		double BaseLossRate = IonDensity * ReferenceDensity * ( SoundSpeed() / pVacuumConfig->PlasmaLength );
+		double smoothing = Transition( Chi_i, .5, 1.0 );
+		return smoothing*BaseLossRate + ( 1-smoothing )*LossRate;
+	}
+
+	return LossRate*pVacuumConfig->ParallelFudgeFactor;
 }
 
 double MirrorPlasma::ParallelIonParticleLoss() const
@@ -293,7 +318,12 @@ double MirrorPlasma::AmbipolarPhi() const
 		// Add correction.
 		double Sigma = 1.0 + Zeff;
 		double R = pVacuumConfig->MirrorRatio;
-		AmbipolarPhi += ::log( (  ElectronCollisionTime() / IonCollisionTime() ) * ( ::log( R*Sigma ) / ( Sigma * ::log( R ) ) ) );
+		double Correction = ::log( (  ElectronCollisionTime() / IonCollisionTime() ) * ( ::log( R*Sigma ) / ( Sigma * ::log( R ) ) ) );
+		if ( ::fabs( Correction ) > ::fabs( AmbipolarPhi ) )
+		{
+			std::cerr << " The 1st order correction " << Correction << " is larger than the 0th order " << AmbipolarPhi << "!!" << std::endl;
+		}
+		AmbipolarPhi += Correction;
 	}
 
 	return AmbipolarPhi;
@@ -384,7 +414,7 @@ double MirrorPlasma::ThermalEnergy() const
 double MirrorPlasma::ClassicalViscosity() const
 {
 	double omega_ci = IonCyclotronFrequency();
-	return ( 3.0 / 10.0 ) * ( pVacuumConfig->IonSpecies.Charge * ElectronDensity * ReferenceDensity * IonTemperature * ReferenceTemperature ) / ( omega_ci * omega_ci * IonCollisionTime() );
+	return pVacuumConfig->PerpFudgeFactor * ( 3.0 / 10.0 ) * ( pVacuumConfig->IonSpecies.Charge * ElectronDensity * ReferenceDensity * IonTemperature * ReferenceTemperature ) / ( omega_ci * omega_ci * IonCollisionTime() );
 }
 
 // Viscous heating = eta * u^2 / L_u^2
@@ -446,6 +476,7 @@ double MirrorPlasma::ElectronHeatLosses() const
 double MirrorPlasma::IonHeating() const
 {
 	double Heating = ViscousHeating();
+	//std::cout << "i-Heating comprises " << Heating << " of viscous and " << -IonToElectronHeatTransfer() << " transfer" << std::endl;
 
 	return Heating - IonToElectronHeatTransfer();
 }
@@ -463,6 +494,7 @@ double MirrorPlasma::ElectronHeating() const
 		// 1e6 as we are using W/m^3 and the formulary was in MW/m^3
 		Heating += AlphaHeating() * 1e6 * AlphaHeatingFraction;
 	}
+	// std::cout << "e-Heating comprises " << Heating << " of aux and " << IonToElectronHeatTransfer() << " transfer" << std::endl;
 	return Heating + IonToElectronHeatTransfer();
 }
 

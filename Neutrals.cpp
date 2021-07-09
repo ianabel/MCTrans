@@ -14,8 +14,7 @@ constexpr double BaseIonizationCrossSection = 1e-10;
 // n_neutral * n_e * Volume to get rate)
 double IonizationRate( double Ne, double Te )
 {
-	double ElectronThermalSpeed = ::sqrt( 2.0 * Te * ReferenceTemperature / ElectronMass );
-	return BaseIonizationCrossSection * 1e-4 * ElectronThermalSpeed;
+	return 1.0;
 }
 
 // CX Rate as a function of 
