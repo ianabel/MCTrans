@@ -147,8 +147,8 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 	: pVacuumConfig( std::make_shared<VacuumMirrorConfiguration>( plasmaConfig ) )
 {
 
-	double TiTe = toml::find_or<double>( plasmaConfig, "IonToElectronTemperatureRatio", 1.0 );
-	if ( TiTe <= 0.0 )
+	double TiTe = toml::find_or<double>( plasmaConfig, "IonToElectronTemperatureRatio", 0.0 );
+	if ( TiTe < 0.0 )
 	{
 		throw std::invalid_argument( "Ion to Electron temperature ratio must be a positive number" );
 	}
@@ -174,7 +174,7 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 	// If the temperature is -1.0, that indicates we are in a Temperature Solve run
 	// and the temperature will be solved for.
 	if ( plasmaConfig.count( "ElectronTemperature" ) == 1 ) {
-		ElectronTemperature = toml::find_or<double>( plasmaConfig, "ElectronTemperature", -1.0 );
+		ElectronTemperature = toml::find<double>( plasmaConfig, "ElectronTemperature" );
 		IonTemperature = ElectronTemperature * TiTe;
 	} else if ( plasmaConfig.count( "ElectronTemperature" ) == 0 ) {
 		ElectronTemperature = -1.0;

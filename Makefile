@@ -4,9 +4,9 @@ include Makefile.local
 CXX ?= g++
 
 ifdef DEBUG
-CXXFLAGS += -g -Og --std=c++17 -Wall
+CXXFLAGS += -g -Og --std=c++20 -Wall
 else
-CXXFLAGS += -O2 --std=c++17 -Wall
+CXXFLAGS += -O2 --std=c++20 -Wall
 endif
 
 all: MCTrans++
