@@ -97,10 +97,10 @@ void MirrorPlasma::PrintReport() const
 	PrintWithUnit( ElectricPotential(), "V" );
 	std::cout << std::endl;
 
-	double ViscousHeatingRate = ViscousHeating() * pVacuumConfig->PlasmaVolume();
-	double ParallelMomentumLoss = ParallelKineticEnergyLoss() * pVacuumConfig->PlasmaVolume();
+	double JRadial = RadialCurrent();
+	std::cout << "Radial Current Drawn from Power Supply "; PrintWithUnit( JRadial, "A" ); std::cout << std::endl;
 	std::cout << "Power Required (at the plasma) to support rotation ";
-	PrintWithUnit( ViscousHeatingRate + ParallelMomentumLoss, "W" );
+	PrintWithUnit( Voltage * JRadial, "W" );
 	std::cout << std::endl;
 	std::cout << std::endl;
 

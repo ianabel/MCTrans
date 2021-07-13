@@ -51,6 +51,9 @@ class MirrorPlasma {
 				};
 
 				double ImposedVoltage;
+				double PlasmaInnerRadius() const { return AxialGapDistance; };
+				double PlasmaOuterRadius() const { return AxialGapDistance + PlasmaColumnWidth; };
+				double PlasmaCentralRadius() const { return AxialGapDistance + PlasmaColumnWidth / 2.0; };
 			private:
 
 		};

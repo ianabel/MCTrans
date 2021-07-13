@@ -249,7 +249,6 @@ double MirrorPlasma::ParallelElectronPastukhovLossRate( double Chi_e ) const
 
 	// To prevent false solutions, apply strong losses if the Mach number drops
 	if ( Chi_e < 1.0 ) {
-		std::cerr << "Chi_e " << Chi_e << " not large. Warning" << std::endl;
 		double BaseLossRate = ElectronDensity * ReferenceDensity * ( SoundSpeed() / pVacuumConfig->PlasmaLength );
 		double smoothing = Transition( Chi_e, .5, 1.0 );
 		return smoothing*BaseLossRate + ( 1-smoothing )*LossRate;
@@ -285,7 +284,6 @@ double MirrorPlasma::ParallelIonPastukhovLossRate( double Chi_i ) const
 
 	// To prevent false solutions, apply strong losses if the Mach number drops
 	if ( Chi_i < 1.0 ) {
-		std::cerr << "Chi_i " << Chi_i << " not large. Warning" << std::endl;
 		double BaseLossRate = IonDensity * ReferenceDensity * ( SoundSpeed() / pVacuumConfig->PlasmaLength );
 		double smoothing = Transition( Chi_i, .5, 1.0 );
 		return smoothing*BaseLossRate + ( 1-smoothing )*LossRate;
@@ -319,10 +317,6 @@ double MirrorPlasma::AmbipolarPhi() const
 		double Sigma = 1.0 + Zeff;
 		double R = pVacuumConfig->MirrorRatio;
 		double Correction = ::log( (  ElectronCollisionTime() / IonCollisionTime() ) * ( ::log( R*Sigma ) / ( Sigma * ::log( R ) ) ) );
-		if ( ::fabs( Correction ) > ::fabs( AmbipolarPhi ) )
-		{
-			std::cerr << " The 1st order correction " << Correction << " is larger than the 0th order " << AmbipolarPhi << "!!" << std::endl;
-		}
 		AmbipolarPhi += Correction;
 	}
 
@@ -417,6 +411,7 @@ double MirrorPlasma::ClassicalViscosity() const
 	return pVacuumConfig->PerpFudgeFactor * ( 3.0 / 10.0 ) * ( pVacuumConfig->IonSpecies.Charge * ElectronDensity * ReferenceDensity * IonTemperature * ReferenceTemperature ) / ( omega_ci * omega_ci * IonCollisionTime() );
 }
 
+
 // Viscous heating = eta * u^2 / L_u^2
 double MirrorPlasma::ViscousHeating() const
 {
@@ -425,6 +420,14 @@ double MirrorPlasma::ViscousHeating() const
 	double VelocityShear = Velocity / L_u;
 
 	return ClassicalViscosity() * VelocityShear * VelocityShear;
+}
+
+double MirrorPlasma::ViscousTorque() const
+{
+	double L_u = ( pVacuumConfig->PlasmaColumnWidth / 2.0 );
+	double Velocity = MachNumber * SoundSpeed();
+
+	return ClassicalViscosity() * ( Velocity / ( L_u * L_u ) );
 }
 
 double MirrorPlasma::ClassicalElectronParticleLosses() const
@@ -506,8 +509,18 @@ void MirrorPlasma::SetMachFromVoltage()
 	MachNumber = pVacuumConfig->ImposedVoltage / ( pVacuumConfig->PlasmaColumnWidth * pVacuumConfig->CentralCellFieldStrength * SoundSpeed() );
 }
 
-double MirrorPlasma::ParallelMomentumLossRate() const 
+double MirrorPlasma::ParallelAngularMomentumLossRate() const 
 {
 	double IonLoss = ParallelIonParticleLoss();
-	return IonLoss * pVacuumConfig->PlasmaVolume() * pVacuumConfig->IonSpecies.Mass * ProtonMass * SoundSpeed() * MachNumber;
+	return IonLoss * pVacuumConfig->PlasmaVolume() * pVacuumConfig->IonSpecies.Mass * ProtonMass * SoundSpeed() * MachNumber * pVacuumConfig->PlasmaCentralRadius();
 }
+
+// Momentum Equation is
+//		I d omega / dt = <Viscous Torque> + <Parallel Angular Momentum Loss> + R J_R B_z
+//
+//	This can be rearranged to solve for J_R * (2*pi*R*L) = I_Radial
+double MirrorPlasma::RadialCurrent() const
+{
+	double Torque = -ViscousTorque() * pVacuumConfig->PlasmaVolume();
+	double ParallelLosses = -ParallelAngularMomentumLossRate();
+
