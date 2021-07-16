@@ -100,7 +100,7 @@ void MirrorPlasma::PrintReport() const
 	double JRadial = RadialCurrent();
 	std::cout << "Radial Current Drawn from Power Supply "; PrintWithUnit( JRadial, "A" ); std::cout << std::endl;
 	std::cout << "Power Required (at the plasma) to support rotation ";
-	PrintWithUnit( Voltage * JRadial, "W" );
+	PrintWithUnit( pVacuumConfig->ImposedVoltage * JRadial, "W" );
 	std::cout << std::endl;
 	std::cout << std::endl;
 
@@ -134,10 +134,10 @@ void MirrorPlasma::PrintReport() const
 
 	std::cout << std::endl;
 	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
-	std::cout << "Plasma must be provided at a rate of " << ElectronLossRate << "electrons /s /m^3 to maintain steady-state" << std::endl;
+	std::cout << "Plasma must be provided at a rate of " << ElectronLossRate*pVacuumConfig->PlasmaVolume() << " electrons /s to maintain steady-state" << std::endl;
 
 	std::cout << std::endl;
-	double Resistance = ElectricPotential() * ElectricPotential() / (  ViscousHeatingRate + ParallelMomentumLoss );
+	double Resistance = ElectricPotential() * ElectricPotential() /(  (  ViscousHeating() + ParallelKineticEnergyLoss() )*pVacuumConfig->PlasmaVolume() );
 	double Capacitance = 2.0*KineticStoredEnergy / ( ElectricPotential() * ElectricPotential() );
 	std::cout << "Electrical Properties of the Plasma:" << std::endl;
 	std::cout << "\tResistance  = "; PrintWithUnit( Resistance,  "Ω" ); std::cout << std::endl;
@@ -162,7 +162,7 @@ void MirrorPlasma::PrintReport() const
 	std::cout << std::endl;
 
 	if ( pVacuumConfig->ReportMomentumLoss ) {
-		std::cout << "Momentum loss rate along the field line is " << ParallelMomentumLossRate() << " kg m / s^2" << std::endl;
+		// std::cout << "Momentum loss rate along the field line is " << ParallelMomentumLossRate() << " kg m / s^2" << std::endl;
 	}
 
 

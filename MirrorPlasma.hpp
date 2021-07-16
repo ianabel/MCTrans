@@ -196,6 +196,10 @@ class MirrorPlasma {
 		double PromptAlphaLossFraction() const;
 		double AlphaPromptLosses() const;
 		double AlphaParallelLossRate() const;
+
+		double ViscousTorque() const;
+		double ParallelAngularMomentumLossRate() const;
+		double RadialCurrent() const;
 };
 
 

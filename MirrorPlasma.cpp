@@ -512,15 +512,21 @@ void MirrorPlasma::SetMachFromVoltage()
 double MirrorPlasma::ParallelAngularMomentumLossRate() const 
 {
 	double IonLoss = ParallelIonParticleLoss();
-	return IonLoss * pVacuumConfig->PlasmaVolume() * pVacuumConfig->IonSpecies.Mass * ProtonMass * SoundSpeed() * MachNumber * pVacuumConfig->PlasmaCentralRadius();
+	return IonLoss * pVacuumConfig->IonSpecies.Mass * ProtonMass * SoundSpeed() * MachNumber * pVacuumConfig->PlasmaCentralRadius();
 }
 
 // Momentum Equation is
 //		I d omega / dt = <Viscous Torque> + <Parallel Angular Momentum Loss> + R J_R B_z
 //
-//	This can be rearranged to solve for J_R * (2*pi*R*L) = I_Radial
+// Div(J) = 0 => R J_R = constant
+//
+// Current I_radial = 2 * pi * R * J_R * L_plasma
+//
 double MirrorPlasma::RadialCurrent() const
 {
-	double Torque = -ViscousTorque() * pVacuumConfig->PlasmaVolume();
-	double ParallelLosses = -ParallelAngularMomentumLossRate();
-
+	double Torque = -ViscousTorque();
+	double ParallelLosses = -ParallelAngularMomentumLossRate() / pVacuumConfig->PlasmaVolume();
+	// R J_R = (<Torque> + <ParallelLosses>)/B_z
+	double I_radial = 2.0 * M_PI * pVacuumConfig->PlasmaLength * ( Torque + ParallelLosses ) / pVacuumConfig->CentralCellFieldStrength;
+	return I_radial;
+}
