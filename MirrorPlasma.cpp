@@ -12,21 +12,25 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 
 	std::string FuelName = plasmaConfig.at( "IonSpecies" ).as_string();
 
+
 	if ( FuelName == "Hydrogen" ) {
 		IonSpecies.Mass   = 1.0;
 		IonSpecies.Charge = 1.0;
 		IonSpecies.Name   = "Hydrogen";
 		AlphaHeating = false;
+		ReportNuclearDiagnostics = false;
 	} else if ( FuelName == "Deuterium" ) {
 		IonSpecies.Mass   = 2.0;
 		IonSpecies.Charge = 1.0;
 		IonSpecies.Name   = "Deuterium";
 		AlphaHeating = false;
+		ReportNuclearDiagnostics = true;
 	} else if ( FuelName == "DT Fuel" ) {
 		IonSpecies.Mass   = 2.5;
 		IonSpecies.Charge = 1.0;
 		IonSpecies.Name   = "Deuterium/Tritium Fuel";
 		AlphaHeating = true;
+		ReportNuclearDiagnostics = true;
 	} else {
 		std::string ErrorMessage = "Fuel is not a recognized plasma species";
 		throw std::invalid_argument( ErrorMessage );
@@ -42,6 +46,8 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	// Sets the fudge factors to 1 if not specified in the config
 	ParallelFudgeFactor = 1.0;
 	PerpFudgeFactor = 1.0;
+
+	Collisional = false;
 
 	if ( mirrorConfig.count( "ParallelFudgeFactor" ) )
 		ParallelFudgeFactor = mirrorConfig.at( "ParallelFudgeFactor" ).as_floating();
@@ -141,6 +147,10 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	// This overrides the default for the chosen fuel
 	if ( mirrorConfig.count( "IncludeAlphaHeating" ) == 1 )
 		AlphaHeating = mirrorConfig.at( "IncludeAlphaHeating" ).as_boolean();
+	
+	// This overrides the default for the chosen fuel
+	if ( mirrorConfig.count( "ReportNuclearDiagnostics" ) == 1 )
+		AlphaHeating = mirrorConfig.at( "ReportNuclearDiagnostics" ).as_boolean();
 }
 
 MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
@@ -265,6 +275,13 @@ double MirrorPlasma::ParallelElectronParticleLoss() const
 
 double MirrorPlasma::ParallelElectronHeatLoss() const
 {
+	if ( Collisional )
+	{
+		double kappa_parallel = ElectronDensity * ElectronTemperature * ReferenceDensity * ReferenceTemperature / ( ElectronMass * ElectronCollisionTime() );
+		double L_parallel = pVacuumConfig->PlasmaLength;
+		return kappa_parallel * ElectronTemperature * ReferenceTemperature / ( L_parallel * L_parallel );
+	}
+
 	// Energy loss per particle is ~ e Phi + T_e
 	// AmbipolarPhi = e Phi / T_e so loss is T_e * ( AmbipolarPhi + 1)
 	double Chi_e = -AmbipolarPhi(); // Ignore small electron mass correction

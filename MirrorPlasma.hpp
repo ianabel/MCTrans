@@ -200,6 +200,7 @@ class MirrorPlasma {
 		double ViscousTorque() const;
 		double ParallelAngularMomentumLossRate() const;
 		double RadialCurrent() const;
+		bool Collisional;
 };
 
 
