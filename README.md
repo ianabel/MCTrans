@@ -33,8 +33,8 @@ If you're happy with this, let's proceed!
 
  1. Install the Boost library, either using your system package manager or manually by downloading from [here](https://www.boost.org). If this is a system-wide install, 
  proceed to step 2. If you downloaded the Boost libraries, add a line to `Makefile.local` which sets `BOOST_DIR = /path/to/boost`.
- 2. Clone the [TOML11](http://github.com/toruniina/toml11) library into a directory of your choice. If you clone it into the default location of MCTrans/toml11, proceed to step 4. As with Boost, set `TOML11_DIR = /path/to/toml11` in `Makefile.local`.
- 4. Install [SUNDIALS](https://computing.llnl.gov/projects/sundials) and edit Makefile.local to set `SUNDIALS_DIR` to the location you have installed the Sundials library in. If you are only using SUNDIALS for MCTrans++, a quick intro to installing sundials is inclued below.
+ 2. Clone the [TOML11](http://github.com/toruniina/toml11) library into a directory of your choice. If you clone it into the default location of MCTrans/toml11, proceed to step 3. As with Boost, set `TOML11_DIR = /path/to/toml11` in `Makefile.local`.
+ 4. Install [SUNDIALS](https://computing.llnl.gov/projects/sundials) and edit Makefile.local to set `SUNDIALS_DIR` to the location you have installed the Sundials library in. If you are only using SUNDIALS for MCTrans++, a quick intro to installing SUNDIALS is inclued below.
  5. Set any other options, e.g. setting the variable `DEBUG` to any value will build a version that you can use to develop MCTrans++ and that includes debug information.
  6. Run `make MCTrans++`. 
 
@@ -45,16 +45,14 @@ To compile the manual you will need a copy of pdflatex, bibtex, and revtex4. A p
 If this is your first use of SUNDIALS, a quick guide to installing the base libraries follows here.
 
 Pick where you want the sundials sources / build tree / compiled libraries to go. We will call these directories
-SUNDIALS_SOURCE, SUNDIALS_BUILD, and SUNDIALS_INSTALL in the following. One suggestions would be
+SUNDIALS_SOURCE, SUNDIALS_BUILD, and SUNDIALS_INSTALL in the following. One suggestion would be
 ```
 SUNDIALS_SOURCE = ~/sundials/source
 SUNDIALS_BUILD  = ~/sundials/build
 SUNDIALS_INSTALL = ~/sundials/
 ```
 
-Make sure all these directories exist.
-
-Then, follow these instructions:
+With these directories picked, we can download and compile SUNDIALS.
 
 	1. Download the SUNDIALS source from [here](https://computing.llnl.gov/projects/sundials) or [here](https://github.com/LLNL/sundials) into `SUNDIALS_SOURCE`
 	2. Move to `SUNDIALS_BUILD`. Configure the SUNDIALS build with `cmake $SUNDIALS_SOURCE -DCMAKE_INSTALL_PREFIX=$SUNDIALS_INSTALL -DEXAMPLES_INSTALL=off`.
