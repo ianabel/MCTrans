@@ -70,7 +70,15 @@ There is also a `check_examples.sh` script that will check all the examples stil
 
 * [Boost](http://boost.org) - C++ Template library that radically extends the STL
 * [TOML11](http://github.com/toruniina/toml11) - For parsing configuration files written in [TOML](https://github.com/toml-lang/toml)
-* [Sundials](http://llnl.gov/sundials) - Suite of libraries from LLNL for numerical solution of ODEs
+* [Sundials](https://computing.llnl.gov/projects/sundials) - Suite of libraries from Lawrence Livermore National Laboratory for numerical solution of Nonlinear Algebraic Equations, ODEs and DAEs
+
+## Known Issues
+
+General issues include the fact that the steady-state equations may have multiple roots.
+
+Specific known issues are listed here.
+
+ - Debug builds currently fail on OSX due to the use of `feenableexcept()`.
 
 ## Contributing
 
