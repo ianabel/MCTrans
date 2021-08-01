@@ -342,7 +342,17 @@ double MirrorPlasma::AmbipolarPhi() const
 			double Chi_i = pVacuumConfig->IonSpecies.Charge * Phi * ( ElectronTemperature/IonTemperature ) + 
 			                 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
 			double Chi_e = -Phi; // Ignore small electron mass correction
-			return ParallelIonPastukhovLossRate( Chi_i )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
+
+			// If Alphas are included, they correspond to a (small) charge flow
+			if ( pVacuumConfig->AlphaHeating )
+			{
+				double AlphaLossRate =  AlphaProductionRate() * PromptAlphaLossFraction();
+				return 2.0*AlphaLossRate + ParallelIonPastukhovLossRate( Chi_i )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
+			}
+			else
+			{
+				return ParallelIonPastukhovLossRate( Chi_i )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
+			}
 		};
 
 		boost::uintmax_t iters = 1000;

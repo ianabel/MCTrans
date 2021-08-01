@@ -66,8 +66,8 @@ void MCTransConfig::doMachSolve( MirrorPlasma& plasma ) const
 
 	boost::uintmax_t iters = 1000;
 	boost::math::tools::eps_tolerance<double> tol( 11 ); // only bother getting part in 1024 accuracy
-	double InitialMach = 1.0; // Usually M > 4 for these solutions
-	double Factor = 2.0;
+	double InitialMach = 4.0; // Usually M > 4 for these solutions
+	double Factor = 1.25;
 	bool rising = true; // Confinement gets uniformly better for increasing M, and Viscous heating increases with M
 	auto [ M_lower, M_upper ] = boost::math::tools::bracket_and_solve_root( PowerBalance, InitialMach, Factor, rising, tol, iters );
 	plasma.MachNumber = ( M_lower + M_upper )/2.0;
