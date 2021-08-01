@@ -54,11 +54,11 @@ SUNDIALS_INSTALL = ~/sundials/
 
 With these directories picked, we can download and compile SUNDIALS.
 
-	1. Download the SUNDIALS source from [here](https://computing.llnl.gov/projects/sundials) or [here](https://github.com/LLNL/sundials) into `SUNDIALS_SOURCE`
-	2. Move to `SUNDIALS_BUILD`. Configure the SUNDIALS build with `cmake $SUNDIALS_SOURCE -DCMAKE_INSTALL_PREFIX=$SUNDIALS_INSTALL -DEXAMPLES_INSTALL=off`.
+ 1. Download the SUNDIALS source from [here](https://computing.llnl.gov/projects/sundials) or [here](https://github.com/LLNL/sundials) into `SUNDIALS_SOURCE`
+ 2. Move to `SUNDIALS_BUILD`. Configure the SUNDIALS build with `cmake $SUNDIALS_SOURCE -DCMAKE_INSTALL_PREFIX=$SUNDIALS_INSTALL -DEXAMPLES_INSTALL=off`.
 	   If this gives you any errors (lack of C compiler, etc), refer to the SUNDIALS documentation.
-	3. Compile SUNDIALS with `make -j install`. 
-	4. You now have sundials installed into the `SUNDIALS_INSTALL` directory. This is the path you should set `SUNDIALS_DIR` to in your MCTrans `Makefile.local`
+ 3. Compile SUNDIALS with `make -j install`. 
+ 4. You now have sundials installed into the `SUNDIALS_INSTALL` directory. This is the path you should set `SUNDIALS_DIR` to in your MCTrans `Makefile.local`
 
 
 ### Example Configurations
