@@ -73,4 +73,12 @@ double MirrorPlasma::DDNeutronRate() const
 }
 
 
+double MirrorPlasma::AlphaProductionRate() const
+{
+	double SigmaVelocityAverage = FusionReactions::SigmaAverageDT( IonTemperature );
+	double nD_cc = .5 * IonDensity * 1e14;
+	double nT_cc = .5 * IonDensity * 1e14;
+	// Returns alphas / m^3
+	return nD_cc * nT_cc * SigmaVelocityAverage * 1e6;
+}
 

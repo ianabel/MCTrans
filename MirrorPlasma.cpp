@@ -38,16 +38,15 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 
 	const auto mirrorConfig = toml::find<toml::table>( plasmaConfig, "configuration" );
 
-	if ( mirrorConfig.count( "ReportMomentumLoss" ) == 1 )
-		ReportMomentumLoss = mirrorConfig.at( "ReportMomentumLoss" ).as_boolean();
+	if ( mirrorConfig.count( "ReportThrust" ) == 1 )
+		ReportThrust = mirrorConfig.at( "ReportThrust" ).as_boolean();
 	else 
-		ReportMomentumLoss = false;
+		ReportThrust = false;
 
 	// Sets the fudge factors to 1 if not specified in the config
 	ParallelFudgeFactor = 1.0;
 	PerpFudgeFactor = 1.0;
 
-	Collisional = false;
 
 	if ( mirrorConfig.count( "ParallelFudgeFactor" ) )
 		ParallelFudgeFactor = mirrorConfig.at( "ParallelFudgeFactor" ).as_floating();
@@ -150,12 +149,13 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	
 	// This overrides the default for the chosen fuel
 	if ( mirrorConfig.count( "ReportNuclearDiagnostics" ) == 1 )
-		AlphaHeating = mirrorConfig.at( "ReportNuclearDiagnostics" ).as_boolean();
+		ReportNuclearDiagnostics = mirrorConfig.at( "ReportNuclearDiagnostics" ).as_boolean();
 }
 
 MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 	: pVacuumConfig( std::make_shared<VacuumMirrorConfiguration>( plasmaConfig ) )
 {
+	Collisional = false;
 
 	double TiTe = toml::find_or<double>( plasmaConfig, "IonToElectronTemperatureRatio", 0.0 );
 	if ( TiTe < 0.0 )
@@ -334,7 +334,22 @@ double MirrorPlasma::AmbipolarPhi() const
 		double Sigma = 1.0 + Zeff;
 		double R = pVacuumConfig->MirrorRatio;
 		double Correction = ::log( (  ElectronCollisionTime() / IonCollisionTime() ) * ( ::log( R*Sigma ) / ( Sigma * ::log( R ) ) ) );
-		AmbipolarPhi += Correction;
+		AmbipolarPhi += Correction/2.0;
+
+		// This gives us a first-order guess for the Ambipolar potential. Now we solve j_|| = 0 to get the better answer.
+		//
+		auto ParallelCurrent = [ & ]( double Phi ) {
+			double Chi_i = pVacuumConfig->IonSpecies.Charge * Phi * ( ElectronTemperature/IonTemperature ) + 
+			                 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
+			double Chi_e = -Phi; // Ignore small electron mass correction
+			return ParallelIonPastukhovLossRate( Chi_i )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
+		};
+
+		boost::uintmax_t iters = 1000;
+		boost::math::tools::eps_tolerance<double> tol( 11 ); // only bother getting part in 1024 accuracy
+		auto [ Phi_l, Phi_u ] = boost::math::tools::bracket_and_solve_root( ParallelCurrent, AmbipolarPhi, 1.2, false, tol, iters );
+		AmbipolarPhi = ( Phi_l + Phi_u )/2.0;
+
 	}
 
 	return AmbipolarPhi;
@@ -348,7 +363,7 @@ double MirrorPlasma::ParallelKineticEnergyLoss() const
 	double KineticEnergyPerIon = 0.5 * ElectronTemperature * ReferenceTemperature * ( EndExpansionRatio * EndExpansionRatio ) *  MachNumber * MachNumber;
 	// Convert to W/m^3 for consistency across loss rates
 	return IonLossRate * KineticEnergyPerIon;
-};
+}
 
 
 double MirrorPlasma::ClassicalIonHeatLoss() const
@@ -546,4 +561,15 @@ double MirrorPlasma::RadialCurrent() const
 	// R J_R = (<Torque> + <ParallelLosses>)/B_z
 	double I_radial = 2.0 * M_PI * pVacuumConfig->PlasmaLength * ( Torque + ParallelLosses ) / pVacuumConfig->CentralCellFieldStrength;
 	return I_radial;
+}
+
+// Thrust from ions leaving
+// assume parallel kinetic energy contains Chi_i
+double MirrorPlasma::ParallelIonThrust() const
+{
+	double Chi_i = pVacuumConfig->IonSpecies.Charge * AmbipolarPhi() * ( ElectronTemperature/IonTemperature ) + 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
+	double ParallelKineticEnergy = ( Chi_i + 1.0 ) * IonTemperature * ReferenceTemperature;
+	double ParallelMomentum = ::sqrt( 2.0  *  ParallelKineticEnergy * pVacuumConfig->IonSpecies.Mass * ProtonMass );
+	// Only half the particle loss, as the Thrust diagnostics need each end separately.
+	return ParallelMomentum * ( ParallelIonParticleLoss() / 2.0 ) * pVacuumConfig->PlasmaVolume();
 }

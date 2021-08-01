@@ -3,10 +3,12 @@ include Makefile.local
 
 CXX ?= g++
 
+STD=c++17
+
 ifdef DEBUG
-CXXFLAGS += -g -Og --std=c++20 -Wall
+CXXFLAGS += -DDEBUG -g -Og --std=$(STD) -Werror -pedantic
 else
-CXXFLAGS += -O2 --std=c++20 -Wall
+CXXFLAGS += -O2 --std=$(STD) -Wall
 endif
 
 all: MCTrans++
@@ -19,7 +21,10 @@ SUNDIALS_LIB=$(SUNDIALS_DIR)/lib
 SUNFLAGS=-I$(SUNDIALS_INC) -L$(SUNDIALS_LIB) -Wl,-rpath=$(SUNDIALS_LIB) 
 SUN_LINK_FLAGS = -lsundials_kinsol -lsundials_nvecserial
 
-CXXFLAGS += $(SUNFLAGS)
+TOML11_DIR ?= ./toml11
+TOML_FLAGS = -I$(TOML11_DIR)
+
+CXXFLAGS += $(TOML_FLAGS) $(SUNFLAGS)
 
 OBJECTS = MCTrans.cpp MirrorPlasma.cpp FusionYield.cpp Report.cpp AlphaHeating.cpp Neutrals.cpp SundialsWrapper.cpp
 HEADERS = MirrorPlasma.hpp FusionYield.hpp Config.hpp Species.hpp PlasmaPhysics.hpp
@@ -37,7 +42,7 @@ examples/%.report: examples/%.conf MCTrans++
 	./MCTrans++ $< > $@
 
 clean: 
-	rm MCTrans++ MCTrans.pdf
+	rm -f MCTrans++ MCTrans.pdf
 
 .PHONY: examples clean all
 .SUFFIXES:

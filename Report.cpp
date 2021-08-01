@@ -61,15 +61,18 @@ void MirrorPlasma::PrintReport() const
 		std::cout << "" << std::endl;
 	} else {
 		std::cout << "No auxiliary heating was included in this calculation." << std::endl;
+		std::cout << std::endl;
 	}
 
 	if ( pVacuumConfig->AlphaHeating ) {
-		std::cout << " Self-consistent Alpha Heating was included in this calculation. " << std::endl;
+		std::cout << "Self-consistent Alpha Heating was included in this calculation. " << std::endl;
 
-		std::cout << " Alphas provide " << AlphaHeating()*pVacuumConfig->PlasmaVolume() << " MW of heating" << std::endl;
-		std::cout << " Prompt Alpha Losses towards the end plates give " << AlphaPromptLosses() * pVacuumConfig->PlasmaVolume() << " MW of energy losses" << std::endl;
+		std::cout << "  Alphas provide " << AlphaHeating()*pVacuumConfig->PlasmaVolume() << " MW of heating" << std::endl;
+		std::cout << "  Alpha particles are lost directly at a rate of " << PromptAlphaLossFraction() * AlphaProductionRate() * pVacuumConfig->PlasmaVolume() << " /s" << std::endl;
+		std::cout << "  Prompt Alpha Losses towards the end plates give " << AlphaPromptLosses() * pVacuumConfig->PlasmaVolume() << " MW of energy losses" << std::endl;
+
 		double TauSD = SlowingDownTime();
-		std::cout << " The alpha particle slowing-down time is " << TauSD << " s" << std::endl;
+		std::cout << "  The alpha particle slowing-down time is " << TauSD << " s" << std::endl;
 	}
 
 	std::cout << std::endl;
@@ -97,10 +100,10 @@ void MirrorPlasma::PrintReport() const
 	PrintWithUnit( ElectricPotential(), "V" );
 	std::cout << std::endl;
 
-	double JRadial = RadialCurrent();
+	double JRadial = ::fabs( RadialCurrent() );
 	std::cout << "Radial Current Drawn from Power Supply "; PrintWithUnit( JRadial, "A" ); std::cout << std::endl;
 	std::cout << "Power Required (at the plasma) to support rotation ";
-	PrintWithUnit( pVacuumConfig->ImposedVoltage * JRadial, "W" );
+	PrintWithUnit( ElectricPotential() * JRadial, "W" );
 	std::cout << std::endl;
 	std::cout << std::endl;
 
@@ -161,23 +164,32 @@ void MirrorPlasma::PrintReport() const
 	
 	std::cout << std::endl;
 
-	if ( pVacuumConfig->ReportMomentumLoss ) {
-		// std::cout << "Momentum loss rate along the field line is " << ParallelMomentumLossRate() << " kg m / s^2" << std::endl;
+	if ( pVacuumConfig->ReportThrust ) {
+			std::cout << "Ions lost from the central cell provide " << ParallelIonThrust() << " N of thrust" << std::endl;
+			if ( pVacuumConfig->AlphaHeating )
+				std::cout << "Prompt Alpha losses contribute " << PromptAlphaThrust() << " N of thrust" << std::endl;
 	}
 
 
 	if ( pVacuumConfig->ReportNuclearDiagnostics ) {
-		std::cout << " === Nuclear Reactions Assuming Deuterium Fuel === " << std::endl;
-		std::cout << " Neutrons per second: " << DDNeutronRate() << std::endl;
-		std::cout << std::endl;
-		std::cout << " === Reactor Output Assuming D/T Reactor Fuel === " << std::endl;
+		if ( pVacuumConfig->IonSpecies.Name == "Deuterium" ) {
+			std::cout << " === Nuclear Reactions Assuming Deuterium Fuel === " << std::endl;
+			std::cout << " D/D Neutrons (2.45 MeV) per second: " << DDNeutronRate() << std::endl;
+			// std::cout << " D/T Neutrons (14.1 MeV) from Fusion-Produced-Tritium: " << DDEnergeticNeutronRate() << std::endl;
+			std::cout << std::endl;
+		} else if ( pVacuumConfig->IonSpecies.Name == "Deuterium/Tritium Fuel" ) {
+			std::cout << " === Reactor Output Assuming D/T Reactor Fuel === " << std::endl;
 
-		double FusionAlphaPower = FusionAlphaPowerDensity()*pVacuumConfig->PlasmaVolume();
-		double FusionNeutronPower = ( 14.1/3.52 ) * FusionAlphaPower;
-		std::cout << "Fusion Power Output as Alphas:   " << FusionAlphaPower   << " MW" << std::endl;
-		std::cout << "                    as Neutrons: " << FusionNeutronPower << " MW" << std::endl;
-		std::cout << "Neutron Wall Loading is " << NeutronWallLoading() << " MW/m^2" << std::endl;
-		std::cout << "Total Thermal Power Output is " << ThermalPowerOutput() << " MW" << std::endl;
+			double FusionAlphaPower = FusionAlphaPowerDensity()*pVacuumConfig->PlasmaVolume();
+			double FusionNeutronPower = ( 14.1/3.52 ) * FusionAlphaPower;
+			std::cout << "Fusion Power Output as Alphas:   " << FusionAlphaPower   << " MW" << std::endl;
+			std::cout << "                    as Neutrons: " << FusionNeutronPower << " MW" << std::endl;
+			std::cout << "Neutron Wall Loading is " << NeutronWallLoading() << " MW/m^2" << std::endl;
+			std::cout << "Total Thermal Power Output is " << ThermalPowerOutput() << " MW" << std::endl;
+
+		} else {
+			std::cout << "No Nuclear Reaction Diagnostics for Ion species: " << pVacuumConfig->IonSpecies.Name << std::endl;
+		}
 	}
 
 }

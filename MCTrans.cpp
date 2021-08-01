@@ -13,7 +13,10 @@ extern "C" {
 
 int main( int argc, char** argv )
 {
+#ifdef DEBUG
 	::feenableexcept( FE_DIVBYZERO );
+#endif
+
 	std::string fname( "Mirror.conf" );
 	if ( argc == 2 )
 		fname = argv[ 1 ];

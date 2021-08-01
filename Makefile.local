@@ -1,4 +1,13 @@
 
-DEBUG=on
-SUNDIALS_DIR=/home/ian/projects/sundials-install/
+# A simple makefile for compiling on linux
+# if you are following the guide in the README
+
+# Uncomment to use clang instead of g++
+# CXX = clang++
+
+# Uncomment for debug information
+DEBUG = on
+
+SUNDIALS_DIR=$(HOME)/sundials/
+
 

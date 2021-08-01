@@ -41,7 +41,7 @@ class MirrorPlasma {
 
 				bool AlphaHeating;
 				bool ReportNuclearDiagnostics;
-				bool ReportMomentumLoss;
+				bool ReportThrust;
 
 				double PlasmaVolume() const {
 					return M_PI * ( PlasmaColumnWidth + 2 * AxialGapDistance ) * PlasmaColumnWidth * PlasmaLength;
@@ -187,6 +187,7 @@ class MirrorPlasma {
 		};
 
 		double FusionAlphaPowerDensity() const;
+		double AlphaProductionRate() const;
 		double NeutronOutput() const;
 		double ThermalPowerOutput() const;
 		double NeutronWallLoading() const;
@@ -194,12 +195,14 @@ class MirrorPlasma {
 
 		double AlphaHeating() const;
 		double PromptAlphaLossFraction() const;
+		double PromptAlphaThrust() const;
 		double AlphaPromptLosses() const;
 		double AlphaParallelLossRate() const;
-
 		double ViscousTorque() const;
 		double ParallelAngularMomentumLossRate() const;
 		double RadialCurrent() const;
+		double ParallelIonThrust() const;
+
 		bool Collisional;
 };
 

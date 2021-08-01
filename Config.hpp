@@ -2,7 +2,7 @@
 #define CONFIG_HPP
 
 #include "MirrorPlasma.hpp"
-#include "toml11/toml.hpp"
+#include <toml.hpp>
 #include <memory>
 
 class MCTransConfig {

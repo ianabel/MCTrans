@@ -10,6 +10,9 @@
  * v_perp / v < sqrt( 1/R ) will be lost along the field line
  */
 
+// Born at 3.52 MeV
+constexpr double AlphaBirthEnergy = 3.52e6 * ElectronCharge;
+
 double MirrorPlasma::PromptAlphaLossFraction() const
 {
 	// Transforming to pitch angle and integrating, 
@@ -82,4 +85,12 @@ double MirrorPlasma::AlphaPromptLosses() const
 	return GrossHeatingRate * LossFraction;
 }
 
-
+// I.e. Parallel momentum loss rate.
+double MirrorPlasma::PromptAlphaThrust() const
+{
+	// Integrate m_alpha v_|| * isotropic alpha birth distribution
+	// Lost momentum = Alpha Birth Rate * Alpha Birth Momentum / Mirror Ratio
+	double AlphaMomentum = ::sqrt( 2.0 * AlphaMass * AlphaBirthEnergy );
+	double AlphasPerSecond = AlphaProductionRate() * pVacuumConfig->PlasmaVolume();
+	return AlphasPerSecond * AlphaMomentum / pVacuumConfig->MirrorRatio;
+}
