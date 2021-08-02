@@ -7,11 +7,49 @@
 
 MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value const& plasmaConfig )
 {
-	if ( plasmaConfig.count( "IonSpecies" ) != 1 )
+	if ( plasmaConfig.count( "algorithm" ) != 0 ) {
+		const auto algConfig = toml::find<toml::table>( plasmaConfig, "configuration" );
+
+		if ( algConfig.count( "ParallelFudgeFactor" ) == 1 )
+			ParallelFudgeFactor = algConfig.at( "ParallelFudgeFactor" ).as_floating();
+
+		if ( algConfig.count( "PerpFudgeFactor" ) == 1 )
+			PerpFudgeFactor = algConfig.at( "PerpFudgeFactor" ).as_floating();
+
+		if ( algConfig.count( "UseAmbipolarPhi" ) == 1 )
+			AmbipolarPhi = algConfig.at( "UseAmbipolarPhi" ).as_boolean();
+		else 
+			AmbipolarPhi = false;
+
+		if ( algConfig.count( "InitialTemp" ) == 1 )
+		{
+			InitialTemp = algConfig.at( "InitialTemp" ).as_floating();
+#ifdef DEBUG
+			std::cerr << "Initial Temperature for Temperature Solve set from config file to " << InitialTemp << std::endl;
+#endif
+		} else {
+			InitialTemp = 0.1;
+#ifdef DEBUG
+			std::cerr << "Initial Temperature for Temperature Solve set to the default of " << InitialTemp << std::endl;
+#endif
+		}
+
+	} else {
+#ifdef DEBUG
+		std::cerr << "No [algorithm] section, using default values for internal knobs." << std::endl;
+#endif
+		ParallelFudgeFactor = 1.0;
+		PerpFudgeFactor = 1.0;
+		InitialTemp = 0.1;
+		InitialMach = 4.0;
+	}
+
+	const auto mirrorConfig = toml::find<toml::table>( plasmaConfig, "configuration" );
+
+	if ( mirrorConfig.count( "IonSpecies" ) != 1 )
 		throw std::invalid_argument( "Fuel must be specified once in the [plasma] block" );
 
-	std::string FuelName = plasmaConfig.at( "IonSpecies" ).as_string();
-
+	std::string FuelName = mirrorConfig.at( "IonSpecies" ).as_string();
 
 	if ( FuelName == "Hydrogen" ) {
 		IonSpecies.Mass   = 1.0;
@@ -36,30 +74,11 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 		throw std::invalid_argument( ErrorMessage );
 	}
 
-	const auto mirrorConfig = toml::find<toml::table>( plasmaConfig, "configuration" );
 
 	if ( mirrorConfig.count( "ReportThrust" ) == 1 )
 		ReportThrust = mirrorConfig.at( "ReportThrust" ).as_boolean();
 	else 
 		ReportThrust = false;
-
-	// Sets the fudge factors to 1 if not specified in the config
-	ParallelFudgeFactor = 1.0;
-	PerpFudgeFactor = 1.0;
-
-
-	if ( mirrorConfig.count( "ParallelFudgeFactor" ) )
-		ParallelFudgeFactor = mirrorConfig.at( "ParallelFudgeFactor" ).as_floating();
-	
-	if ( mirrorConfig.count( "PerpFudgeFactor" ) )
-		PerpFudgeFactor = mirrorConfig.at( "PerpFudgeFactor" ).as_floating();
-
-	if ( mirrorConfig.count( "UseAmbipolarPhi" ) == 1 )
-		AmbipolarPhi = mirrorConfig.at( "UseAmbipolarPhi" ).as_boolean();
-	else 
-		AmbipolarPhi = false;
-
-
 
 	CentralCellFieldStrength =  mirrorConfig.at( "CentralCellField" ).as_floating();
 

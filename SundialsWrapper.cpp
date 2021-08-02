@@ -72,7 +72,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 
 	N_Vector initialCondition = N_VNew_Serial( NDims );
 
-	double InitialTemperature = 0.1; // Assume Ti = Te = 100eV to begin
+	double InitialTemperature = 0.1;
 	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
 	ELECTRON_TEMPERATURE( initialCondition ) = InitialTemperature;
 

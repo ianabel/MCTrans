@@ -43,6 +43,9 @@ class MirrorPlasma {
 				bool ReportNuclearDiagnostics;
 				bool ReportThrust;
 
+				double InitialTemp;
+				double InitialMach;
+
 				double PlasmaVolume() const {
 					return M_PI * ( PlasmaColumnWidth + 2 * AxialGapDistance ) * PlasmaColumnWidth * PlasmaLength;
 				};
@@ -131,6 +134,8 @@ class MirrorPlasma {
 		void ComputeSteadyStateNeutrals();
 
 		double ParallelMomentumLossRate() const;
+		double initialTemperature() const { return pVacuumConfig->InitialTemp; };
+		double initialMach() const { return pVacuumConfig->InitialMach; };
 	private:
 
 		double LogLambdaElectron() const;

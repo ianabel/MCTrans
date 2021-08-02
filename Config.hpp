@@ -10,12 +10,7 @@ class MCTransConfig {
 		MCTransConfig( std::string const& configFile ) {
 			const toml::value config = toml::parse( configFile );
 
-			if ( config.count( "plasma" ) != 1 )
-				throw std::invalid_argument( "There must be one, and only one, [plasma] block in the configuration file." );
-
-			const auto plasmaConfig = toml::find( config, "plasma" );
-
-			ReferencePlasmaState = std::make_unique<MirrorPlasma>( plasmaConfig );
+			ReferencePlasmaState = std::make_unique<MirrorPlasma>( config );
 
 			bool MachSolve = ( ReferencePlasmaState->ElectronTemperature > 0.0 );
 			bool TempSolve = ( ReferencePlasmaState->pVacuumConfig->ImposedVoltage > 0.0 );
