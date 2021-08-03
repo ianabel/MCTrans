@@ -17,5 +17,6 @@ addons:
 script:
   - git clone https://github.com/toruniina/toml11
   - ./build_sundials
+  - cp Makefile.local.example Makefile.local
   - make
   - make test
