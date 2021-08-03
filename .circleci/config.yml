@@ -14,7 +14,9 @@ jobs:
       - run:
           command: git clone https://github.com/ToruNiina/toml11.git toml11/
       - run:
-          command: ./build_sundials 2> /dev/null >/dev/null
+          command: ./build_sundials
+      - run:
+          command: cp Makefile.local.example Makefile.local
       - run:
           command: make
       - run:
