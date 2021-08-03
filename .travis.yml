@@ -1,5 +1,3 @@
-sudo: required
-
 language: cpp
 
 compiler:
@@ -7,6 +5,7 @@ compiler:
   - gcc
 
 os: linux
+dist: bionic
 
 addons:
   apt:
