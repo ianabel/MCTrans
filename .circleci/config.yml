@@ -1,11 +1,7 @@
 version: 2.1
-workflow:
-  main:
-    jobs:
-      - build-debian
-      - build-ubuntu-lts
+
 jobs:
-  build-debian:
+  builddebian:
     docker:
       - image: buildpack-deps:buster
     steps:
@@ -22,7 +18,7 @@ jobs:
           command: make
       - run:
           command: make test
-  build-ubuntu-lts:
+  buildubuntu:
     docker:
       - image: buildpack-deps:focal
     steps:
@@ -39,3 +35,8 @@ jobs:
           command: make
       - run:
           command: make test
+workflow:
+  main:
+    jobs:
+      - builddebian
+      - buildubuntu
