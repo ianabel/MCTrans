@@ -18,7 +18,7 @@ SUNDIALS_DIR ?= /usr/local
 SUNDIALS_INC=$(SUNDIALS_DIR)/include
 SUNDIALS_LIB=$(SUNDIALS_DIR)/lib
 
-SUNFLAGS=-I$(SUNDIALS_INC) -L$(SUNDIALS_LIB) -Wl,-rpath=$(SUNDIALS_LIB) 
+SUNFLAGS=-I$(SUNDIALS_INC) -L$(SUNDIALS_LIB) -Wl,-rpath $(SUNDIALS_LIB) 
 SUN_LINK_FLAGS = -lsundials_kinsol -lsundials_nvecserial
 
 TOML11_DIR ?= ./toml11
