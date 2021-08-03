@@ -1,9 +1,13 @@
+sudo: required
 
 language: cpp
+
 compiler:
   - clang
   - gcc
+
 os: linux
+
 addons:
   apt:
     packages:
