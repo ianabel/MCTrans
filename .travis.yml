@@ -13,6 +13,15 @@ addons:
       libboost-dev
       cmake
 
+jobs:
+  include:
+    os: osx
+    osx_image: xcode12.5
+    addons:
+      homebrew:
+        packages:
+          - boost
+
 script:
   - git clone https://github.com/toruniina/toml11
   - ./build_sundials
