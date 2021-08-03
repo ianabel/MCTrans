@@ -1,0 +1,21 @@
+version: 2.1
+workflow:
+  main:
+    jobs:
+      - build
+jobs:
+  build:
+    docker:
+      - image: buildpack-deps:stretch
+    steps:
+      - checkout
+      - run:
+          command: apt-get update && apt-get install --quiet --yes libboost-dev
+      - run:
+          command: git clone https://github.com/ToruNiina/toml11.git toml11/
+      - run:
+          command: ./build_sundials 2> /dev/null >/dev/null
+      - run:
+          command: make
+      - run:
+          command: make test
