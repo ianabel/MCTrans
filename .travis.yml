@@ -17,6 +17,7 @@ jobs:
   include:
     os: osx
     osx_image: xcode12.5
+    compiler: clang
     addons:
       homebrew:
         packages:
