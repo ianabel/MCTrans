@@ -6,11 +6,11 @@ workflow:
 jobs:
   build:
     docker:
-      - image: buildpack-deps:stretch
+      - image: buildpack-deps:buster
     steps:
       - checkout
       - run:
-          command: apt-get update && apt-get install --quiet --yes libboost-dev
+          command: apt-get update && apt-get install --quiet --yes libboost-dev cmake
       - run:
           command: git clone https://github.com/ToruNiina/toml11.git toml11/
       - run:
