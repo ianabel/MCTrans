@@ -1,0 +1,22 @@
+sudo: required
+
+language: cpp
+
+compiler:
+  - clang
+  - gcc
+
+os: linux
+
+addons:
+  apt:
+    packages:
+      libboost-dev
+      cmake
+
+script:
+  - git clone https://github.com/toruniina/toml11
+  - ./build_sundials
+  - cp Makefile.local.example Makefile.local
+  - make
+  - make test

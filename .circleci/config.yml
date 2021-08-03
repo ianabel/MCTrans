@@ -1,0 +1,42 @@
+version: 2.1
+
+jobs:
+  builddebian:
+    docker:
+      - image: buildpack-deps:buster
+    steps:
+      - checkout
+      - run:
+          command: apt-get update && apt-get install --quiet --yes libboost-dev cmake
+      - run:
+          command: git clone https://github.com/ToruNiina/toml11.git toml11/
+      - run:
+          command: ./build_sundials
+      - run:
+          command: cp Makefile.local.example Makefile.local
+      - run:
+          command: make
+      - run:
+          command: make test
+  buildubuntu:
+    docker:
+      - image: buildpack-deps:focal
+    steps:
+      - checkout
+      - run:
+          command: apt-get update && apt-get install --quiet --yes libboost-dev cmake
+      - run:
+          command: git clone https://github.com/ToruNiina/toml11.git toml11/
+      - run:
+          command: ./build_sundials
+      - run:
+          command: cp Makefile.local.example Makefile.local
+      - run:
+          command: make
+      - run:
+          command: make test
+workflows:
+  main:
+    jobs:
+      - builddebian
+      - buildubuntu
