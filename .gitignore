@@ -6,3 +6,4 @@ manual/*.out
 manual/*.bbl
 manual/*.aux
 manual/*.blg
+Makefile.local

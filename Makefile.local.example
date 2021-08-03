@@ -8,6 +8,6 @@
 # Uncomment for debug information
 DEBUG = on
 
-SUNDIALS_DIR=$(HOME)/sundials/
+SUNDIALS_DIR=./sundials/
 
 
