@@ -27,8 +27,11 @@ Precise dependencies have not been exhaustively tested.
 
 ### Building MCTrans++
 
-All the build options are set in the file `Makefile.local`. This is in GNU-compatable Makefile format, and you can set and override all the compilation options here.
+All the build options are set in the file `Makefile.local`, which you need to provide for your system.
+An example is provided in `Makefile.local.example` -- copy this file to `Makefile.local` and make any edits needed. 
+This file is in GNU-compatable Makefile format, and you can set and override all the compilation options here.
 For example, if you are not using the default compiler (g++), then you can add a line to `Makefile.local` that reads `CXX = /path/to/my/c++/compiler`.
+ 
 If you're happy with this, let's proceed!
 
  1. Install the Boost library, either using your system package manager or manually by downloading from [here](https://www.boost.org). If this is a system-wide install, 
