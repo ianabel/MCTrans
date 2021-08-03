@@ -35,7 +35,7 @@ jobs:
           command: make
       - run:
           command: make test
-workflow:
+workflows:
   main:
     jobs:
       - builddebian
