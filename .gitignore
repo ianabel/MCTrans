@@ -7,3 +7,4 @@ manual/*.bbl
 manual/*.aux
 manual/*.blg
 Makefile.local
+toml11/
