@@ -1,0 +1,25 @@
+#!/bin/sh
+
+SUNDIALS_ROOT=`realpath ./sundials`
+SUNDIALS_URL="https://github.com/LLNL/sundials/releases/download/v5.7.0/sundials-5.7.0.tar.gz"
+
+mkdir $SUNDIALS_ROOT
+
+cd $SUNDIALS_ROOT
+wget $SUNDIALS_URL
+
+tar xzf sundials-5.7.0.tar.gz
+mkdir build;
+cd build;
+cmake ../sundials-5.7.0/ -DCMAKE_INSTALL_PREFIX=$SUNDIALS_ROOT -DEXAMPLES_INSTALL=off;
+make -j install;
+
+echo
+echo
+echo "Sundials has been compiled. To make MCTrans++ you should add"
+echo " SUNDIALS_DIR=$SUNDIALS_ROOT"
+echo "in Makefile.local"
+echo
+echo
+
+
