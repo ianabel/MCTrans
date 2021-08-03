@@ -41,8 +41,11 @@ examples: examples/*.report
 examples/%.report: examples/%.conf MCTrans++
 	./MCTrans++ $< > $@
 
+test: MCTrans++
+	true
+
 clean: 
 	rm -f MCTrans++ MCTrans.pdf
 
-.PHONY: examples clean all
+.PHONY: examples clean all test
 .SUFFIXES:
