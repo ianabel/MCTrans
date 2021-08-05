@@ -8,7 +8,7 @@
 MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value const& plasmaConfig )
 {
 	if ( plasmaConfig.count( "algorithm" ) != 0 ) {
-		const auto algConfig = toml::find<toml::table>( plasmaConfig, "configuration" );
+		const auto algConfig = toml::find<toml::table>( plasmaConfig, "algorithm" );
 
 		if ( algConfig.count( "ParallelFudgeFactor" ) == 1 )
 			ParallelFudgeFactor = algConfig.at( "ParallelFudgeFactor" ).as_floating();
@@ -47,7 +47,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	const auto mirrorConfig = toml::find<toml::table>( plasmaConfig, "configuration" );
 
 	if ( mirrorConfig.count( "IonSpecies" ) != 1 )
-		throw std::invalid_argument( "Fuel must be specified once in the [plasma] block" );
+		throw std::invalid_argument( "Fuel must be specified once in the [configuration] block" );
 
 	std::string FuelName = mirrorConfig.at( "IonSpecies" ).as_string();
 
@@ -176,22 +176,24 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 {
 	Collisional = false;
 
-	double TiTe = toml::find_or<double>( plasmaConfig, "IonToElectronTemperatureRatio", 0.0 );
+	const auto mirrorConfig = toml::find<toml::value>( plasmaConfig, "configuration" );
+
+	double TiTe = toml::find_or<double>( mirrorConfig, "IonToElectronTemperatureRatio", 0.0 );
 	if ( TiTe < 0.0 )
 	{
 		throw std::invalid_argument( "Ion to Electron temperature ratio must be a positive number" );
 	}
 
 	// Default to pure plasma
-	Zeff = toml::find_or<double>( plasmaConfig, "Zeff", 1.0 );
+	Zeff = toml::find_or<double>( mirrorConfig, "Zeff", 1.0 );
 	if ( Zeff <= 0.0 ) {
 		throw std::invalid_argument( "Effective charge (Z_eff) must be positive!" );
 	}
 
 	try {
-		ElectronDensity = toml::find<double>( plasmaConfig, "ElectronDensity" );
+		ElectronDensity = toml::find<double>( mirrorConfig, "ElectronDensity" );
 	} catch ( std::out_of_range &e ) {
-		throw std::invalid_argument( "You must specify the electron density (ElectronDensity) in the [plasma] block" );
+		throw std::invalid_argument( "You must specify the electron density (ElectronDensity) in the [configuration] block" );
 	}
 
 	if ( ElectronDensity <= 0.0 ) {
@@ -202,19 +204,19 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 
 	// If the temperature is -1.0, that indicates we are in a Temperature Solve run
 	// and the temperature will be solved for.
-	if ( plasmaConfig.count( "ElectronTemperature" ) == 1 ) {
-		ElectronTemperature = toml::find<double>( plasmaConfig, "ElectronTemperature" );
+	if ( mirrorConfig.count( "ElectronTemperature" ) == 1 ) {
+		ElectronTemperature = toml::find<double>( mirrorConfig, "ElectronTemperature" );
 		IonTemperature = ElectronTemperature * TiTe;
-	} else if ( plasmaConfig.count( "ElectronTemperature" ) == 0 ) {
+	} else if ( mirrorConfig.count( "ElectronTemperature" ) == 0 ) {
 		ElectronTemperature = -1.0;
 		IonTemperature = -1.0;
 	} else {
 		throw std::invalid_argument( "Electron Temperature specified more than once!" );
 	}
 
-	if ( plasmaConfig.count( "NeutralDensity" ) == 1 ) {
+	if ( mirrorConfig.count( "NeutralDensity" ) == 1 ) {
 		NeutralSource = 0;
-		NeutralDensity = plasmaConfig.at( "NeutralDensity" ).as_floating();
+		NeutralDensity = mirrorConfig.at( "NeutralDensity" ).as_floating();
 	} else {
 		NeutralSource = 0;
 		NeutralDensity = 0;
@@ -586,7 +588,7 @@ double MirrorPlasma::ParallelAngularMomentumLossRate() const
 double MirrorPlasma::RadialCurrent() const
 {
 	double Torque = -ViscousTorque();
-	double ParallelLosses = -ParallelAngularMomentumLossRate() / pVacuumConfig->PlasmaVolume();
+	double ParallelLosses = -ParallelAngularMomentumLossRate();
 	// R J_R = (<Torque> + <ParallelLosses>)/B_z
 	double I_radial = 2.0 * M_PI * pVacuumConfig->PlasmaLength * ( Torque + ParallelLosses ) / pVacuumConfig->CentralCellFieldStrength;
 	return I_radial;

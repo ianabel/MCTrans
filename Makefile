@@ -45,7 +45,10 @@ test: MCTrans++
 	true
 
 clean: 
-	rm -f MCTrans++ MCTrans.pdf
+	rm -f MCTrans++
+
+distclean: clean
+	rm -f MCTrans.pdf
 
 .PHONY: examples clean all test
 .SUFFIXES:
