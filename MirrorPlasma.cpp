@@ -490,7 +490,7 @@ double MirrorPlasma::ViscousTorque() const
 	double L_u = ( pVacuumConfig->PlasmaColumnWidth / 2.0 );
 	double Velocity = MachNumber * SoundSpeed();
 
-	return ClassicalViscosity() * ( Velocity / ( L_u * L_u ) );
+	return ClassicalViscosity() * ( Velocity * pVacuumConfig->PlasmaCentralRadius() / ( L_u * L_u ) );
 }
 
 double MirrorPlasma::ClassicalElectronParticleLosses() const

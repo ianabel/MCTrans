@@ -81,7 +81,7 @@ void MirrorPlasma::PrintReport() const
 	std::cout << std::endl;
 	double v = SoundSpeed() * MachNumber;
 	std::cout << "Velocity is " << v << " m/s" << std::endl;
-	double Rmid = pVacuumConfig->AxialGapDistance + pVacuumConfig->PlasmaColumnWidth/2.0;
+	double Rmid = pVacuumConfig->PlasmaCentralRadius();
 	std::cout << "Angular Velocity at the plasma centre (R = " << Rmid << " m) is " << v/Rmid << " /s" << std::endl;
 	std::cout << std::endl;
 
@@ -105,6 +105,11 @@ void MirrorPlasma::PrintReport() const
 	std::cout << "Power Required (at the plasma) to support rotation ";
 	PrintWithUnit( ElectricPotential() * JRadial, "W" );
 	std::cout << std::endl;
+#ifdef DEBUG
+	double omega = v/Rmid;
+	std::cout << "\t Power Loss from viscous torque " << ViscousTorque()*omega*pVacuumConfig->PlasmaVolume() << std::endl;
+	std::cout << "\t Power Loss from parallel loss  " << ParallelAngularMomentumLossRate()*omega*pVacuumConfig->PlasmaVolume() << std::endl;
+#endif
 	std::cout << std::endl;
 
 	double KineticStoredEnergy = KineticEnergy();
