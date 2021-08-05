@@ -1,5 +1,15 @@
 version: 2.1
 
+executors:
+  debian-buster:
+    docker:
+      - image: buildpack-deps:buster
+  ubuntu-focal:
+    docker:
+      - image: buildpack-deps:focal
+
+
+
 jobs:
   builddebian:
     docker:
