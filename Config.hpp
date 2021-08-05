@@ -33,6 +33,7 @@ class MCTransConfig {
 	private:
 		void doMachSolve( MirrorPlasma& plasma ) const;
 		void doTempSolve( MirrorPlasma& plasma ) const;
+		void doFixedTeSolve( MirrorPlasma& plasma ) const;
 
 };
 
