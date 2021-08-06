@@ -7,4 +7,6 @@ manual/*.bbl
 manual/*.aux
 manual/*.blg
 Makefile.local
+*.o
 toml11/
+sundials/
