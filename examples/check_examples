@@ -7,13 +7,27 @@ function test_case {
 	local INPUT="$CASE.conf"
 	local OUTPUT="$CASE.out"
 	local REF="$CASE.report"
-	$MCTRANS $INPUT > $OUTPUT
-	diff -q $OUTPUT $REF && echo "Reference input $CASE.conf produces expected output";
-	rm -f $OUTPUT;
+	$MCTRANS $INPUT > $OUTPUT 2>/dev/null;
+	
+	if diff -q $OUTPUT $REF >/dev/null;
+	then
+		rm -f $OUTPUT;
+		return 0;
+	else
+		rm -f $OUTPUT;
+		return 1;
+	fi
+
 }
 
 CASES=(Mirror_1keV Mirror_100kV Breakeven)
 
 for CASE in ${CASES[@]}; do
-	test_case
+	if test_case;
+	then
+		echo "Reference input $CASE.conf produces expected output";
+	else
+		echo "Reference input $CASE.conf failed to produce correct output";
+		exit 1;
+	fi
 done

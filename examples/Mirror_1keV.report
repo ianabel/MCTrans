@@ -2,8 +2,8 @@ The plasma is made up of electrons, Hydrogen and trace, radiating, impurities
 Electron Density is 1e+19 m^-3
 Ion Density is 1e+19 m^-3
 
-Electron Temperature is 
-Ion Temperature is 
+Electron Temperature is 1e+03 eV
+Ion Temperature is 1e+03 eV
 Radius of central cell (first wall) is 0.5 m
 	 Inner radius of the plasma is 0.15 m
 	 Outer radius of the plasma is 0.35 m
@@ -20,41 +20,45 @@ Typical plasma scale lenghts are ~ 0.1 m  = 9.3 rho_i
 
 No auxiliary heating was included in this calculation.
 
-Operating Mach number is 5.56
-Alfven Mach number is 0.831
 
-Viscous Heating is 9.05 kW
+Operating Mach number is 4.85
+Alfven Mach number is 0.725
+
+Velocity is 1.5e+06 m/s
+Angular Velocity at the plasma centre (R = 0.25 m) is 6e+06 /s
+
+Viscous Heating is 6.88 kW
 Bremsstrahlung losses are 30.2 W
 
-Total potential drop is 103 kV
-Power Required (at the plasma) to support rotation 9.14 kW
+Total potential drop is 90 kV
+Radial Current Drawn from Power Supply 388 mA
+Power Required (at the plasma) to support rotation 34.9 kW
 
-Total Stored Energy is 5.57 kJ
- of which 4.66 kJ is kinetic energy in the rotation
+Total Stored Energy is 4.45 kJ
+ of which 3.54 kJ is kinetic energy in the rotation
       and 906 J is thermal energy of the plasma
-Energy Confinement Time is 0.1 s
+Energy Confinement Time is 132 ms
 Of which
-	Confinement time from parallel losses is 0.291 s
-	Confinement time from perpendicular losses is 0.155 s
+	Confinement time from parallel losses is 231 ms
+	Confinement time from perpendicular losses is 155 ms
 
-Ion-Electron Temperature Equilibration Time is 2.19 s
+Particle (Ion) Confinement Time ~= 967 ms
 
-Neutral gas must be provided at a rate of 1.3e+18 particles/s to refuel the plasma
-This leads to a steady-state neutral density of 2.89e+14/m^3
+Ion-Electron Temperature Equilibration Time is 98.7 ms
+
+Plasma must be provided at a rate of 2.02e+18 electrons /s to maintain steady-state
+
+Electrical Properties of the Plasma:
+	Resistance  = 767 kΩ
+	Capacitance = 876 pF
 
 Dimensionless parameters:
 	 β  = 8.96%
 	 ν* = 0.000541 (ions) 
 	 ρ* = 0.108
+	 Omega_i tau_ii = 1.03e+05
 
 Fusion Triple Product 
-	 n T τ = 1e+18 keV s /m^3
+	 n T τ = 1.32e+18 keV s /m^3
 
- === Nuclear Reactions Assuming Deuterium Fuel === 
- Neutrons per second: 3.13e+09
-
- === Reactor Output Assuming D/T Reactor Fuel === 
-Fusion Power Output as Alphas:   2.13e-08 MW
-                    as Neutrons: 8.51e-08 MW
-Neutron Wall Loading is 9.03e-08 MW/m^2
-Total Thermal Power Output is 1.35e-07 MW
+No Nuclear Reaction Diagnostics for Ion species: Hydrogen

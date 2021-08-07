@@ -45,11 +45,13 @@ MCTrans.pdf: manual/Makefile manual/MCTrans.tex manual/macros.tex manual/referen
 
 examples: examples/*.report
 
+
 examples/%.report: examples/%.conf MCTrans++
+	$(warning "WARNING: Replacing the old output $@ with current output of MCTrans++ $<)
 	./MCTrans++ $< > $@
 
 test: MCTrans++
-	true
+	cd examples/; ./check_examples
 
 clean: 
 	rm -f MCTrans++ $(OBJECTS)
