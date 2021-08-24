@@ -6,6 +6,7 @@ manual/*.out
 manual/*.bbl
 manual/*.aux
 manual/*.blg
+manual/*.end
 Makefile.local
 *.o
 toml11/

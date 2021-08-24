@@ -88,7 +88,12 @@ In steady-state operation, \mctrans{} sets the time derivatives to zero and solv
 In the following subsections we will explain the approximations used to calculate those heat losses explicitly in terms of the system state.
 
 \subsection{Approximations to the Magnetic Geometry}
-The simplest, and most transparent, geometric approximation is the ``square well'' model.
+The simplest, and most transparent, geometric approximation is the ``square well'' model. In this model we assume the field lines to be straight, directed in the $Z$ direction, with a step-function shape and a step function in field strength. We demonstrate this in \Figref{squarewellplot}.
+\begin{figure}
+\includegraphics{SquareWell.pdf}
+\caption{An example plot of field lines and the square-well approximation to the central field line}
+\label{squarewellplot}
+\end{figure}
 
 \subsection{The Centrifugal Potential}
 
@@ -98,7 +103,8 @@ Many results have been derived for confinement in mirror machines which possess 
 \end{equation}
 We can thus reuse results from existing papers simply by making the substitution $Z_s e\pot \rightarrow \Xi_s$.
 
-The potential $\pot$ has to be solved for by insisting that the plasma is quasineutral along field lines (and hence that the loss rate is ambipolar).
+Physically, this electrostatic potential exists to keep the electrons (which are light and barely affected by the centrifugal force) next to the ions which are pushed to regions of large $R$ by the centrifugal force.
+Hence, the potential $\pot$ has to be solved for by insisting that the plasma is quasineutral along field lines (and that the loss rate is ambipolar).
 If we assume that the plasma rotates at a large Mach number $M \gg 1$, then the plasma is well-confined and the confinement time is long compared to the collision time (this can be checked \textit{a posteriori}). In such a situation the plasma is locally Maxwellian (equivalently it is in LTE) and we can write the density of species $s$ as~\cite{catto:2784,flowtome1}:
 \begin{equation}
 n_s = N_s(\psi) \exp\left( - \frac{\Xi_s}{T_s} \right).
@@ -112,13 +118,25 @@ Without loss of generality, we can pick a baseline for $\pot$ such that $Z_i N_i
 \begin{equation}
 \pot = \left( \frac{Z_i e}{T_i} + \frac{e}{T_e}\right)^{-1} \frac{m_i}{2 T_i} \omega^2 R^2,
 \end{equation}
-up to a possible constant offset. It is clear that this potential is $\Or(M^2T_e/e)$ and is, in fact, the leading order term in an asymptotic series in $M^{-1}$.\footnote{In computing the densities in \eref{confinedDensity}, we have integrated over a full Maxwellian distribution, neglecting the fact that some small number of high-energy particles are in fact lost alongt he field line. This is a consistent approximation as we have determined that the potential barrier is $\Or(M^2T_e)$, which to leading order is effectively infinite.} To compute the next-order terms in this series 
+up to a possible constant offset. It is clear that this potential is $\Or(M^2T_e/e)$ and is, in fact, the leading order term in an asymptotic series in $M^{-1}$.\footnote{In computing the densities in \eref{confinedDensity}, we have integrated over a full Maxwellian distribution, neglecting the fact that some small number of high-energy particles are in fact lost alongt he field line. This is a consistent approximation as we have determined that the potential barrier is $\Or(M^2T_e)$, which to leading order is effectively infinite.} 
+To compute the next-order terms in this series we need to know about lost particles and hence parallel transport. This is tackled in the next section. We end with a convenient expression for the potential drop from the centre of a flux surface (at $R = R_{max}$) in terms of suitably normalized variables:
+
+\begin{equation}
+\frac{e \pot}{T_e} = \left( \frac{Z_i}{\tau} + 1 \right)^{-1} \frac{M^2}{2} \left( \frac{R^2}{R_{\mathrm{max}}^2 - 1 \right),
+\end{equation}
+where we $\tau = T_i/T_e$ and we have defined the sonic Mach number $M = \omega R_{max} / \cs$ in terms of the sound speed $\cs^2 = T_e / m_i$.\footnote{This is not the speed at which sound waves propagate in a warm plasma, but provides a very convenient normalization. It is the cold-ion limit of the sound speed, and we will continue to call it the sound speed despite this abuse of terminology.}
+If $Z_i = \tau = 1$ then we get the usual $M^2/4$ scaling for the potential drop. It is also useful to note that, as a consequence of flux conservation
+	\begin{equation}
+	\frac{B_{\mathrm{min}}}{B_{\mathrm{max}}} = \left(\frac{R_{\mathrm{max}}}{R_{\mathrm{min}}}\right)^2
+	\label{<+label+>}
+\end{equation}<++>
 
 \subsection{Parallel Transport}
 
 We assume that the plasma is hot enough to be in the collisionless regime where the particle bounce time (inside the potential well formed by the centrifugal force) is extremely short compared to the particle collision time. This is manifestly true in reactor-grade plasmas ($\left.\nu_{ii} L_\parallel \right/ \vth \sim 10^{-5}$ or smaller) but is even valid for warm plasmas above a few hundred electron Volts in temperature. The collisionality parameter is reported and if it is not much less than one the results of \mctrans{} are not valid.
 
-In this collisionless regime we use formulae that are derived in the manner originally used by Pastukhov~\cite{Pastukhov1974} for the case of a tandem mirror with an electron-confining electrostatic potential. Pastukhov originally derived his results for electrons alone. We need the result for a multispecies plasma.  We can find this result in 
+In this collisionless regime we use formulae that are derived in the manner originally used by Pastukhov~\cite{Pastukhov1974} for the case of a tandem mirror with an electron-confining electrostatic potential. Pastukhov originally derived his results for electrons alone. We need the result for a multispecies plasma.  
+We can find this result in \citet{CattoBernsteinMirror1} by taking the square-well limit of .
 
 \subsection{Perpendicular Transport}
 
