@@ -45,7 +45,10 @@ To compile the manual you will need a copy of pdflatex, bibtex, and revtex4. A p
 
 #### Installing SUNDIALS 
 
-If this is your first use of SUNDIALS, a quick guide to installing the base libraries follows here.
+If you are only building a version of SUNDIALS for use with MCTrans++ the included script `build_sundials` should provide
+the minimal needed installation of SUNDIALS. 
+
+If this is your first use of SUNDIALS, and you want a custom install, a quick guide to installing the base libraries follows here.
 
 Pick where you want the sundials sources / build tree / compiled libraries to go. We will call these directories
 SUNDIALS_SOURCE, SUNDIALS_BUILD, and SUNDIALS_INSTALL in the following. One suggestion would be

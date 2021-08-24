@@ -2,72 +2,74 @@ The plasma is made up of electrons, Deuterium/Tritium Fuel and trace, radiating,
 Electron Density is 1.5e+20 m^-3
 Ion Density is 1.5e+20 m^-3
 
-Electron Temperature is 14 keV
-Ion Temperature is 14 keV
-Radius of central cell (first wall) is 1.25 m
-	 Inner radius of the plasma is 0.25 m
-	 Outer radius of the plasma is 0.85 m
-Outer Radius of the plasma at the mirror throat is 0.356 m
+Electron Temperature is 5.58 keV
+Ion Temperature is 8.13 keV
+Radius of central cell (first wall) is 0.8 m
+	 Inner radius of the plasma is 0.1 m
+	 Outer radius of the plasma is 0.5 m
+Outer Radius of the plasma at the mirror throat is 0.25 m
 
-Axial Length of the plasma is 4 m
-Plasma Volume is 8.29 m^3
+Axial Length of the plasma is 2 m
+Plasma Volume is 1.51 m^3
 
-Magnetic Field in the Central Cell is 3.5 T
-Magnetic Field at the Mirror Throat is 20 T
+Magnetic Field in the Central Cell is 3 T
+Magnetic Field at the Mirror Throat is 12 T
 
-Ion Larmor Radius in the central cell is 0.00545 m 
-Typical plasma scale lenghts are ~ 0.3 m  = 55 rho_i 
+Ion Larmor Radius in the central cell is 0.00485 m 
+Typical plasma scale lenghts are ~ 0.2 m  = 41.3 rho_i 
 
-Auxiliary Heating of 2.5e+03 kW was included
+No auxiliary heating was included in this calculation.
 
 Self-consistent Alpha Heating was included in this calculation. 
-  Alphas provide 3.84 MW of heating
-  Alpha particles are lost directly at a rate of 6.92e+17 /s
-  Prompt Alpha Losses towards the end plates give 0.387 MW of energy losses
-  The alpha particle slowing-down time is 0.294 s
+  Alphas provide 0.185 MW of heating
+  Alpha particles are lost directly at a rate of 5.1e+16 /s
+  Prompt Alpha Losses towards the end plates give 0.0286 MW of energy losses
+  The alpha particle slowing-down time is 0.0757 s
 
-Operating Mach number is 4.77
-Alfven Mach number is 0.886
+Operating Mach number is 13.5
+Alfven Mach number is 1.85
 
-Velocity is 3.49e+06 m/s
-Angular Velocity at the plasma centre (R = 0.55 m) is 6.35e+06 /s
+Velocity is 6.25e+06 m/s
+Angular Velocity at the plasma centre (R = 0.3 m) is 2.08e+07 /s
 
-Viscous Heating is 364 kW
-Bremsstrahlung losses are 1.49 MW
+Viscous Heating is 819 kW
+Bremsstrahlung losses are 171 kW
 
-Total potential drop is 7.34 MV
-Radial Current Drawn from Power Supply 6.43 A
-Power Required (at the plasma) to support rotation 47.2 MW
+Total potential drop is 7.5 MV
+Radial Current Drawn from Power Supply 109 mA
+Power Required (at the plasma) to support rotation 819 kW
+	 Power Loss from viscous torque 8.19e+05
+	 Power Loss from parallel loss  8.25e-09
 
-Total Stored Energy is 40.1 MJ
- of which 31.8 MJ is kinetic energy in the rotation
-      and 8.37 MJ is thermal energy of the plasma
-Energy Confinement Time is 335 ms
+Total Stored Energy is 19.2 MJ
+ of which 18.5 MJ is kinetic energy in the rotation
+      and 745 kJ is thermal energy of the plasma
+Energy Confinement Time is 3.13 s
 Of which
-	Confinement time from parallel losses is 359 ms
-	Confinement time from perpendicular losses is 26.2 s
+	Confinement time from parallel losses is 525 s
+	Confinement time from perpendicular losses is 6.77 s
 
-Particle (Ion) Confinement Time ~= 1.37 s
+Particle (Ion) Confinement Time ~= 4.48e+15 s
 
-Ion-Electron Temperature Equilibration Time is 798 ms
+Ion-Electron Temperature Equilibration Time is 212 ms
 
-Plasma must be provided at a rate of 9.13e+20 electrons /s to maintain steady-state
+Plasma must be provided at a rate of 2.46e+17 electrons /s to maintain steady-state
 
 Electrical Properties of the Plasma:
-	Resistance  = 2.28 MΩ
-	Capacitance = 1.18 µF
+	Resistance  = 68.7 MΩ
+	Capacitance = 657 pF
 
 Dimensionless parameters:
-	 β  = 13.8%
-	 ν* = 0.000315 (ions) 
-	 ρ* = 0.0182
-	 Omega_i tau_ii = 2.33e+06
+	 β  = 9.21%
+	 ν* = 0.000542 (ions) 
+	 ρ* = 0.0242
+	 Omega_i tau_ii = 9.17e+05
 
 Fusion Triple Product 
-	 n T τ = 7.04e+20 keV s /m^3
+	 n T τ = 3.82e+21 keV s /m^3
 
  === Reactor Output Assuming D/T Reactor Fuel === 
-Fusion Power Output as Alphas:   4.22 MW
-                    as Neutrons: 16.9 MW
-Neutron Wall Loading is 0.431 MW/m^2
-Total Thermal Power Output is 29.4 MW
+Fusion Power Output as Alphas:   0.213 MW
+                    as Neutrons: 0.854 MW
+Neutron Wall Loading is 0.106 MW/m^2
+Total Thermal Power Output is 1.36 MW
