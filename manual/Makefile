@@ -1,9 +1,11 @@
 
-MCTrans.pdf: MCTrans.pdf macros.tex references.bib
+MCTrans.pdf: MCTrans.tex macros.tex references.bib gyrokinetics-macros.tex
 	pdflatex MCTrans
+	pdflatex MCTrans
+	bibtex MCTrans
 	pdflatex MCTrans
 	bibtex MCTrans
 	pdflatex MCTrans
 
 clean:
-	rm -f MCTrans.pdf MCTrans.out MCTrans.log MCTrans.bbl MCTrans.blg MCTrans.aux macros.aux
+	rm -f MCTrans.pdf MCTrans.out MCTrans.log MCTrans.bbl MCTrans.blg MCTrans.aux macros.aux gyrokinetic-macros.aux

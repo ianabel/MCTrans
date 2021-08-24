@@ -6,34 +6,159 @@
 \usepackage{graphicx}
 \usepackage{bm,ulem,color}
 \usepackage{natbib}
+
+\include{gyrokinetics-macros}
 \include{macros}
+
 \usepackage[colorlinks=true]{hyperref}
+\providecommand{\pitens}{\tensor{\pi}}
 \begin{document}
 
 \date{\today}
 
-\title{\mctrans Reference Manual}
+\title{\mctrans{} Reference Manual}
 \author{Ian G. Abel}
 
 
 \maketitle
 \section{Introduction}
 
-\mctrans is the scoping tool used by the CMFX project and others for designing centrifugal magnetic mirrors.
+\mctrans{} is the scoping tool used by the CMFX project and others for designing centrifugal magnetic mirrors.
 
-\section{\mctrans: A User's Guide}
+\section{\mctrans{}: A User's Guide}
 
-\mctrans is driven from a configuration file. This file is written in the \href{https://github.com/toml-lang/toml}{TOML} language. This language endeavours
-to be transparent and easy to use. The configuration file is broken up into blocks, denoted by 
+\mctrans{} is driven from a configuration file. This file is written in the \href{https://github.com/toml-lang/toml}{TOML} language. This language endeavours
+to be transparent and easy to use. The configuration file is broken up into blocks. ARRANGE THE BLOCKS (or finish writing this manual).
 
-\section{The Physics Model of \mctrans}
+\section{The Physics Model of \mctrans{}}
 
-\mctrans solves simplified transport equations for the centrigually-confined plasma. The underlying models are all based on the assumption that the plasma is well-confined and that the thermal Mach number is large compared to one.
+\mctrans{} solves simplified transport equations for the centrigually-confined plasma. The underlying models are all based on the assumption that the plasma is well-confined and that the thermal Mach number is large compared to one.
+
+In many places we use formulae straight from the NRL Plasma Formulary. 
+
+\subsection{Fundamental Equations}
+
+As with any transport solver, \mctrans{} solves equations for the fluid-like conserved quantities -- particles, energy, and momentum.
+We work in the usual $(R,\tor,Z)$ cylindrical coordinate system.
+The magnetic field lies purely in the $R-Z$ plane,\footnote{Estimates of ripple / mis-alignment induced transport can be computed, but it is currently out of scope for \mctrans{}.}
+and is given by
+\begin{equation}
+\bm{B} = \grad\psi\times\grad \tor,
+\end{equation}
+where $\psi$ is the poloidal flux function (proportional to the toroidal component of the vector potential).
+The electric field is given by
+\begin{equation}
+\bm{E} = -\grad \psi \frac{d \Phi}{d\psi} - \grad \pot,
+\end{equation}
+where we have split off the dominant radial electric field into the first term (which gives rise to the sonic rotation) and put all other electric field variation into the second term. Estimating the size of the two terms, we see that
+\begin{equation}
+\Phi \sim \frac{a M T_e}{e \rho_i} \gg \pot \sim \frac{T_e}{e},
+\end{equation}
+where $a$ is a typical radial scale length, $M$ the thermal Mach number, and $\rho_i$ the thermal ion Larmor radius.
+
+We assume that the flow velocity $\bm{u}$ is the same for all species and given by
+\begin{equation}
+\bm{u} = \omega R^2 \grad\tor,
+\end{equation}
+where $\omega$ is the toroidal angular velocity. We also assume that the angular velocity is only a function of flux-surface-label $\psi$.
+
+The underlying transport equations are thus:
+\begin{eqnarray}
+\label{parttrans}
+\frac{d n_s}{dt} + \dv\bm{\Gamma}_s &=& S_{n\,s}\\
+		\label{heattrans}
+\frac{d}{dt} \left( \frac{3}{2} n_s T_s \right) + \dv\bm{q}_s &=& \left(\grad\psi \cdot \pitens \cdot \grad\tor\right) R^2 \frac{d\omega}{d \psi}   + Q_s + S_{E\,s}\\
+	\label{momtrans}
+\frac{d \omega}{dt} + \dv\left(\pitens\cdot R^2\grad\tor\right) &=& \bm{j} \times\bm{B} \cdot R^2\grad\tor + S_{\omega}.
+\end{eqnarray}
+In these equations the transport fluxes $\bm{\Gamma}_s$ and $\bm{q}_s$ are the particle and heat fluxes of each species, and the species-summed momentum flux tensor is denoted by $\pitens$. We have also included arbitrary sources of particles $S_{n\,s}$, energy $S_{E\,s}$, and angular momentum $S_{\omega\,s}$; these source terms will be used to account for collisionless parallel losses and energy sources such as alpha-particle heating.
+
+Currently, \mctrans{} does not solve all these equations. In fact, we only solve for the transport of heat. The particle transport equation is assumed to contain a 
+source that is feedback controlled to maintain the electron density at a fixed value. This restiction may be lifted at a later date.
+
+The momentum transport equation is more interesting. We know that the angular velocity is driven by $\bm{E}\times\bm{B}$ rotation, and so is given by
+\begin{equation}
+\omega = - \frac{d \Phi}{d\psi},
+\end{equation}
+where the effect of $\pot$ in $\bm{E}$ is small and can be neglected.  Due to the electrical configuration of a centrifugal mirror (see figure) we often
+wish to consider the behaviour of a centrifugal plasma given a fixed input voltage. In this case, the momentum transport equation becomes an equation to determine
+the radial current drawn from the power supply in terms of other quantities. We never need to solve \eref{momtrans} for $\omega$ in this setup. If we instead held the input power or current fixed then \eref{momtrans} would be solved as normal.
+
+In steady-state operation, \mctrans{} sets the time derivatives to zero and solves the ensuing nonlinear algebraic equations to balance heat generation and heat losses.
+In the following subsections we will explain the approximations used to calculate those heat losses explicitly in terms of the system state.
+
+\subsection{Approximations to the Magnetic Geometry}
+The simplest, and most transparent, geometric approximation is the ``square well'' model.
+
+\subsection{The Centrifugal Potential}
+
+Many results have been derived for confinement in mirror machines which possess an electrostatic potential that varies along the field line. We can make use of these results by noting the following fact: the potential energy of a charged particle on a rotating field line at radius $R$ with angular velocity $\omega$ is
+\begin{equation}
+\Xi_s = Z_s e \pot - \frac{m_s}{2} \omega^2 R^2.
+\end{equation}
+We can thus reuse results from existing papers simply by making the substitution $Z_s e\pot \rightarrow \Xi_s$.
+
+The potential $\pot$ has to be solved for by insisting that the plasma is quasineutral along field lines (and hence that the loss rate is ambipolar).
+If we assume that the plasma rotates at a large Mach number $M \gg 1$, then the plasma is well-confined and the confinement time is long compared to the collision time (this can be checked \textit{a posteriori}). In such a situation the plasma is locally Maxwellian (equivalently it is in LTE) and we can write the density of species $s$ as~\cite{catto:2784,flowtome1}:
+\begin{equation}
+n_s = N_s(\psi) \exp\left( - \frac{\Xi_s}{T_s} \right).
+\label{confinedDensity}
+\end{equation}
+If we now insist that the plasma is made up of ions (mass $m_i$ and charge $Z_i e$) and electrons (mass $m_e$ and charge $-e$) then quasineutrality reads
+\begin{equation}
+Z_i N_i \exp\left( - \frac{Z_i e\pot}{T_i} + \frac{m_i}{2T_i} \omega^2 R^2 \right) = N_e \exp\left( \frac{e\pot}{T_e} + \frac{m_e}{2T_e} \omega^2 R^2 \right).
+\end{equation}
+Without loss of generality, we can pick a baseline for $\pot$ such that $Z_i N_i = N_e$ (to see this, average along a field line, use the fact that neither $N_s$ nor $T_s$ varies along the field line). Furthermore, by neglecting the term containing the electron mass, we can solve the resulting equation for $\pot$:
+\begin{equation}
+\pot = \left( \frac{Z_i e}{T_i} + \frac{e}{T_e}\right)^{-1} \frac{m_i}{2 T_i} \omega^2 R^2,
+\end{equation}
+up to a possible constant offset. It is clear that this potential is $\Or(M^2T_e/e)$ and is, in fact, the leading order term in an asymptotic series in $M^{-1}$.\footnote{In computing the densities in \eref{confinedDensity}, we have integrated over a full Maxwellian distribution, neglecting the fact that some small number of high-energy particles are in fact lost alongt he field line. This is a consistent approximation as we have determined that the potential barrier is $\Or(M^2T_e)$, which to leading order is effectively infinite.} To compute the next-order terms in this series 
 
 \subsection{Parallel Transport}
+
+We assume that the plasma is hot enough to be in the collisionless regime where the particle bounce time (inside the potential well formed by the centrifugal force) is extremely short compared to the particle collision time. This is manifestly true in reactor-grade plasmas ($\left.\nu_{ii} L_\parallel \right/ \vth \sim 10^{-5}$ or smaller) but is even valid for warm plasmas above a few hundred electron Volts in temperature. The collisionality parameter is reported and if it is not much less than one the results of \mctrans{} are not valid.
+
+In this collisionless regime we use formulae that are derived in the manner originally used by Pastukhov~\cite{Pastukhov1974} for the case of a tandem mirror with an electron-confining electrostatic potential. Pastukhov originally derived his results for electrons alone. We need the result for a multispecies plasma.  We can find this result in 
+
 \subsection{Perpendicular Transport}
+
+\subsection{Alpha Particles and Nuclear Physics}
+Our fundamental model for alpha particles is that they are all born with a delta-function distribution at the birth energy of $E_\alpha = 3.52$ MeV:
+\begin{equation}
+\left( \pd{f_\alpha}{t}\right)_{\mathrm{Source}} = \frac{S_\alpha \delta(v-v_*)}{4\pi v_*^2}
+\end{equation}
+where $v_*$ is the birth velocity corresponding to $E_\alpha$ and $S_\alpha$ is the birth rate of alphas per unit time per unit volume.
+\subsubsection{Prompt Alpha Losses}
+Alpha particles are born isotropically. Thus, a fraction of them are born directly into the unconfined region of velcoity space.
+The birth energy of alphas $E_\alpha$ is much greater than the centrifugal potential which is roughly $M^2 T_e / 4$ (at fusion temperatures and parameters this remains
+less than $0.5$ MeV). We thus model the 
+\subsubsection{Collisional Alpha Losses}
+\subsubsection{Alpha Heating}
+
 \subsection{Neutral Transport}
+We currently have no model of transport due to neutral particles. A first step towards this will be implementing a diagnostic for 
+the neutral mean free path in our plasma. In the limit of either very small or very long mean free path, we may be able to make further approximations to evaluate the 
+losses from charge exchange.
+
+\textbf{N.B. Until more neutral physics is implemented, we have no way to handle self-consistent fuelling scenarios. The only reasonable assumption
+	is that losses due to neutrals are small and feedback control is used to target a fixed electron density.}
+
+\subsection{Radiative Processes and Impurities}
+There are two ways to model impurities in \mctrans{}. Firstly is a ``lumped impurity'' that only changes the effective charge state $Z_{\mathrm{eff}}$ and 
+provides \textit{only} bremsstrahlung radiation. It does not dilute the main ion species, so quasineutrality is enforced by only considering the main ions and 
+
+\subsubsection{Bremsstrahlung and Synchrotron Radiation}
+\subsubsection{Line Radiation}
+ Without a better model for the impurity 
+species that are present (including multiple charge states) we cannot reliably predict the amount of line radiation lost from the plasma.
+
+\textbf{N.B. Because of the lack of ionization and radiative cooling, one should view low-temperature outputs from \mctrans{} extremely sceptically!}
+
 
 \appendix
+\section{Full Syntax for \mctrans{} configuration files}
+\section{References}
+\bibliographystyle{apsrev}
+\bibliography{references}
 \end{document}
 
