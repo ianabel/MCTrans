@@ -13,7 +13,7 @@ executors:
 jobs:
   builddebian:
     docker:
-      - image: buildpack-deps:buster
+      - image: buildpack-deps:bullseye
     steps:
       - checkout
       - run:
@@ -26,8 +26,6 @@ jobs:
           command: cp Makefile.local.example Makefile.local
       - run:
           command: make
-      - run:
-          command: ./MCTrans++ examples/Mirror_1keV.conf
       - run:
           command: make test
   buildubuntu:

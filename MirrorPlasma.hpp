@@ -3,7 +3,7 @@
 
 #include "PlasmaPhysics.hpp"
 #include "Species.hpp"
-#include "toml11/toml.hpp"
+#include <toml.hpp>
 
 #include <memory>
 #include <cmath>
