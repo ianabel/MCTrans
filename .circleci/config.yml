@@ -27,6 +27,8 @@ jobs:
       - run:
           command: make
       - run:
+          command: ./MCTrans++ examples/Mirror_1keV.conf
+      - run:
           command: make test
   buildubuntu:
     docker:
