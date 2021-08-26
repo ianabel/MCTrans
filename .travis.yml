@@ -22,10 +22,10 @@ jobs:
       homebrew:
         packages:
           - boost
+          - sundials
 
 script:
   - git clone https://github.com/toruniina/toml11
-  - ./build_sundials
   - cp Makefile.local.travisci Makefile.local
   - make
   - make test

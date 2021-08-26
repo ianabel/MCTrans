@@ -407,8 +407,8 @@ double MirrorPlasma::AmbipolarPhi() const
 		std::function<double( double )> jParallel = std::bind( &MirrorPlasma::ParallelCurrent, this, std::placeholders::_1 );
 
 		double Phi_l, Phi_u;
-		Phi_u = -1.0;
-		Phi_l = AmbipolarPhi + 2.0*Correction;
+		Phi_u = -0.5;
+		Phi_l = -60.0;
 		std::tie( Phi_l, Phi_u ) = boost::math::tools::toms748_solve( jParallel, Phi_l, Phi_u, tol, iters );
 		if ( ::fabs( Phi_u - Phi_l )/2.0 > 0.01 )
 		{
