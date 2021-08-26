@@ -57,6 +57,7 @@ int KINSysWrapper_TemperatureSolve( N_Vector u, N_Vector F, void* voidPlasma )
 //		PARTICLE_BALANCE( F ) = ParticleBalance; 
 
 	} catch ( std::exception& e ) {
+		std::cerr << "Exception " << e.what() << " caught inside KINSol KINSysWrapper_Temperature Solve" << std::endl;
 		return -1;
 	} 
 

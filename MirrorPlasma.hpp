@@ -198,6 +198,7 @@ class MirrorPlasma {
 		double NeutronWallLoading() const;
 		double DDNeutronRate() const;
 
+	public:
 		double AlphaHeating() const;
 		double PromptAlphaLossFraction() const;
 		double PromptAlphaThrust() const;
@@ -207,6 +208,7 @@ class MirrorPlasma {
 		double ParallelAngularMomentumLossRate() const;
 		double RadialCurrent() const;
 		double ParallelIonThrust() const;
+		double ParallelCurrent(double) const;
 
 		bool Collisional;
 };

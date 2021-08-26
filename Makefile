@@ -6,7 +6,7 @@ CXX ?= g++
 STD=c++17
 
 ifdef DEBUG
-CXXFLAGS += -DDEBUG -g -Og --std=$(STD) -Werror -pedantic
+CXXFLAGS += -DDEBUG -g3 -O0 --std=$(STD) -Werror -pedantic
 else
 CXXFLAGS += -O2 --std=$(STD) -Wall
 endif

@@ -32,7 +32,7 @@ to be transparent and easy to use. The configuration file is broken up into bloc
 
 \section{The Physics Model of \mctrans{}}
 
-\mctrans{} solves simplified transport equations for the centrigually-confined plasma. The underlying models are all based on the assumption that the plasma is well-confined and that the thermal Mach number is large compared to one.
+\mctrans{} solves simplified transport equations for the centrifugally-confined plasma. The underlying models are all based on the assumption that the plasma is well-confined and that the thermal Mach number is large compared to one.
 
 In many places we use formulae straight from the NRL Plasma Formulary. 
 
@@ -122,23 +122,110 @@ up to a possible constant offset. It is clear that this potential is $\Or(M^2T_e
 To compute the next-order terms in this series we need to know about lost particles and hence parallel transport. This is tackled in the next section. We end with a convenient expression for the potential drop from the centre of a flux surface (at $R = R_{max}$) in terms of suitably normalized variables:
 
 \begin{equation}
-\frac{e \pot}{T_e} = \left( \frac{Z_i}{\tau} + 1 \right)^{-1} \frac{M^2}{2} \left( \frac{R^2}{R_{\mathrm{max}}^2 - 1 \right),
+\frac{e \pot}{T_e} = \left( \frac{Z_i}{\tau} + 1 \right)^{-1} \frac{M^2}{2} \left( \frac{R^2}{R_{\mathrm{max}}^2} - 1 \right) + \Or(1),
 \end{equation}
-where we $\tau = T_i/T_e$ and we have defined the sonic Mach number $M = \omega R_{max} / \cs$ in terms of the sound speed $\cs^2 = T_e / m_i$.\footnote{This is not the speed at which sound waves propagate in a warm plasma, but provides a very convenient normalization. It is the cold-ion limit of the sound speed, and we will continue to call it the sound speed despite this abuse of terminology.}
-If $Z_i = \tau = 1$ then we get the usual $M^2/4$ scaling for the potential drop. It is also useful to note that, as a consequence of flux conservation
+where we let $\tau = T_i/T_e$ be the temperature ratio, and we have defined the sonic Mach number $M = \omega R_{max} / \cs$ in terms of the sound speed $\cs^2 = T_e / m_i$.\footnote{This is not the speed at which sound waves propagate in a warm plasma, but provides a very convenient normalization. It is the cold-ion limit of the sound speed, and we will continue to call it the sound speed despite this abuse of terminology.}
+This is only the leading-order term in a $M \gg 1$ expansion, and so we collect all higher-order terms and denote them by $\pot_0$.
+Note that if $Z_i = \tau = 1$ then we get the usual $M^2/4$ scaling for the potential drop. 
+It is also useful to note that, as a consequence of flux conservation
 	\begin{equation}
-	\frac{B_{\mathrm{min}}}{B_{\mathrm{max}}} = \left(\frac{R_{\mathrm{max}}}{R_{\mathrm{min}}}\right)^2
-	\label{<+label+>}
-\end{equation}<++>
+	\frac{B_{\mathrm{min}}}{B_{\mathrm{max}}} = \left(\frac{R_{\mathrm{max}}}{R_{\mathrm{min}}}\right)^2, 
+\end{equation}
+and so we can relate the ratio of the radius of the flux surface at throat and in the central cell to the ``Mirror Ratio'' given by the ratio of magnetic field strengths.
+
+For electrons, the only term in the potential energy is the electrostatic potential:
+\begin{equation}
+\Xi_e = \left( \frac{Z_i}{\tau} + 1 \right)^{-1} \frac{M^2}{2} T_e \left( 1 - \frac{R^2}{R_{\mathrm{max}}^2} \right) - e \phi_0,
+\end{equation}
+but for ions we need to include the centrifugal potential to obtain
+\begin{equation}
+\Xi_i = \left( \frac{Z_i}{\tau} + 1 \right)^{-1} \frac{M^2}{2} T_i \left( 1 - \frac{R^2}{R_{\mathrm{max}}^2} \right) + Z_i e \phi_0,
+\end{equation}
+where we have picked the constant offset of $\pot$ such that $\Xi_i = \Xi_e = 0$ at the midplane ($Z=0$, $R=R_{\mathrm{max}}$). Again, $\pot_0$ is the higher-order part of $\pot$ that must be determined by evaluating the parallel losses.
+
+\textbf{N.B. In contrast to a tandem mirror, where the only confining potential is electric, the addition of the centrifugal term allows the 
+	potential to be confining for \textit{both} the species.}
 
 \subsection{Parallel Transport}
 
 We assume that the plasma is hot enough to be in the collisionless regime where the particle bounce time (inside the potential well formed by the centrifugal force) is extremely short compared to the particle collision time. This is manifestly true in reactor-grade plasmas ($\left.\nu_{ii} L_\parallel \right/ \vth \sim 10^{-5}$ or smaller) but is even valid for warm plasmas above a few hundred electron Volts in temperature. The collisionality parameter is reported and if it is not much less than one the results of \mctrans{} are not valid.
 
 In this collisionless regime we use formulae that are derived in the manner originally used by Pastukhov~\cite{Pastukhov1974} for the case of a tandem mirror with an electron-confining electrostatic potential. Pastukhov originally derived his results for electrons alone. We need the result for a multispecies plasma.  
-We can find this result in \citet{CattoBernsteinMirror1} by taking the square-well limit of .
+We can find this result in \citet{CattoBernsteinMirror1} by taking the square-well limit of (40) of that work to obtain the particle loss rate in our notation:
+\begin{equation}
+\left(\pd{n_s}{t}\right)_{\mathrm{End Losses}} = 
+	- \left( \frac{2 n_s \Sigma}{\sqrt{\pi}} \right) \nu_s \frac{1}{\ln\left( R_{\mathrm{mirror}} \Sigma\right)} \frac{\exp\left( -\Xi_s/T_s \right)}{\Xi_s/T_s},
+	\label{ParticleLossRate}
+\end{equation}
+where $\Sigma = Z_i + 1$ for electrons and $\Sigma = 1$ for ions, and $\nu_s$ is the appropriate collision frequency for species $s$. For electrons this is the combination of electron-electron and electron-ion collisions. For ions this is just the ion-ion collision frequency.
+
+Note that this equation only agrees with the results of \citet{Pastukhov1974} and \citet{cohen1978collisional} in the limit of $R_{\mathrm{mirror}} \rightarrow \infty$. The error induced by not knowing this prefactor accurately is much smaller than the approximation by a square well, and is comparable with the effect of several other approximations made in the analytic work.
+
+We anticipate upgrading \mctrans{} to use the full formulae of \citet{CattoBernsteinMirror1} in the near future, thereby including some effect of the actual magnetic geometry.
+
+This particle loss rate can be used to compute heat losses by multiplying by $\Xi_s$ -- the energy loss is dominated by energetic particles, nullifying the extra power of $\Xi_s$ in the denominator of \eref{ParticleLossRate}. Similarly, loss of toroidal angular momentum can be computed by multiplying the particle loss rate by the angular momentum lost per ion (electrons carrying negligible momentum).
+
+\subsubsection{Ambipolar Parallel Losses and Solving for $\pot$}
+In the formula \eref{ParticleLossRate} for the losses we see that $\Xi_s$ appears in the exponential. The leading order part of $\Xi_s$ is $\Or(M^2 T_s)$, so this exponential is what strongly suppresses the collisional loss rate. Expanding this exponential schematically we have
+\begin{equation}
+\exp\left( -\frac{\Xi_s}{T_s} \right) \approx \exp\left[ - (\dots) M^2 \right] \exp\left( -Z_s e \pot_0 / T_s \right),
+\end{equation}
+and we see that even though $\pot_0$ is small compared to the leading-order part of the potential it has an $\Or(1)$ effect on the loss rate and must be accounted for.
+
+We find $\pot_0$ by equating the electron and ion loss rates along the field line to enforce zero net charge loss along the field line. \textbf{N.B. This part of the code can be a little tempremental, and if you find a case that doesn't work it may be because you're starting to search for an equilibrium from a starting point that is so poorly confined that quasineutrality cannot be satisfied within the bounds that the code is searching.}
 
 \subsection{Perpendicular Transport}
+
+To completely evaluate the heat transport equations we need expressions for $\bm{q}_s$ and $\pitens$. 
+We consider only the classical collisional contribution to these transport fluxes. Turbulent transport should be fully suppressed by the flow shear.
+
+We handle the heat flux first.
+From (2.14) of \citet{braginskii1965tpp} the collisional ion heat flux in a strongly-magnetized plasma is 
+\begin{equation}
+q_i = -\chi_{i\parallel} \bm{b}\bm{b}\dg T_i - \chi_{i\perp} \grad_\perp T_i + \frac{5}{2} \frac{n_i T_i}{m_i \cycfreq[i]} \bm{b}\times\grad T_i.
+\end{equation}
+Now, in the collisionless limit, $T_i = T_i(\psi)$ and so the first term vanishes, and the third term is purely toroidal. Thus, when we evaluate the divergence of the heat flux, we obtain (using axisymmetry)
+\begin{equation}
+\dv\bm{q}_i = \dv\left( \chi_{i\perp} \grad_\perp T_i \right).
+\end{equation}
+To estimate this term, we assume that all the plasma profiles vary on a scale $a$ that is related to the width of the plasma column $w$ by $a = w/2$, see \Figref{scales} for more details. Thus, we have that
+\begin{equation}
+\dv{\bm{q}_i} \approx \frac{1}{a^2} \chi_{i\perp} T_i = \frac{2 n_i T_i^2}{m_i \cycfreq[i]^2 \tau_i a^2},
+\end{equation}
+where we have used (2.16) of \citet{braginskii1965tpp} for $\chi_{i\perp}$ and $\tau_i$ is the ion-ion collision time.
+
+For electrons, the same geometric algebra applies and we have
+\begin{equation}
+\dv{\bm{q}_e} \approx \frac{1}{a^2} \chi_{e\perp} T_e = \frac{4.66 n_e T_e^2}{m_e \cycfreq[e]^2 \tau_e a^2},
+\end{equation}
+which is approximately $\sqrt{m_e/m_i}$ smaller than the ion heat loss, and usually negligible.
+
+\begin{figure}
+\includegraphics{ScaleLengths.pdf}
+\caption{Plasma column showing its width $w$, lenght $L$, and scale length $a$}
+\label{scales}
+\end{figure}
+
+We only compute the stress tensor for the ions, electron perpendicular viscosity is at least $m_e/m_i$ smaller than the ion viscosity and always negligible.
+To compute the Braginskii viscous stress tensor, we need to know the rate of strain tensor $\tensor{W}$:
+\begin{equation}
+\tensor{W} = \left(\grad\bm{u}\right) + \left(\grad\bm{u}\right)^{T} - \frac{2}{3} \left(\dv\bm{u}\right)\idmat,
+\end{equation}
+which, upon using $\bm{u} = \omega R^2 \grad\tor$, becomes
+\begin{equation}
+\tensor{W} = R^2 \frac{d \omega}{d\psi} \left( \grad\psi \grad \tor + \grad \tor \grad \psi\right) \approx \frac{R}{a} \omega
+\end{equation}
+Evaluating this on the midplane, we see that in Braginskii's cartesian coordinates (with $z$ along $\bm{b}$) the only nonzero component of $\tensor{W}$ is $W_{xy}$ (equivalently $W_{yx}$).
+Thus, using (2.21) of Braginskii, we can compute the nonzero components of the stress tensor. The quantities we need are
+\begin{equation}
+\dv\left( \pitens\cdot R^2\grad\tor \right) \approx \frac{1}{a} \pi_{xy} R = - \frac{R}{a} \frac{3}{10} \frac{n_i T_i}{\cycfreq[i]^2 \tau_i} W_{xy} = - \frac{R}{a} \frac{3}{10} \frac{n_i T_i}{\cycfreq[i]^2 \tau_i} \frac{R}{a} \omega,
+\end{equation}
+and
+\begin{equation}
+\pitens \bm{:}\grad\bm{u} = \frac{1}{2} \pi_{xy} W_{xy} \approx - \frac{3}{10} \frac{n_i T_i}{\cycfreq[i]^2 \tau_i}\frac{R^2\omega^2}{a^2}.
+\end{equation}
+
+Note that, because we are using Braginskii's formulae, we also have to use his formula for the collision times (see \citet{braginskii1965tpp}) which differ by $\sqrt{2}$ from some other definitions of $\tau_i$.
 
 \subsection{Alpha Particles and Nuclear Physics}
 Our fundamental model for alpha particles is that they are all born with a delta-function distribution at the birth energy of $E_\alpha = 3.52$ MeV:
@@ -146,36 +233,71 @@ Our fundamental model for alpha particles is that they are all born with a delta
 \left( \pd{f_\alpha}{t}\right)_{\mathrm{Source}} = \frac{S_\alpha \delta(v-v_*)}{4\pi v_*^2}
 \end{equation}
 where $v_*$ is the birth velocity corresponding to $E_\alpha$ and $S_\alpha$ is the birth rate of alphas per unit time per unit volume.
+
 \subsubsection{Prompt Alpha Losses}
-Alpha particles are born isotropically. Thus, a fraction of them are born directly into the unconfined region of velcoity space.
+Alpha particles are born isotropically. Thus, a fraction of them are born directly into the unconfined region of velocity space.
 The birth energy of alphas $E_\alpha$ is much greater than the centrifugal potential which is roughly $M^2 T_e / 4$ (at fusion temperatures and parameters this remains
-less than $0.5$ MeV). We thus model the 
+less than $0.5$ MeV). We thus model the loss region for energetic alphas as a cone, and only classical mirror confinement applies, thus an alpha is lost if
+\begin{equation}
+\mu_\alpha B_{\mathrm{max}} > E_\alpha.
+\end{equation}
+Integrating this over all velocity space, we see that the fraction of alphas that is lost is
+\begin{equation}
+f_{\mathrm{lost}} = 1 - \sqrt{1 - \frac{1}{R_{\mathrm{mirror}}}}.
+\end{equation}
+This fraction of alpha particles is removed from \mctrans{} and hurled against the end plates.
+This prompt loss of alpha particles is taken into account in assessing quasineutrality.
+
 \subsubsection{Collisional Alpha Losses}
+Currently, we do not have any explicit collisional losses of alpha particles. However, the approximate lifetime of alpha particles in the machine is (under the twin assumptions that of $R_{\mathrm{mirror}} \gg 1$ and that we can treat alphas like main ions, see e.g. \citet{ryutovOpenTraps})
+\begin{equation}
+\tau_\alpha \approx 0.4 \tau_{\alpha i} \ln R_{\mathrm{mirror}},
+\end{equation}
+where $\tau_{\alpha e}$ is the alpha-ion collision time (alpha-electron collisions do not change the pitch-angle of the alpha particles), which is marginally longer than the time it takes the alphas to deposit a reasonably large amount of their energy into electrons and ions.
+Really we should solve the Fokker-Planck kinetic equation for alpha particles with a source and a loss cone as is done in \citet{santarius1982}.
+
 \subsubsection{Alpha Heating}
+Currently, all the energy in the retained alpha particles is deposited into the electron species as heating through collisions.
+This is a pessimistic assumption as electron heating leads to a lower Mach number, faster electron losses, an increasingly electron-confining $\pot$, and hence increased ion losses. 
 
 \subsection{Neutral Transport}
 We currently have no model of transport due to neutral particles. A first step towards this will be implementing a diagnostic for 
 the neutral mean free path in our plasma. In the limit of either very small or very long mean free path, we may be able to make further approximations to evaluate the 
 losses from charge exchange.
-
+\\
 \textbf{N.B. Until more neutral physics is implemented, we have no way to handle self-consistent fuelling scenarios. The only reasonable assumption
 	is that losses due to neutrals are small and feedback control is used to target a fixed electron density.}
 
 \subsection{Radiative Processes and Impurities}
 There are two ways to model impurities in \mctrans{}. Firstly is a ``lumped impurity'' that only changes the effective charge state $Z_{\mathrm{eff}}$ and 
 provides \textit{only} bremsstrahlung radiation. It does not dilute the main ion species, so quasineutrality is enforced by only considering the main ions and 
+electrons.
 
 \subsubsection{Bremsstrahlung and Synchrotron Radiation}
-\subsubsection{Line Radiation}
- Without a better model for the impurity 
-species that are present (including multiple charge states) we cannot reliably predict the amount of line radiation lost from the plasma.
+Taking the formulae for bremsstrahlung from the NRL formulary~\cite{nrlformulary} and writing it in convenient units we have
+\begin{equation}
+P_{\mathrm{rad}} =  5.34 \times 10^3\, Z_{\mathrm{eff}} \left(\frac{n_e}{10^{20} \mathrm{m}^{-3}}\right)^2 \left(\frac{T_e}{1 \mathrm{keV}}\right)^{1/2}\, \mathrm{W}/\mathrm{m}^3,
+\end{equation}
+where we have used the definition
+\begin{equation}
+Z_{\mathrm{eff}} = \frac{1}{n_e} \sum_{s} Z_s^2 n_s,
+\end{equation}
+of the effective charge state of the plasma (summation taken over all positively charged species).
+Similarly, we can take the synchrotron radiation formula from the formulary~\cite{nrlformulary} and write it as
+\begin{equation}
+P_{\mathrm{rad}} =  6.21 \times 10^3 \,\left( \frac{B}{1\,\mathrm{T}} \right)^2 \left( \frac{n_e}{10^{20}\, \mathrm{m}^{-3}} \right) \left( \frac{T_e}{1\,\mathrm{keV}} \right)\, \mathrm{W}/\mathrm{m}^3.
+\end{equation}
 
+The plasma is assumed to be optically thin, and so all radiation is lost onto the first wall.
+
+\subsubsection{Line Radiation}
+ Without a better model for the impurity species that are present (including multiple charge states) we cannot reliably predict the amount of line radiation lost from the plasma.
+\\
 \textbf{N.B. Because of the lack of ionization and radiative cooling, one should view low-temperature outputs from \mctrans{} extremely sceptically!}
 
 
 \appendix
 \section{Full Syntax for \mctrans{} configuration files}
-\section{References}
 \bibliographystyle{apsrev}
 \bibliography{references}
 \end{document}

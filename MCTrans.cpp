@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <cmath>
 #include <memory>
@@ -13,10 +14,6 @@ extern "C" {
 
 int main( int argc, char** argv )
 {
-#ifdef DEBUG
-	::feenableexcept( FE_DIVBYZERO );
-#endif
-
 	std::string fname( "Mirror.conf" );
 	if ( argc == 2 )
 		fname = argv[ 1 ];
@@ -27,6 +24,11 @@ int main( int argc, char** argv )
 	}
 
 	MCTransConfig config( fname );
+
+#if defined(DEBUG) && defined(FPEXCEPT)
+	std::cerr << "Floating Point Exceptions Enabled" << std::endl;
+	::feenableexcept( FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW );
+#endif
 
 	std::unique_ptr<MirrorPlasma> result = config.Solve();
 
