@@ -5,7 +5,7 @@ compiler:
   - gcc
 
 os: linux
-dist: bionic
+dist: focal
 
 addons:
   apt:
@@ -13,19 +13,20 @@ addons:
       libboost-dev
       cmake
 
-jobs:
-  include:
-    os: osx
-    osx_image: xcode12.3
-    compiler: clang
-    addons:
-      homebrew:
-        packages:
-          - boost
-          - sundials
+#jobs:
+#  include:
+#    os: osx
+#    osx_image: xcode12.3
+#    compiler: clang
+#    addons:
+#      homebrew:
+#        packages:
+#          - boost
+#          - sundials
 
 script:
   - git clone https://github.com/toruniina/toml11
   - cp Makefile.local.travisci Makefile.local
+  - ./build_sundials
   - make
   - make test

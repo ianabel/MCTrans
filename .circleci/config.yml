@@ -3,7 +3,7 @@ version: 2.1
 executors:
   debian-buster:
     docker:
-      - image: buildpack-deps:buster
+      - image: buildpack-deps:bullseye
   ubuntu-focal:
     docker:
       - image: buildpack-deps:focal
