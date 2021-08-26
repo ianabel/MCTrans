@@ -31,8 +31,10 @@ Viscous Heating is 6.97 kW
 Bremsstrahlung losses are 30.6 W
 
 Total potential drop is 100 kV
-Radial Current Drawn from Power Supply 336 mA
-Power Required (at the plasma) to support rotation 33.6 kW
+Radial Current Drawn from Power Supply 127 mA
+Power Required (at the plasma) to support rotation 12.7 kW
+	 Power Loss from viscous torque 6.97e+03
+	 Power Loss from parallel loss  5.69e+03
 
 Total Stored Energy is 5.57 kJ
  of which 4.38 kJ is kinetic energy in the rotation

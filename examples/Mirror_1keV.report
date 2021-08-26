@@ -31,8 +31,10 @@ Viscous Heating is 6.88 kW
 Bremsstrahlung losses are 30.2 W
 
 Total potential drop is 90 kV
-Radial Current Drawn from Power Supply 388 mA
-Power Required (at the plasma) to support rotation 34.9 kW
+Radial Current Drawn from Power Supply 158 mA
+Power Required (at the plasma) to support rotation 14.2 kW
+	 Power Loss from viscous torque 6.88e+03
+	 Power Loss from parallel loss  7.33e+03
 
 Total Stored Energy is 4.45 kJ
  of which 3.54 kJ is kinetic energy in the rotation
@@ -49,7 +51,7 @@ Ion-Electron Temperature Equilibration Time is 98.7 ms
 Plasma must be provided at a rate of 2.02e+18 electrons /s to maintain steady-state
 
 Electrical Properties of the Plasma:
-	Resistance  = 767 kΩ
+	Resistance  = 768 kΩ
 	Capacitance = 876 pF
 
 Dimensionless parameters:

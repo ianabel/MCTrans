@@ -408,7 +408,7 @@ double MirrorPlasma::AmbipolarPhi() const
 
 		double Phi_l, Phi_u;
 		Phi_u = -0.5;
-		Phi_l = -60.0;
+		Phi_l = CentrifugalPotential() * 10;
 		std::tie( Phi_l, Phi_u ) = boost::math::tools::toms748_solve( jParallel, Phi_l, Phi_u, tol, iters );
 		if ( ::fabs( Phi_u - Phi_l )/2.0 > 0.01 )
 		{
