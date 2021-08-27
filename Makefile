@@ -31,13 +31,18 @@ ifdef BOOST_DIR
 	CXXFLAGS += $(BOOST_FLAGS)
 endif
 
+NETCDF_LINK_FLAGS =
+
 ifdef NETCDF_DIR
 	NETCDF_FLAGS = 
+	NETCDF_LINK_FLAGS = -L$(NETCDF_DIR) -Wl,-rpath $(NETCDF_DIR)
 	CXXFLAGS += $(NETCDF_FLAGS)
 endif
 
-SOURCES = MCTrans.cpp MirrorPlasma.cpp FusionYield.cpp Report.cpp AlphaHeating.cpp Neutrals.cpp SundialsWrapper.cpp
-HEADERS = MirrorPlasma.hpp FusionYield.hpp Config.hpp Species.hpp PlasmaPhysics.hpp
+NETCDF_LINK_FLAGS += -lnetcdf -lnetcdf_c++4
+
+SOURCES = MCTrans.cpp MirrorPlasma.cpp FusionYield.cpp Report.cpp AlphaHeating.cpp Neutrals.cpp SundialsWrapper.cpp NetCDFIO.cpp
+HEADERS = MirrorPlasma.hpp FusionYield.hpp Config.hpp Species.hpp PlasmaPhysics.hpp NetCDFIO.hpp
 OBJECTS = $(patsubst %.cpp,%.o,$(SOURCES))
 
 Makefile.local:
@@ -47,7 +52,7 @@ Makefile.local:
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
 MCTrans++: $(OBJECTS) $(HEADERS) Makefile Makefile.local
-	$(CXX) $(CXXFLAGS) -o MCTrans++ $(OBJECTS) $(SUN_LINK_FLAGS)
+	$(CXX) $(CXXFLAGS) -o MCTrans++ $(OBJECTS) $(SUN_LINK_FLAGS) $(NETCDF_LINK_FLAGS)
 
 MCTrans.pdf: manual/Makefile manual/MCTrans.tex manual/macros.tex manual/references.bib
 	make -C manual MCTrans.pdf

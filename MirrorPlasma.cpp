@@ -371,7 +371,7 @@ double MirrorPlasma::ParallelIonHeatLoss() const
 							0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
 	return ParallelIonPastukhovLossRate( Chi_i ) * ( IonTemperature * ReferenceTemperature ) * ( ::fabs( Chi_i )  + 1.0 );
 }
-
+/*
 double MirrorPlasma::ParallelCurrent( double Phi ) const 
 {
 	double Chi_i = pVacuumConfig->IonSpecies.Charge * Phi * ( ElectronTemperature/IonTemperature ) + 
@@ -389,6 +389,7 @@ double MirrorPlasma::ParallelCurrent( double Phi ) const
 		return ParallelIonPastukhovLossRate( Chi_i )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
 	}
 }
+*/
 
 // Sets Phi to the ambipolar Phi required such that ion loss = electron loss
 double MirrorPlasma::AmbipolarPhi() const
@@ -401,29 +402,34 @@ double MirrorPlasma::AmbipolarPhi() const
 		double R = pVacuumConfig->MirrorRatio;
 		double Correction = ::log( (  ElectronCollisionTime() / IonCollisionTime() ) * ( ::log( R*Sigma ) / ( Sigma * ::log( R ) ) ) );
 
-		// This gives us a first-order guess for the Ambipolar potential.
-		//  phi = CentrifugalPotential + Correction/2
-		// Now we solve j_|| = 0 to get the better answer.
+		// This gives us a first-order guess for the Ambipolar potential. Now we solve j_|| = 0 to get the better answer.
 		//
-		// We know that
-		//  Phi < 0 -- dominantly electron confining
-		// 
-		
+		auto ParallelCurrent = [ & ]( double Phi ) {
+			double Chi_i = pVacuumConfig->IonSpecies.Charge * Phi * ( ElectronTemperature/IonTemperature ) + 
+			                 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
+			double Chi_e = -Phi; // Ignore small electron mass correction
+
+			// If Alphas are included, they correspond to a (small) charge flow
+			if ( pVacuumConfig->AlphaHeating )
+			{
+				double AlphaLossRate =  AlphaProductionRate() * PromptAlphaLossFraction();
+				return 2.0*AlphaLossRate + ParallelIonPastukhovLossRate( Chi_i )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
+			}
+			else
+			{
+				return ParallelIonPastukhovLossRate( Chi_i )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
+			}
+		};
+
 		boost::uintmax_t iters = 1000;
 		boost::math::tools::eps_tolerance<double> tol( 11 ); // only bother getting part in 1024 accuracy
-		std::function<double( double )> jParallel = std::bind( &MirrorPlasma::ParallelCurrent, this, std::placeholders::_1 );
-
-		double Phi_l, Phi_u;
-		Phi_u = -0.5;
-		Phi_l = CentrifugalPotential() * 10;
-		std::tie( Phi_l, Phi_u ) = boost::math::tools::toms748_solve( jParallel, Phi_l, Phi_u, tol, iters );
-		if ( ::fabs( Phi_u - Phi_l )/2.0 > 0.01 )
+		auto [ Phi_l, Phi_u ] = boost::math::tools::bracket_and_solve_root( ParallelCurrent, AmbipolarPhi, 1.2, false, tol, iters );
+		AmbipolarPhi = ( Phi_l + Phi_u )/2.0;
+		if ( ::fabs( Phi_u - Phi_l )/2.0 > ::fabs( 0.01*AmbipolarPhi ) )
 		{
 			std::cerr << "Unable to find root of j_|| = 0, using approximation" << std::endl;
-			return AmbipolarPhi + Correction/2.0;	
+			return CentrifugalPotential() + Correction/2.0;	
 		}
-		return ( Phi_l + Phi_u )/2.0;
-
 	}
 
 	return AmbipolarPhi;

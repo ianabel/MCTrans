@@ -3,6 +3,7 @@
 
 #include "PlasmaPhysics.hpp"
 #include "Species.hpp"
+#include "NetCDFIO.hpp"
 #include <toml.hpp>
 
 #include <memory>
@@ -47,6 +48,8 @@ class MirrorPlasma {
 				double InitialMach;
 
 				std::string OutputFile;
+				std::string NetcdfOutputFile;
+
 
 				double PlasmaVolume() const {
 					return M_PI * ( PlasmaColumnWidth + 2 * AxialGapDistance ) * PlasmaColumnWidth * PlasmaLength;
@@ -128,6 +131,10 @@ class MirrorPlasma {
 
 		void PrintReport() const;
 
+		void InitialiseNetCDF();
+		void WriteTiemslice();
+
+
 		std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig;
 
 		void SetMachFromVoltage();
@@ -139,6 +146,7 @@ class MirrorPlasma {
 		double initialTemperature() const { return pVacuumConfig->InitialTemp; };
 		double initialMach() const { return pVacuumConfig->InitialMach; };
 	private:
+		NetCDFIO nc_output;
 
 		double LogLambdaElectron() const;
 		double LogLambdaIon() const;

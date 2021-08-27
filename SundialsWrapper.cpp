@@ -40,7 +40,7 @@ int KINSysWrapper_TemperatureSolve( N_Vector u, N_Vector F, void* voidPlasma )
 	
 	plasmaPtr->SetMachFromVoltage();
 
-	// std::cerr << "Iteration at T_i = " << plasmaPtr->IonTemperature << " ; T_e = " << plasmaPtr->ElectronTemperature << std::endl;
+	std::cerr << "Iteration at T_i = " << plasmaPtr->IonTemperature << " ; T_e = " << plasmaPtr->ElectronTemperature << " MachNumber " << plasmaPtr->MachNumber << std::endl;
 
 
 	try {
@@ -49,15 +49,14 @@ int KINSysWrapper_TemperatureSolve( N_Vector u, N_Vector F, void* voidPlasma )
 		double ElectronHeating  = plasmaPtr->ElectronHeating();
 		double ElectronHeatLoss = plasmaPtr->ElectronHeatLosses();
 
-		// std::cerr << " Ion Heating      = " << IonHeating      << " ; Ion Heat Loss       = " << IonHeatLoss      << std::endl;
-		// std::cerr << " Electron Heating = " << ElectronHeating << " ; Electron Heat Loss  = " << ElectronHeatLoss << std::endl;
+		std::cerr << " Ion Heating      = " << IonHeating      << " ; Ion Heat Loss       = " << IonHeatLoss      << std::endl;
+		std::cerr << " Electron Heating = " << ElectronHeating << " ; Electron Heat Loss  = " << ElectronHeatLoss << std::endl;
 
 		ION_HEAT_BALANCE( F )      = ( IonHeating - IonHeatLoss );
 		ELECTRON_HEAT_BALANCE( F ) = ( ElectronHeating - ElectronHeatLoss );
 //		PARTICLE_BALANCE( F ) = ParticleBalance; 
 
 	} catch ( std::exception& e ) {
-		std::cerr << "Exception " << e.what() << " caught inside KINSol KINSysWrapper_Temperature Solve" << std::endl;
 		return -1;
 	} 
 
