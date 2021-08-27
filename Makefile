@@ -26,6 +26,16 @@ TOML_FLAGS = -I$(TOML11_DIR)
 
 CXXFLAGS += $(TOML_FLAGS) $(SUNFLAGS)
 
+ifdef BOOST_DIR
+	BOOST_FLAGS = -I$(BOOST_DIR)
+	CXXFLAGS += $(BOOST_FLAGS)
+endif
+
+ifdef NETCDF_DIR
+	NETCDF_FLAGS = 
+	CXXFLAGS += $(NETCDF_FLAGS)
+endif
+
 SOURCES = MCTrans.cpp MirrorPlasma.cpp FusionYield.cpp Report.cpp AlphaHeating.cpp Neutrals.cpp SundialsWrapper.cpp
 HEADERS = MirrorPlasma.hpp FusionYield.hpp Config.hpp Species.hpp PlasmaPhysics.hpp
 OBJECTS = $(patsubst %.cpp,%.o,$(SOURCES))

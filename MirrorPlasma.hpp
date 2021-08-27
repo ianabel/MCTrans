@@ -46,6 +46,8 @@ class MirrorPlasma {
 				double InitialTemp;
 				double InitialMach;
 
+				std::string OutputFile;
+
 				double PlasmaVolume() const {
 					return M_PI * ( PlasmaColumnWidth + 2 * AxialGapDistance ) * PlasmaColumnWidth * PlasmaLength;
 				};
@@ -197,6 +199,7 @@ class MirrorPlasma {
 		double ThermalPowerOutput() const;
 		double NeutronWallLoading() const;
 		double DDNeutronRate() const;
+
 
 	public:
 		double AlphaHeating() const;

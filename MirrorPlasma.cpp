@@ -53,6 +53,13 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 #endif
 		}
 
+		if ( algConfig.count( "AsciiOutputFile" ) == 1 )
+		{
+			OutputFile = algConfig.at( "AsciiOutputFile" ).as_string();
+		} else {
+			OutputFile = "";
+		}
+
 	} else {
 #ifdef DEBUG
 		std::cerr << "No [algorithm] section, using default values for internal knobs." << std::endl;

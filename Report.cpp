@@ -2,200 +2,218 @@
 #include "MirrorPlasma.hpp"
 #include <iostream>
 
-void PrintWithUnit( double value, std::string const& unit )
+void PrintWithUnit( std::ostream& out, double value, std::string const& unit )
 {
 
 	if ( ::fabs( value ) > 1e3 && ::fabs( value ) <= 1e6 )
-		std::cout << value/1e3 << " k" << unit;
+		out << value/1e3 << " k" << unit;
 	else if ( ::fabs( value ) > 1e6 && ::fabs( value ) <= 1e9 )
-		std::cout << value/1e6 << " M" << unit;
+		out << value/1e6 << " M" << unit;
 	else if ( ::fabs( value ) < 1 && ::fabs( value ) >= 1e-3 )
-		std::cout << value*1e3 << " m" << unit;
+		out << value*1e3 << " m" << unit;
 	else if ( ::fabs( value ) < 1e-3 && ::fabs( value ) >= 1e-6 )
-		std::cout << value*1e6 << " µ" << unit;
+		out << value*1e6 << " µ" << unit;
 	else if ( ::fabs( value ) < 1e-6 && ::fabs( value ) >= 1e-9 )
-		std::cout << value*1e9 << " p" << unit;
+		out << value*1e9 << " p" << unit;
 	else
-		std::cout << value << " " << unit;
-
+		out << value << " " << unit;
 
 	return;
 }
 
+
 void MirrorPlasma::PrintReport() const
 {
-	std::cout.precision( 3 );
+	std::ostream *p_out;
+	if ( pVacuumConfig->OutputFile == "" )
+		p_out = &std::cout;
+	else
+	{
+		p_out = new std::fstream( pVacuumConfig->OutputFile, std::ios_base::out | std::ios_base::trunc );
+	}
 
-	std::cout << "The plasma is made up of electrons, " << pVacuumConfig->IonSpecies.Name; 
+	std::ostream &out = *p_out;
+
+	out.precision( 3 );
+
+	out << "The plasma is made up of electrons, " << pVacuumConfig->IonSpecies.Name; 
 	if ( Zeff > 0.0 )
-		std::cout << " and trace, radiating, impurities" << std::endl;
+		out << " and trace, radiating, impurities" << std::endl;
 	else 
-		std::cout << std::endl;
+		out << std::endl;
 
-	std::cout << "Electron Density is " << ElectronDensity*ReferenceDensity << " m^-3" << std::endl;
-	std::cout << "Ion Density is " << IonDensity * ReferenceDensity << " m^-3" << std::endl;
-	std::cout << std::endl;
-	std::cout << "Electron Temperature is "; PrintWithUnit( ElectronTemperature * 1e3,"eV"); std::cout << std::endl;
-	std::cout << "Ion Temperature is "; PrintWithUnit( IonTemperature * 1e3,"eV"); std::cout << std::endl;
+	out << "Electron Density is " << ElectronDensity*ReferenceDensity << " m^-3" << std::endl;
+	out << "Ion Density is " << IonDensity * ReferenceDensity << " m^-3" << std::endl;
+	out << std::endl;
+	out << "Electron Temperature is "; PrintWithUnit( out, ElectronTemperature * 1e3,"eV"); out << std::endl;
+	out << "Ion Temperature is "; PrintWithUnit( out, IonTemperature * 1e3,"eV"); out << std::endl;
 
-	std::cout << "Radius of central cell (first wall) is " << pVacuumConfig->WallRadius << " m" << std::endl;
+	out << "Radius of central cell (first wall) is " << pVacuumConfig->WallRadius << " m" << std::endl;
 
-	std::cout << "\t Inner radius of the plasma is " << pVacuumConfig->AxialGapDistance << " m" << std::endl;
-	std::cout << "\t Outer radius of the plasma is " << pVacuumConfig->PlasmaColumnWidth + pVacuumConfig->AxialGapDistance << " m" << std::endl;
+	out << "\t Inner radius of the plasma is " << pVacuumConfig->AxialGapDistance << " m" << std::endl;
+	out << "\t Outer radius of the plasma is " << pVacuumConfig->PlasmaColumnWidth + pVacuumConfig->AxialGapDistance << " m" << std::endl;
 
-	std::cout << "Outer Radius of the plasma at the mirror throat is " << (pVacuumConfig->PlasmaColumnWidth + pVacuumConfig->AxialGapDistance) /::sqrt( pVacuumConfig->MirrorRatio ) << " m" << std::endl;
-	std::cout << std::endl;
-	std::cout << "Axial Length of the plasma is " << pVacuumConfig->PlasmaLength << " m" << std::endl;
-	std::cout << "Plasma Volume is " << pVacuumConfig->PlasmaVolume() << " m^3" << std::endl;
-	std::cout << "" << std::endl;
-	std::cout << "Magnetic Field in the Central Cell is " << pVacuumConfig->CentralCellFieldStrength << " T" << std::endl;
-	std::cout << "Magnetic Field at the Mirror Throat is " << pVacuumConfig->MirrorRatio * pVacuumConfig->CentralCellFieldStrength << " T" << std::endl;
-	std::cout << "" << std::endl;
-	std::cout << "Ion Larmor Radius in the central cell is " << IonLarmorRadius() << " m " << std::endl;
-	std::cout << "Typical plasma scale lenghts are ~ " << pVacuumConfig->PlasmaColumnWidth/2.0 << " m  = " << pVacuumConfig->PlasmaColumnWidth / ( 2.0 * IonLarmorRadius() ) << " rho_i " << std::endl;
+	out << "Outer Radius of the plasma at the mirror throat is " << (pVacuumConfig->PlasmaColumnWidth + pVacuumConfig->AxialGapDistance) /::sqrt( pVacuumConfig->MirrorRatio ) << " m" << std::endl;
+	out << std::endl;
+	out << "Axial Length of the plasma is " << pVacuumConfig->PlasmaLength << " m" << std::endl;
+	out << "Plasma Volume is " << pVacuumConfig->PlasmaVolume() << " m^3" << std::endl;
+	out << "" << std::endl;
+	out << "Magnetic Field in the Central Cell is " << pVacuumConfig->CentralCellFieldStrength << " T" << std::endl;
+	out << "Magnetic Field at the Mirror Throat is " << pVacuumConfig->MirrorRatio * pVacuumConfig->CentralCellFieldStrength << " T" << std::endl;
+	out << "" << std::endl;
+	out << "Ion Larmor Radius in the central cell is " << IonLarmorRadius() << " m " << std::endl;
+	out << "Typical plasma scale lenghts are ~ " << pVacuumConfig->PlasmaColumnWidth/2.0 << " m  = " << pVacuumConfig->PlasmaColumnWidth / ( 2.0 * IonLarmorRadius() ) << " rho_i " << std::endl;
 
-	std::cout << std::endl;
+	out << std::endl;
 
 	if ( pVacuumConfig->AuxiliaryHeating > 0 ) {
-		std::cout << "Auxiliary Heating of " << pVacuumConfig->AuxiliaryHeating * 1e3  << " kW was included" << std::endl;
-		std::cout << "" << std::endl;
+		out << "Auxiliary Heating of " << pVacuumConfig->AuxiliaryHeating * 1e3  << " kW was included" << std::endl;
+		out << "" << std::endl;
 	} else {
-		std::cout << "No auxiliary heating was included in this calculation." << std::endl;
-		std::cout << std::endl;
+		out << "No auxiliary heating was included in this calculation." << std::endl;
+		out << std::endl;
 	}
 
 	if ( pVacuumConfig->AlphaHeating ) {
-		std::cout << "Self-consistent Alpha Heating was included in this calculation. " << std::endl;
+		out << "Self-consistent Alpha Heating was included in this calculation. " << std::endl;
 
-		std::cout << "  Alphas provide " << AlphaHeating()*pVacuumConfig->PlasmaVolume() << " MW of heating" << std::endl;
-		std::cout << "  Alpha particles are lost directly at a rate of " << PromptAlphaLossFraction() * AlphaProductionRate() * pVacuumConfig->PlasmaVolume() << " /s" << std::endl;
-		std::cout << "  Prompt Alpha Losses towards the end plates give " << AlphaPromptLosses() * pVacuumConfig->PlasmaVolume() << " MW of energy losses" << std::endl;
+		out << "  Alphas provide " << AlphaHeating()*pVacuumConfig->PlasmaVolume() << " MW of heating" << std::endl;
+		out << "  Alpha particles are lost directly at a rate of " << PromptAlphaLossFraction() * AlphaProductionRate() * pVacuumConfig->PlasmaVolume() << " /s" << std::endl;
+		out << "  Prompt Alpha Losses towards the end plates give " << AlphaPromptLosses() * pVacuumConfig->PlasmaVolume() << " MW of energy losses" << std::endl;
 
 		double TauSD = SlowingDownTime();
-		std::cout << "  The alpha particle slowing-down time is " << TauSD << " s" << std::endl;
+		out << "  The alpha particle slowing-down time is " << TauSD << " s" << std::endl;
 	}
 
-	std::cout << std::endl;
-	std::cout << "Operating Mach number is " << MachNumber << std::endl;
-	std::cout << "Alfven Mach number is " << AlfvenMachNumber() << std::endl;
-	std::cout << std::endl;
+	out << std::endl;
+	out << "Operating Mach number is " << MachNumber << std::endl;
+	out << "Alfven Mach number is " << AlfvenMachNumber() << std::endl;
+	out << std::endl;
 	double v = SoundSpeed() * MachNumber;
-	std::cout << "Velocity is " << v << " m/s" << std::endl;
+	out << "Velocity is " << v << " m/s" << std::endl;
 	double Rmid = pVacuumConfig->PlasmaCentralRadius();
-	std::cout << "Angular Velocity at the plasma centre (R = " << Rmid << " m) is " << v/Rmid << " /s" << std::endl;
-	std::cout << std::endl;
+	out << "Angular Velocity at the plasma centre (R = " << Rmid << " m) is " << v/Rmid << " /s" << std::endl;
+	out << std::endl;
 
-	std::cout << "Viscous Heating is ";
-	PrintWithUnit( ViscousHeating() * pVacuumConfig->PlasmaVolume(),"W" ); std::cout << std::endl;
+	out << "Viscous Heating is ";
+	PrintWithUnit( out, ViscousHeating() * pVacuumConfig->PlasmaVolume(),"W" ); out << std::endl;
 	if ( Zeff > 0.0 )
 	{
-		std::cout << "Bremsstrahlung losses are ";
-		PrintWithUnit( BremsstrahlungLosses()*pVacuumConfig->PlasmaVolume(), "W" ); std::cout << std::endl;
+		out << "Bremsstrahlung losses are ";
+		PrintWithUnit( out, BremsstrahlungLosses()*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
 	}
 	else
-		std::cout << "No radiation losses were included." << std::endl;
-	std::cout << std::endl;
+		out << "No radiation losses were included." << std::endl;
+	out << std::endl;
 		
-	std::cout << "Total potential drop is ";
-	PrintWithUnit( ElectricPotential(), "V" );
-	std::cout << std::endl;
+	out << "Total potential drop is ";
+	PrintWithUnit( out, ElectricPotential(), "V" );
+	out << std::endl;
 
 	double JRadial = ::fabs( RadialCurrent() );
-	std::cout << "Radial Current Drawn from Power Supply "; PrintWithUnit( JRadial, "A" ); std::cout << std::endl;
-	std::cout << "Power Required (at the plasma) to support rotation ";
-	PrintWithUnit( ElectricPotential() * JRadial, "W" );
-	std::cout << std::endl;
+	out << "Radial Current Drawn from Power Supply "; PrintWithUnit( out, JRadial, "A" ); out << std::endl;
+	out << "Power Required (at the plasma) to support rotation ";
+	PrintWithUnit( out, ElectricPotential() * JRadial, "W" );
+	out << std::endl;
 #ifdef DEBUG
 	double omega = v/Rmid;
-	std::cout << "\t Power Loss from viscous torque " << ViscousTorque()*omega*pVacuumConfig->PlasmaVolume() << std::endl;
-	std::cout << "\t Power Loss from parallel loss  " << ParallelAngularMomentumLossRate()*omega*pVacuumConfig->PlasmaVolume() << std::endl;
+	out << "\t Power Loss from viscous torque " << ViscousTorque()*omega*pVacuumConfig->PlasmaVolume() << std::endl;
+	out << "\t Power Loss from parallel loss  " << ParallelAngularMomentumLossRate()*omega*pVacuumConfig->PlasmaVolume() << std::endl;
 #endif
-	std::cout << std::endl;
+	out << std::endl;
 
 	double KineticStoredEnergy = KineticEnergy();
 	double ThermalStoredEnergy = ThermalEnergy();
-	std::cout << "Total Stored Energy is "; PrintWithUnit( KineticStoredEnergy + ThermalStoredEnergy, "J" ); std::cout << std::endl;
-	std::cout << " of which "; PrintWithUnit( KineticStoredEnergy, "J" ); std::cout << " is kinetic energy in the rotation" << std::endl;
-	std::cout << "      and "; PrintWithUnit( ThermalStoredEnergy, "J" ); std::cout << " is thermal energy of the plasma" << std::endl;
+	out << "Total Stored Energy is "; PrintWithUnit( out, KineticStoredEnergy + ThermalStoredEnergy, "J" ); out << std::endl;
+	out << " of which "; PrintWithUnit( out, KineticStoredEnergy, "J" ); out << " is kinetic energy in the rotation" << std::endl;
+	out << "      and "; PrintWithUnit( out, ThermalStoredEnergy, "J" ); out << " is thermal energy of the plasma" << std::endl;
 
 
-	std::cout << "Energy Confinement Time is "; PrintWithUnit( EnergyConfinementTime(),"s" ); std::cout << std::endl;
-	std::cout << "Of which" << std::endl;
+	out << "Energy Confinement Time is "; PrintWithUnit( out, EnergyConfinementTime(),"s" ); out << std::endl;
+	out << "Of which" << std::endl;
 	
 	double ParallelConfinementTime = ( 1.5  * ElectronDensity * ElectronTemperature + 1.5 * IonDensity * IonTemperature ) * (  ReferenceDensity * ReferenceTemperature )/( ParallelElectronHeatLoss() + ParallelIonHeatLoss() );
 	double PerpConfinementTime = ( 1.5  * IonDensity * IonTemperature * ReferenceDensity * ReferenceTemperature )/ClassicalIonHeatLoss();
-	std::cout << "\tConfinement time from parallel losses is "; PrintWithUnit( ParallelConfinementTime, "s" ); std::cout << std::endl;
-	std::cout << "\tConfinement time from perpendicular losses is "; PrintWithUnit( PerpConfinementTime, "s" ); std::cout << std::endl;
-	std::cout << std::endl;
+	out << "\tConfinement time from parallel losses is "; PrintWithUnit( out, ParallelConfinementTime, "s" ); out << std::endl;
+	out << "\tConfinement time from perpendicular losses is "; PrintWithUnit( out, PerpConfinementTime, "s" ); out << std::endl;
+	out << std::endl;
 
 	double ParallelParticleConfinementTime = ( IonDensity * ReferenceDensity ) /(  ParallelIonParticleLoss() );
-	std::cout << "Particle (Ion) Confinement Time ~= "; PrintWithUnit( ParallelParticleConfinementTime, "s" ); std::cout << std::endl;
-	std::cout << std::endl;
+	out << "Particle (Ion) Confinement Time ~= "; PrintWithUnit( out, ParallelParticleConfinementTime, "s" ); out << std::endl;
+	out << std::endl;
 
-	std::cout << "Ion-Electron Temperature Equilibration Time is "; PrintWithUnit( CollisionalTemperatureEquilibrationTime(),"s" ); std::cout << std::endl;
+	out << "Ion-Electron Temperature Equilibration Time is "; PrintWithUnit( out, CollisionalTemperatureEquilibrationTime(),"s" ); out << std::endl;
 
 	/*
-	std::cout << std::endl;
-	std::cout << "Neutral gas must be provided at a rate of " << NeutralSource * pVacuumConfig->PlasmaVolume() << " particles/s to refuel the plasma" << std::endl;
-	std::cout << "This leads to a steady-state neutral density of " << NeutralDensity * ReferenceDensity << "/m^3" << std::endl;
+	out << std::endl;
+	out << "Neutral gas must be provided at a rate of " << NeutralSource * pVacuumConfig->PlasmaVolume() << " particles/s to refuel the plasma" << std::endl;
+	out << "This leads to a steady-state neutral density of " << NeutralDensity * ReferenceDensity << "/m^3" << std::endl;
 	*/
 
-	std::cout << std::endl;
+	out << std::endl;
 	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
-	std::cout << "Plasma must be provided at a rate of " << ElectronLossRate*pVacuumConfig->PlasmaVolume() << " electrons /s to maintain steady-state" << std::endl;
+	out << "Plasma must be provided at a rate of " << ElectronLossRate*pVacuumConfig->PlasmaVolume() << " electrons /s to maintain steady-state" << std::endl;
 
-	std::cout << std::endl;
+	out << std::endl;
 	double Resistance = ElectricPotential() * ElectricPotential() /(  (  ViscousHeating() + ParallelKineticEnergyLoss() )*pVacuumConfig->PlasmaVolume() );
 	double Capacitance = 2.0*KineticStoredEnergy / ( ElectricPotential() * ElectricPotential() );
-	std::cout << "Electrical Properties of the Plasma:" << std::endl;
-	std::cout << "\tResistance  = "; PrintWithUnit( Resistance,  "Ω" ); std::cout << std::endl;
-	std::cout << "\tCapacitance = "; PrintWithUnit( Capacitance, "F" ); std::cout << std::endl;
+	out << "Electrical Properties of the Plasma:" << std::endl;
+	out << "\tResistance  = "; PrintWithUnit( out, Resistance,  "Ω" ); out << std::endl;
+	out << "\tCapacitance = "; PrintWithUnit( out, Capacitance, "F" ); out << std::endl;
 
 
 
-	std::cout << std::endl;
-	std::cout << "Dimensionless parameters:" << std::endl;
-	std::cout << "\t β  = " << Beta() * 100 << "%" << std::endl;
-	std::cout << "\t ν* = " << NuStar() << " (ions) " << std::endl; 
-	std::cout << "\t ρ* = " << ( 2.0 * IonLarmorRadius() ) / pVacuumConfig->PlasmaColumnWidth << std::endl; 
-	std::cout << "\t Omega_i tau_ii = " << IonCyclotronFrequency()*IonCollisionTime() << std::endl; 
+	out << std::endl;
+	out << "Dimensionless parameters:" << std::endl;
+	out << "\t β  = " << Beta() * 100 << "%" << std::endl;
+	out << "\t ν* = " << NuStar() << " (ions) " << std::endl; 
+	out << "\t ρ* = " << ( 2.0 * IonLarmorRadius() ) / pVacuumConfig->PlasmaColumnWidth << std::endl; 
+	out << "\t Omega_i tau_ii = " << IonCyclotronFrequency()*IonCollisionTime() << std::endl; 
 
 	
 
-	std::cout << std::endl;
-	std::cout << "Fusion Triple Product " << std::endl;
+	out << std::endl;
+	out << "Fusion Triple Product " << std::endl;
 	double TripleProduct = IonDensity * ReferenceDensity * IonTemperature * EnergyConfinementTime();
-	std::cout << "\t n T τ = " << TripleProduct << " keV s /m^3" << std::endl;
+	out << "\t n T τ = " << TripleProduct << " keV s /m^3" << std::endl;
 	
-	std::cout << std::endl;
+	out << std::endl;
 
 	if ( pVacuumConfig->ReportThrust ) {
-			std::cout << "Ions lost from the central cell provide " << ParallelIonThrust() << " N of thrust" << std::endl;
+			out << "Ions lost from the central cell provide " << ParallelIonThrust() << " N of thrust" << std::endl;
 			if ( pVacuumConfig->AlphaHeating )
-				std::cout << "Prompt Alpha losses contribute " << PromptAlphaThrust() << " N of thrust" << std::endl;
+				out << "Prompt Alpha losses contribute " << PromptAlphaThrust() << " N of thrust" << std::endl;
 	}
 
 
 	if ( pVacuumConfig->ReportNuclearDiagnostics ) {
 		if ( pVacuumConfig->IonSpecies.Name == "Deuterium" ) {
-			std::cout << " === Nuclear Reactions Assuming Deuterium Fuel === " << std::endl;
-			std::cout << " D/D Neutrons (2.45 MeV) per second: " << DDNeutronRate() << std::endl;
-			// std::cout << " D/T Neutrons (14.1 MeV) from Fusion-Produced-Tritium: " << DDEnergeticNeutronRate() << std::endl;
-			std::cout << std::endl;
+			out << " === Nuclear Reactions Assuming Deuterium Fuel === " << std::endl;
+			out << " D/D Neutrons (2.45 MeV) per second: " << DDNeutronRate() << std::endl;
+			// out << " D/T Neutrons (14.1 MeV) from Fusion-Produced-Tritium: " << DDEnergeticNeutronRate() << std::endl;
+			out << std::endl;
 		} else if ( pVacuumConfig->IonSpecies.Name == "Deuterium/Tritium Fuel" ) {
-			std::cout << " === Reactor Output Assuming D/T Reactor Fuel === " << std::endl;
+			out << " === Reactor Output Assuming D/T Reactor Fuel === " << std::endl;
 
 			double FusionAlphaPower = FusionAlphaPowerDensity()*pVacuumConfig->PlasmaVolume();
 			double FusionNeutronPower = ( 14.1/3.52 ) * FusionAlphaPower;
-			std::cout << "Fusion Power Output as Alphas:   " << FusionAlphaPower   << " MW" << std::endl;
-			std::cout << "                    as Neutrons: " << FusionNeutronPower << " MW" << std::endl;
-			std::cout << "Neutron Wall Loading is " << NeutronWallLoading() << " MW/m^2" << std::endl;
-			std::cout << "Total Thermal Power Output is " << ThermalPowerOutput() << " MW" << std::endl;
+			out << "Fusion Power Output as Alphas:   " << FusionAlphaPower   << " MW" << std::endl;
+			out << "                    as Neutrons: " << FusionNeutronPower << " MW" << std::endl;
+			out << "Neutron Wall Loading is " << NeutronWallLoading() << " MW/m^2" << std::endl;
+			out << "Total Thermal Power Output is " << ThermalPowerOutput() << " MW" << std::endl;
 
 		} else {
-			std::cout << "No Nuclear Reaction Diagnostics for Ion species: " << pVacuumConfig->IonSpecies.Name << std::endl;
+			out << "No Nuclear Reaction Diagnostics for Ion species: " << pVacuumConfig->IonSpecies.Name << std::endl;
 		}
 	}
+
+	out.flush();
+
+	if ( pVacuumConfig->OutputFile != "" )
+	{
+		delete p_out;
+	}
+
 
 }
 
