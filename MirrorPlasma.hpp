@@ -46,6 +46,7 @@ class MirrorPlasma {
 
 				double InitialTemp;
 				double InitialMach;
+				bool Collisional;
 
 				std::string OutputFile;
 				std::string NetcdfOutputFile;
@@ -221,7 +222,6 @@ class MirrorPlasma {
 		double ParallelIonThrust() const;
 		double ParallelCurrent(double) const;
 
-		bool Collisional;
 };
 
 

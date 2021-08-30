@@ -60,6 +60,8 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 			OutputFile = "";
 		}
 
+		Collisional = false;
+
 	} else {
 #ifdef DEBUG
 		std::cerr << "No [algorithm] section, using default values for internal knobs." << std::endl;
@@ -69,6 +71,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 		InitialTemp = 0.1;
 		InitialMach = 4.0;
 		AmbipolarPhi = true;
+		Collisional = false;
 	}
 
 	const auto mirrorConfig = toml::find<toml::table>( plasmaConfig, "configuration" );
@@ -201,8 +204,6 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 	: pVacuumConfig( std::make_shared<VacuumMirrorConfiguration>( plasmaConfig ) )
 {
-	Collisional = false;
-
 	const auto mirrorConfig = toml::find<toml::value>( plasmaConfig, "configuration" );
 
 	double TiTe = toml::find_or<double>( mirrorConfig, "IonToElectronTemperatureRatio", 0.0 );
@@ -323,7 +324,7 @@ double MirrorPlasma::ParallelElectronParticleLoss() const
 
 double MirrorPlasma::ParallelElectronHeatLoss() const
 {
-	if ( Collisional )
+	if ( pVacuumConfig->Collisional )
 	{
 		double kappa_parallel = ElectronDensity * ElectronTemperature * ReferenceDensity * ReferenceTemperature / ( ElectronMass * ElectronCollisionTime() );
 		double L_parallel = pVacuumConfig->PlasmaLength;
