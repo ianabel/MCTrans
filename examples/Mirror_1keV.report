@@ -34,7 +34,7 @@ Total potential drop is 90 kV
 Radial Current Drawn from Power Supply 158 mA
 Power Required (at the plasma) to support rotation 14.2 kW
 	 Power Loss from viscous torque 6.88e+03
-	 Power Loss from parallel loss  7.33e+03
+	 Power Loss from parallel loss  7.31e+03
 
 Total Stored Energy is 4.45 kJ
  of which 3.54 kJ is kinetic energy in the rotation
@@ -44,11 +44,11 @@ Of which
 	Confinement time from parallel losses is 231 ms
 	Confinement time from perpendicular losses is 155 ms
 
-Particle (Ion) Confinement Time ~= 967 ms
+Particle (Ion) Confinement Time ~= 970 ms
 
 Ion-Electron Temperature Equilibration Time is 98.7 ms
 
-Plasma must be provided at a rate of 2.02e+18 electrons /s to maintain steady-state
+Plasma must be provided at a rate of 2.03e+18 electrons /s to maintain steady-state
 
 Electrical Properties of the Plasma:
 	Resistance  = 768 kΩ

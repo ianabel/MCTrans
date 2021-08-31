@@ -28,7 +28,7 @@ class MCTransConfig {
 			SteadyStateTempSolve
 		} Type;
 
-		std::unique_ptr<MirrorPlasma> Solve() const;
+		std::unique_ptr<MirrorPlasma> Solve();
 		std::unique_ptr<MirrorPlasma> ReferencePlasmaState;
 	private:
 		void doMachSolve( MirrorPlasma& plasma ) const;

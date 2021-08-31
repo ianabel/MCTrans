@@ -60,6 +60,12 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 			OutputFile = "";
 		}
 
+		if ( algConfig.count( "NetcdfOutput" ) == 1 )
+		{
+			NetcdfOutputFile = algConfig.at( "NetcdfOutput" ).as_string();
+		} else {
+			NetcdfOutputFile = "";
+		}
 		Collisional = false;
 
 	} else {
@@ -72,6 +78,8 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 		InitialMach = 4.0;
 		AmbipolarPhi = true;
 		Collisional = false;
+		OutputFile  = "";
+		NetcdfOutputFile = "";
 	}
 
 	const auto mirrorConfig = toml::find<toml::table>( plasmaConfig, "configuration" );
@@ -249,6 +257,12 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 		NeutralSource = 0;
 		NeutralDensity = 0;
 	}
+
+	if ( pVacuumConfig->NetcdfOutputFile != "" )
+	{
+		InitialiseNetCDF();
+	}
+
 
 }
 
@@ -599,16 +613,10 @@ double MirrorPlasma::IonHeating() const
 
 double MirrorPlasma::ElectronHeating() const
 {
-	double Heating = pVacuumConfig->AuxiliaryHeating * 1e6; // Auxiliary Heating stored as MW, heating is in W
+	double Heating = pVacuumConfig->AuxiliaryHeating * 1e6 / pVacuumConfig->PlasmaVolume(); // Auxiliary Heating stored as MW, heating is in W/m^3
 	if ( pVacuumConfig->AlphaHeating ) {
-		/*
-		 * If the slowing-down time is longer than the energy confinement time
-		 * reduce the alpha heating by that amount
-		 */
-		double AlphaHeatingFraction = EnergyConfinementTime() / SlowingDownTime();
-		AlphaHeatingFraction = 1.0;
 		// 1e6 as we are using W/m^3 and the formulary was in MW/m^3
-		Heating += AlphaHeating() * 1e6 * AlphaHeatingFraction;
+		Heating += AlphaHeating() * 1e6;
 	}
 	// std::cout << "e-Heating comprises " << Heating << " of aux and " << IonToElectronHeatTransfer() << " transfer" << std::endl;
 	return Heating + IonToElectronHeatTransfer();

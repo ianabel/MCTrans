@@ -68,6 +68,7 @@ class MirrorPlasma {
 		};
 
 		// Copy Constructor
+		/*
 		MirrorPlasma( MirrorPlasma const& other ) :
 			pVacuumConfig( other.pVacuumConfig )
 		{
@@ -81,6 +82,9 @@ class MirrorPlasma {
 			Zeff = other.Zeff;
 		   MachNumber = other.MachNumber;
 		};
+		*/
+
+		MirrorPlasma( MirrorPlasma const& ) = delete;
 
 		MirrorPlasma( toml::value const& configSection );
 
@@ -130,10 +134,11 @@ class MirrorPlasma {
 		double KineticEnergy() const;
 		double ThermalEnergy() const;
 
-		void PrintReport() const;
+		void PrintReport();
 
 		void InitialiseNetCDF();
-		void WriteTiemslice();
+		void WriteTimeslice();
+		void FinaliseNetCDF();
 
 
 		std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig;

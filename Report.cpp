@@ -22,8 +22,16 @@ void PrintWithUnit( std::ostream& out, double value, std::string const& unit )
 }
 
 
-void MirrorPlasma::PrintReport() const
+void MirrorPlasma::PrintReport()
 {
+	if ( pVacuumConfig->NetcdfOutputFile != "" )
+	{
+		// Final timeslice
+		WriteTimeslice();
+		// Tidy up
+		FinaliseNetCDF();
+	}
+
 	std::ostream *p_out;
 	if ( pVacuumConfig->OutputFile == "" )
 		p_out = &std::cout;

@@ -37,21 +37,20 @@ int main( int argc, char** argv )
 	return 0;
 }
 
-std::unique_ptr<MirrorPlasma> MCTransConfig::Solve() const
+std::unique_ptr<MirrorPlasma> MCTransConfig::Solve()
 {
-	std::unique_ptr<MirrorPlasma> plasma = std::make_unique<MirrorPlasma>( *ReferencePlasmaState );
 	switch ( Type ) {
 		case SolveType::SteadyStateMachSolve:
-			doMachSolve( *plasma );
+			doMachSolve( *ReferencePlasmaState );
 			break;
 		case SolveType::SteadyStateTempSolve:
-			doTempSolve( *plasma );
+			doTempSolve( *ReferencePlasmaState );
 			break;
 		default:
 			throw std::invalid_argument( "Unknown Solve Type" );
 	}
 	
-	return plasma;
+	return std::move( ReferencePlasmaState );
 }
 
 void MCTransConfig::doMachSolve( MirrorPlasma& plasma ) const

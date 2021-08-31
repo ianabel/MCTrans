@@ -13,6 +13,7 @@ class NetCDFIO
 		NetCDFIO();
 		~NetCDFIO();
 		void Open( const std::string &file );
+		void Close();
 		void AddScalarVariable( std::string&& name, std::string&& description, std::string&& units, double value );
 
 	private:
