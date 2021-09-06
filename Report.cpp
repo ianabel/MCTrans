@@ -116,11 +116,9 @@ void MirrorPlasma::PrintReport()
 	out << "Power Required (at the plasma) to support rotation ";
 	PrintWithUnit( out, ElectricPotential() * JRadial, "W" );
 	out << std::endl;
-#ifdef DEBUG
 	double omega = v/Rmid;
-	out << "\t Power Loss from viscous torque " << ViscousTorque()*omega*pVacuumConfig->PlasmaVolume() << std::endl;
-	out << "\t Power Loss from parallel loss  " << ParallelAngularMomentumLossRate()*omega*pVacuumConfig->PlasmaVolume() << std::endl;
-#endif
+	out << "\t Power Loss from viscous torque "; PrintWithUnit( out, ViscousTorque()*omega*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
+	out << "\t Power Loss from parallel loss  "; PrintWithUnit( out, ParallelAngularMomentumLossRate()*omega*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
 	out << std::endl;
 
 	double KineticStoredEnergy = KineticEnergy();
