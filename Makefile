@@ -19,7 +19,7 @@ SUNDIALS_INC=$(SUNDIALS_DIR)/include
 SUNDIALS_LIB=$(SUNDIALS_DIR)/lib
 
 SUNFLAGS=-I$(SUNDIALS_INC)
-SUN_LINK_FLAGS = -L$(SUNDIALS_LIB) -Wl,-rpath $(SUNDIALS_LIB) -lsundials_kinsol -lsundials_nvecserial
+SUN_LINK_FLAGS = -L$(SUNDIALS_LIB) -Wl,-rpath $(SUNDIALS_LIB) -lsundials_arkode -lsundials_nvecserial
 
 TOML11_DIR ?= ./toml11
 TOML_FLAGS = -I$(TOML11_DIR)
@@ -34,10 +34,15 @@ endif
 NETCDF_LINK_FLAGS =
 
 ifdef NETCDF_DIR
-	NETCDF_FLAGS = 
-	NETCDF_LINK_FLAGS = -L$(NETCDF_DIR) -Wl,-rpath $(NETCDF_DIR)
-	CXXFLAGS += $(NETCDF_FLAGS)
+	CXXFLAGS += -I$(NETCDF_DIR)/include
+	NETCDF_LINK_FLAGS = -L$(NETCDF_DIR)/lib -Wl,-rpath $(NETCDF_DIR)/lib
 endif
+
+ifdef NETCDF_CXX_DIR
+	CXXFLAGS += -I$(NETCDF_CXX_DIR)/include
+	NETCDF_LINK_FLAGS += -L$(NETCDF_CXX_DIR)/lib -Wl,-rpath $(NETCDF_CXX_DIR)/lib
+endif
+	
 
 NETCDF_LINK_FLAGS += -lnetcdf -lnetcdf_c++4
 

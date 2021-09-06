@@ -83,7 +83,7 @@ There is also a `check_examples.sh` script that will check all the examples stil
 
 ## Known Issues
 
-General issues include the fact that the steady-state equations may have multiple roots.
+General issues include the fact that the steady-state equations may have multiple roots. Options exist including running a nonlinear solver from a given initial condition, or running the time-dependent solver to steaady-state from a given initial condition.
 
 Specific known issues are listed here.
 

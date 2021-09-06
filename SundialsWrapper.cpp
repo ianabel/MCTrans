@@ -1,5 +1,5 @@
 
-#include <kinsol/kinsol.h>             /* access to KINSOL func., consts. */
+#include <arkode/arkode_arkstep.h>     /* access to ARKode func., consts. */
 #include <nvector/nvector_serial.h>    /* access to serial N_Vector       */
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix       */
 #include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver */
@@ -28,31 +28,49 @@
 #include "MirrorPlasma.hpp"
 #include <exception>
 #include <iostream>
+#include <iomanip>
 
-void KinsolErrorWrapper( int errorFlag, std::string&& fName )
+void ArkodeErrorWrapper( int errorFlag, std::string&& fName )
 {
-	if ( errorFlag == KIN_SUCCESS )
+	if ( errorFlag == ARK_SUCCESS )
 		return;
 	else
 	{
-		throw std::runtime_error( "Error " + std::to_string( errorFlag ) + " returned from KINSol function: " + fName );
+		throw std::runtime_error( "Error " + std::to_string( errorFlag ) + " returned from ARKode function: " + fName );
 	}
 }
 
 
 
-int KINSysWrapper_TemperatureSolve( N_Vector u, N_Vector F, void* voidPlasma )
+int ARKStep_TemperatureSolve( realtype t, N_Vector u, N_Vector uDot, void* voidPlasma )
 {
 	MirrorPlasma* plasmaPtr = reinterpret_cast<MirrorPlasma*>( voidPlasma );
+
+	double TiOld = plasmaPtr->IonTemperature;
+	double TeOld = plasmaPtr->ElectronTemperature;
+
+	if ( ION_TEMPERATURE( u ) < 0.0 )
+		return 1;
+	if ( ELECTRON_TEMPERATURE( u ) < 0.0 )
+		return 2;
 
 	plasmaPtr->IonTemperature = ION_TEMPERATURE( u );
 	plasmaPtr->ElectronTemperature = ELECTRON_TEMPERATURE( u );
 	//plasma->ElectronDensity = DENSITY( u );
 	//plasma->SetIonDensity() // Set n_i from n_e, Z_i
 	
+	try {
+		plasmaPtr->SetTime(t);
+	} catch ( std::domain_error &e ) {
+		// Timestep too long?
+#ifdef DEBUG
+		std::cerr << "Evaluating RHS at t = " << std::setprecision( 20 ) << t << " ?!" << std::endl;
+#endif
+		return 3;
+	}
 	plasmaPtr->SetMachFromVoltage();
 #if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
-	std::cerr << "Iteration at T_i = " << plasmaPtr->IonTemperature << " ; T_e = " << plasmaPtr->ElectronTemperature << " MachNumber " << plasmaPtr->MachNumber << std::endl;
+	std::cerr << "t = " << t << " ; T_i = " << plasmaPtr->IonTemperature << " ; T_e = " << plasmaPtr->ElectronTemperature << " MachNumber " << plasmaPtr->MachNumber << std::endl;
 #endif
 
 
@@ -67,20 +85,24 @@ int KINSysWrapper_TemperatureSolve( N_Vector u, N_Vector F, void* voidPlasma )
 		std::cerr << " Electron Heating = " << ElectronHeating << " ; Electron Heat Loss  = " << ElectronHeatLoss << std::endl;
 #endif
 
-		ION_HEAT_BALANCE( F )      = ( IonHeating - IonHeatLoss );
-		ELECTRON_HEAT_BALANCE( F ) = ( ElectronHeating - ElectronHeatLoss );
-//		PARTICLE_BALANCE( F ) = ParticleBalance; 
+		ION_HEAT_BALANCE( uDot )      = ( IonHeating - IonHeatLoss );
+		ELECTRON_HEAT_BALANCE( uDot ) = ( ElectronHeating - ElectronHeatLoss );
+//		PARTICLE_BALANCE( uDot ) = ParticleBalance; 
 
 	} catch ( std::exception& e ) {
 		return -1;
 	} 
 
-	return 0;
+	plasmaPtr->IonTemperature = TiOld;
+	plasmaPtr->ElectronTemperature = TeOld;
+	plasmaPtr->SetMachFromVoltage();
+
+	return ARK_SUCCESS;
 }
 
 // In this mode, Mach Number is u(0) and T_i is u(1)
-// but we still solve both the power-balance equations
-int KINSysWrapper_FixedTeSolve( N_Vector u, N_Vector F, void* voidPlasma )
+// but we still solve both the power-balance equations by running to steady state
+int ARKStep_FixedTeSolve( realtype t, N_Vector u, N_Vector F, void* voidPlasma )
 {
 	MirrorPlasma* plasmaPtr = reinterpret_cast<MirrorPlasma*>( voidPlasma );
 
@@ -109,99 +131,87 @@ int KINSysWrapper_FixedTeSolve( N_Vector u, N_Vector F, void* voidPlasma )
 
 void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 {
-	void *kinMem = KINCreate();
-	if ( kinMem == nullptr ) {
-		throw std::runtime_error( "Cannot allocate KINSol Working Memory" );
-	}
-
+	
 	sunindextype NDims = N_DIMENSIONS;
-	int errorFlag = KIN_SUCCESS;
-
 	N_Vector initialCondition = N_VNew_Serial( NDims );
 
 	double InitialTemperature = plasma.pVacuumConfig->InitialTemp;
 	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
 	ELECTRON_TEMPERATURE( initialCondition ) = InitialTemperature;
 
-	errorFlag = KINInit( kinMem, KINSysWrapper_TemperatureSolve, initialCondition );
+	plasma.ElectronTemperature = InitialTemperature;
+	plasma.IonTemperature = InitialTemperature;
+	plasma.SetMachFromVoltage();
 
-	if ( errorFlag != KIN_SUCCESS ) {
-		throw std::runtime_error( "Could not initialise KINSol" );
+	plasma.InitialiseNetCDF();
+
+	realtype t0 = 0;
+
+	void *arkMem = ARKStepCreate( nullptr, ARKStep_TemperatureSolve, t0, initialCondition );
+
+	if ( arkMem == nullptr ) {
+		throw std::runtime_error( "Cannot allocate ARKStep Working Memory" );
 	}
 
-	// Dummy Jacobian, will be filled by KINSol with finite-difference approximations
+	// Dummy Jacobian, will be filled by ARKStep with finite-difference approximations
 	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims );
 	// Small system, direct solve is fastest
 	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian );
 
-	KinsolErrorWrapper( KINSetLinearSolver( kinMem, LS, Jacobian ), "KINSetLinearSolver" );
+	ArkodeErrorWrapper( ARKStepSetLinearSolver( arkMem, LS, Jacobian ), "ARKStepSetLinearSolver" );
 	
 	
 
-	double ftol = 1.e-3;
-	double scstol = 1.e-11;
-	double jtol = 1.e-9;
+	double abstol = 1e-6;
+	double reltol = 1e-5;
 
-	KinsolErrorWrapper( KINSetFuncNormTol( kinMem, ftol ), "KINSetFuncNormTol" );
-	KinsolErrorWrapper( KINSetScaledStepTol( kinMem, scstol ), "KINSetScaledStepTol" );
-	KinsolErrorWrapper( KINSetRelErrFunc( kinMem, jtol ), "KINSetRelErrFunc" );
-
-	N_Vector positivityEnforcement = N_VNew_Serial( NDims );
-	N_VConst( 0.0, positivityEnforcement ); // Default to no constraints
-	ION_TEMPERATURE( positivityEnforcement ) = 1.0;      // T_i >= 0
-	ELECTRON_TEMPERATURE( positivityEnforcement ) = 1.0; // T_e >= 0
-
-	KinsolErrorWrapper( KINSetConstraints( kinMem, positivityEnforcement ), "KINSetConstraints" );
-
-	KinsolErrorWrapper( KINSetUserData( kinMem, reinterpret_cast<void*>( &plasma ) ), "KINSetUserData( kinMem, reinterpret_cast<void*>" );
-
-	// set one to be the constant vector containing N 1s
-	// this turns off scaling
-	N_Vector one = N_VNew_Serial( NDims );
-	N_VConst( 1.0, one );
-
-	KinsolErrorWrapper( KINSetMaxSetupCalls( kinMem, 1 ), "KINSetMaxSetupCalls" );
-#if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
-	KinsolErrorWrapper( KINSetPrintLevel( kinMem, 1 ), "KINSetPrintLevel" );
-#else
-	KinsolErrorWrapper( KINSetPrintLevel( kinMem, 0 ), "KINSetPrintLevel" );
-#endif
+	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
+	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, DEFAULT_DIRK_5, -1 ), "ARKStepSetTableNum" );
 	
-	// Reference value for F(u) should be roughly
-	// 1.5 * Final Temperature * Final Density / tau, where tau is some typical equilibrium timescale
-	// choosing tau = 100ms, T = 1keV, n = 10^20 we have
-	N_Vector f_scale = N_VNew_Serial( NDims );
-	ELECTRON_TEMPERATURE( f_scale ) = 10 / ( 1.5 * ReferenceTemperature * ReferenceDensity );
-	ION_TEMPERATURE( f_scale ) = 10 / ( 1.5 * ReferenceTemperature * ReferenceDensity );
-
-#if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
-	std::cerr << "f_scale set to (" << ION_TEMPERATURE( f_scale ) << ", " << ELECTRON_TEMPERATURE( f_scale ) << ")" << std::endl;
-#endif
+	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 
 
-	errorFlag =  KINSol( kinMem, initialCondition, KIN_LINESEARCH, one, f_scale );
-	switch ( errorFlag ) {
-		case KIN_SUCCESS:
-			break;
-		case KIN_INITIAL_GUESS_OK:
+	const unsigned long MaxSteps = 1e4;
+	ArkodeErrorWrapper( ARKStepSetMaxNumSteps( arkMem, MaxSteps ), "ARKStepSetMaxNumSteps" );
+
+	realtype t,tRet = 0;	
+	int errorFlag;
+
 #ifdef DEBUG
-			std::cerr << " Initial Temperature is a steady-state solution?! " << std::endl;
+	std::cerr << "Solving from t = 0 to t = " << EndTime << std::endl;
+#endif 
+	ArkodeErrorWrapper( ARKStepSetStopTime( arkMem, EndTime ), "ARKStepSetStopTime" );
+	for ( t = OutputDeltaT; t < EndTime; t += OutputDeltaT )
+	{
+		errorFlag = ARKStepEvolve( arkMem, t, initialCondition, &tRet, ARK_NORMAL );
+		plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
+		plasma.IonTemperature = ION_TEMPERATURE( initialCondition );
+		plasma.SetMachFromVoltage();
+		plasma.WriteTimeslice( t );
+#if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
+	std::cerr << "After evolving to " << tRet << " T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
 #endif
-			break;
-		default:
-			throw std::runtime_error( "KINSol failed with error " + std::to_string( errorFlag ) );
-			break;
-	}	// We've solved and found the answer. Update the plasma object
+		switch ( errorFlag ) {
+			case ARK_SUCCESS:
+				break;
+			default:
+				throw std::runtime_error( "ARKStep failed with error " + std::to_string( errorFlag ) );
+				break;
+		}	
+	}
+
+	// We've solved and found the answer. Update the plasma object
+
 	plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 	plasma.IonTemperature      =      ION_TEMPERATURE( initialCondition );
+	plasma.SetTime( EndTime );
 
 	// Teardown 
 	{
 		SUNLinSolFree( LS );
 		SUNMatDestroy( Jacobian );
-		N_VDestroy( one );
 		N_VDestroy( initialCondition );
-		KINFree( &kinMem );
+		ARKStepFree( &arkMem );
 	}
 
 	plasma.SetMachFromVoltage();
@@ -211,82 +221,55 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 // e.g. Feedback Control of Voltage on Te
 void MCTransConfig::doFixedTeSolve( MirrorPlasma& plasma ) const
 {
-	void *kinMem = KINCreate();
-	if ( kinMem == nullptr ) {
-		throw std::runtime_error( "Cannot allocate KINSol Working Memory" );
-	}
-
+	throw std::logic_error( "Fixed T_e solve not yet fully implemented" );
 	sunindextype NDims = N_DIMENSIONS;
-	int errorFlag = KIN_SUCCESS;
-
 	N_Vector initialCondition = N_VNew_Serial( NDims );
 
-	double InitialTemperature = 0.1;
+	double InitialTemperature = plasma.pVacuumConfig->InitialTemp;
 	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
 	ELECTRON_TEMPERATURE( initialCondition ) = InitialTemperature;
 
-	errorFlag = KINInit( kinMem, KINSysWrapper_TemperatureSolve, initialCondition );
-	if ( errorFlag != KIN_SUCCESS ) {
-		throw std::runtime_error( "Could not initialise KINSol" );
+	realtype t0 = 0;
+
+	void *arkMem = ARKStepCreate( nullptr, ARKStep_TemperatureSolve, t0, initialCondition );
+
+	if ( arkMem == nullptr ) {
+		throw std::runtime_error( "Cannot allocate ARKStep Working Memory" );
 	}
 
-	// Dummy Jacobian, will be filled by KINSol with finite-difference approximations
+	// Dummy Jacobian, will be filled by ARKStep with finite-difference approximations
 	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims );
 	// Small system, direct solve is fastest
 	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian );
 
-	KinsolErrorWrapper( KINSetLinearSolver( kinMem, LS, Jacobian ), "KINSetLinearSolver" );
-
+	ArkodeErrorWrapper( ARKStepSetLinearSolver( arkMem, LS, Jacobian ), "ARKStepSetLinearSolver" );
+	
 	
 
-	double ftol = 1.e-3;
-	double scstol = 1.e-9;
-	double jtol = 1.e-9;
+	double abstol = 1e-6;
+	double reltol = 1e-5;
 
-	KinsolErrorWrapper( KINSetFuncNormTol( kinMem, ftol ), "KINSetFuncNormTol" );
-	KinsolErrorWrapper( KINSetScaledStepTol( kinMem, scstol ), "KINSetScaledStepTol" );
-	KinsolErrorWrapper( KINSetRelErrFunc( kinMem, jtol ), "KINSetRelErrFunc" );
-
-	N_Vector positivityEnforcement = N_VNew_Serial( NDims );
-	N_VConst( 0.0, positivityEnforcement ); // Default to no constraints
-	ION_TEMPERATURE( positivityEnforcement ) = 1.0;      // T_i >= 0
-	ELECTRON_TEMPERATURE( positivityEnforcement ) = 1.0; // T_e >= 0
-
-	KinsolErrorWrapper( KINSetConstraints( kinMem, positivityEnforcement ), "KINSetConstraints" );
-
-	KinsolErrorWrapper( KINSetUserData( kinMem, reinterpret_cast<void*>( &plasma ) ), "KINSetUserData( kinMem, reinterpret_cast<void*>" );
-
-	// set one to be the constant vector containing N 1s
-	// this turns off scaling
-	N_Vector one = N_VNew_Serial( NDims );
-	N_VConst( 1.0, one );
-
-	KinsolErrorWrapper( KINSetMaxSetupCalls( kinMem, 1 ), "KINSetMaxSetupCalls" );
-	KinsolErrorWrapper( KINSetPrintLevel( kinMem, 0 ), "KINSetPrintLevel" );
-
-	// Reference value for F(u) should be roughly
-	// 1.5 * Final Temperature * Final Density / tau, where tau is some typical equilibrium timescale
-	// choosing tau = 100ms, T = 1keV, n = 10^20 we have
-	N_Vector f_scale = N_VNew_Serial( NDims );
-	ELECTRON_TEMPERATURE( f_scale ) = 10 / ( 1.5 * ReferenceTemperature * ReferenceDensity );
-	ION_TEMPERATURE( f_scale ) = 10 / ( 1.5 * ReferenceTemperature * ReferenceDensity );
+	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
+	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, DEFAULT_DIRK_5, -1 ), "ARKStepSetTableNum" );
+	
+	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 
 
-	errorFlag =  KINSol( kinMem, initialCondition, KIN_LINESEARCH, one, f_scale );
+	const unsigned long MaxSteps = 1e4;
+	ArkodeErrorWrapper( ARKStepSetMaxNumSteps( arkMem, MaxSteps ), "ARKStepSetMaxNumSteps" );
+
+	realtype t,tRet;	
+	int errorFlag = ARKStepEvolve( arkMem, t, initialCondition, &tRet, ARK_NORMAL );
 	switch ( errorFlag ) {
-		case KIN_SUCCESS:
-			break;
-		case KIN_INITIAL_GUESS_OK:
-#ifdef DEBUG
-			std::cerr << " Initial Temperature is a steady-state solution?! " << std::endl;
-#endif
+		case ARK_SUCCESS:
 			break;
 		default:
 			throw std::runtime_error( "KINSol failed with error " + std::to_string( errorFlag ) );
 			break;
-	}
+	}	
 
 	// We've solved and found the answer. Update the plasma object
+
 	plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 	plasma.IonTemperature      =      ION_TEMPERATURE( initialCondition );
 
@@ -294,11 +277,11 @@ void MCTransConfig::doFixedTeSolve( MirrorPlasma& plasma ) const
 	{
 		SUNLinSolFree( LS );
 		SUNMatDestroy( Jacobian );
-		N_VDestroy( one );
 		N_VDestroy( initialCondition );
-		KINFree( &kinMem );
+		ARKStepFree( &arkMem );
 	}
 
 	plasma.SetMachFromVoltage();
 	plasma.ComputeSteadyStateNeutrals();
+	plasma.FinaliseNetCDF();
 }

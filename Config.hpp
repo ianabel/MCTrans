@@ -22,6 +22,15 @@ class MCTransConfig {
 				throw std::invalid_argument( "[error] Cannot specify both temperature and voltage." );
 			else if ( !MachSolve && !TempSolve )
 				throw std::invalid_argument( "[error] Must specify at least one of ElectronTemperature or Voltage." );
+
+			if ( config.count( "timestepping" ) ) {
+				const auto & timestep_conf = toml::find<toml::table>( config, "timestepping" );
+				OutputDeltaT = timestep_conf.at( "OutputCadence" ).as_floating();
+				EndTime = timestep_conf.at( "EndTime" ).as_floating();
+			} else {
+				OutputDeltaT = 0.0005; // 500µs cadence
+				EndTime = 0.100; // 100 ms run time
+			}
 		};
 		enum SolveType {
 			SteadyStateMachSolve,
@@ -34,6 +43,8 @@ class MCTransConfig {
 		void doMachSolve( MirrorPlasma& plasma ) const;
 		void doTempSolve( MirrorPlasma& plasma ) const;
 		void doFixedTeSolve( MirrorPlasma& plasma ) const;
+
+		double OutputDeltaT,EndTime;
 
 };
 

@@ -6,6 +6,8 @@
 #include "NetCDFIO.hpp"
 #include <toml.hpp>
 
+#include <boost/math/interpolators/makima.hpp>
+
 #include <memory>
 #include <cmath>
 
@@ -137,7 +139,7 @@ class MirrorPlasma {
 		void PrintReport();
 
 		void InitialiseNetCDF();
-		void WriteTimeslice();
+		void WriteTimeslice( double T );
 		void FinaliseNetCDF();
 
 
@@ -214,7 +216,11 @@ class MirrorPlasma {
 		double NeutronWallLoading() const;
 		double DDNeutronRate() const;
 
-
+		using interpolant = boost::math::interpolators::makima<std::vector<double>>;
+		std::unique_ptr<interpolant> VoltageFunction;
+		void ReadVoltageFile( std::string const& );
+		double time;
+		bool isTimeDependent;
 	public:
 		double AlphaHeating() const;
 		double PromptAlphaLossFraction() const;
@@ -226,7 +232,8 @@ class MirrorPlasma {
 		double RadialCurrent() const;
 		double ParallelIonThrust() const;
 		double ParallelCurrent(double) const;
-
+		void UpdateVoltage();
+		void SetTime( double );
 };
 
 

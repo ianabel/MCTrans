@@ -39,15 +39,19 @@ fig, ax1 = plt.subplots()
 color = 'tab:red'
 ax1.set_xlabel('time (s)')
 ax1.set_ylabel('Voltage (V)', color=color)
-ax1.plot(t_var, v_var, label='V', color=color)
+ax1.plot(t_var[1:], v_var[1:], label='V', color=color)
 ax1.tick_params(axis='y', labelcolor=color)
 
 ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
+power_var = np.abs(np.array(j_var) * np.array(v_var) / 1000.0);
+
 color = 'tab:blue'
-ax2.set_ylabel('Radial Current (A)', color=color)  # we already handled the x-label with ax1
-ax2.plot(t_var, j_var, color=color)
+ax2.set_ylabel('Power Draw (kW)', color=color)  # we already handled the x-label with ax1
+ax2.plot(t_var[1:], power_var[1:], color=color)
 ax2.tick_params(axis='y', labelcolor=color)
+fig.figsize=(10,6)
+fig.dpi=210
 
 fig.tight_layout()  # otherwise the right y-label is slightly clipped
 plt.legend()

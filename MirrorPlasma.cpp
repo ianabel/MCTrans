@@ -258,11 +258,14 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 		NeutralDensity = 0;
 	}
 
-	if ( pVacuumConfig->NetcdfOutputFile != "" )
-	{
-		InitialiseNetCDF();
+	if ( mirrorConfig.count( "VoltageTrace" ) == 1 ) {
+		ReadVoltageFile( mirrorConfig.at( "VoltageTrace" ).as_string() );
+		SetTime( 0 );
+		isTimeDependent = true;
+	} else {
+		time = std::nan( "" );
+		isTimeDependent = false;
 	}
-
 
 }
 
@@ -647,7 +650,18 @@ double MirrorPlasma::RadialCurrent() const
 {
 	double Torque = -ViscousTorque();
 	double ParallelLosses = -ParallelAngularMomentumLossRate();
-	// R J_R = (<Torque> + <ParallelLosses>)/B_z
+	// Inertial term = m_i n_i R^2 d omega / dt ~= m_i n_i R^2 d  / dt ( E/ ( R*B) )
+	//					~= m_i n_i (R/B) * d/dt ( V / a )	
+	double Inertia;
+	if ( isTimeDependent )
+		Inertia = pVacuumConfig->IonSpecies.Mass * IonDensity * ( pVacuumConfig->PlasmaCentralRadius() / pVacuumConfig->CentralCellFieldStrength ) 
+		            * VoltageFunction->prime( time );
+	else
+		Inertia = 0.0;
+
+	Inertia = 0.0;
+	// R J_R = (<Torque> + <ParallelLosses> + <Inertia>)/B_z
+	// I_R = 2*Pi*R*L*J_R
 	double I_radial = 2.0 * M_PI * pVacuumConfig->PlasmaLength * ( Torque + ParallelLosses ) / pVacuumConfig->CentralCellFieldStrength;
 	return I_radial;
 }
@@ -661,4 +675,19 @@ double MirrorPlasma::ParallelIonThrust() const
 	double ParallelMomentum = ::sqrt( 2.0  *  ParallelKineticEnergy * pVacuumConfig->IonSpecies.Mass * ProtonMass );
 	// Only half the particle loss, as the Thrust diagnostics need each end separately.
 	return ParallelMomentum * ( ParallelIonParticleLoss() / 2.0 ) * pVacuumConfig->PlasmaVolume();
+}
+
+
+void MirrorPlasma::UpdateVoltage()
+{
+	if ( !isTimeDependent )
+		return;
+	else
+		pVacuumConfig->ImposedVoltage = ( *VoltageFunction )( time );	
+}
+
+void MirrorPlasma::SetTime( double new_time )
+{
+	time = new_time;
+	UpdateVoltage();
 }
