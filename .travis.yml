@@ -11,6 +11,8 @@ addons:
   apt:
     packages:
       libboost-dev
+      libnetcdf-c++4-dev
+      libnetcdf-dev
       cmake
 
 #jobs:
