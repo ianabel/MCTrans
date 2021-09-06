@@ -15,32 +15,35 @@ all: MCTrans++
 
 SUNDIALS_DIR ?= /usr/local
 
-SUNDIALS_INC=$(SUNDIALS_DIR)/include
-SUNDIALS_LIB=$(SUNDIALS_DIR)/lib
+SUNDIALS_INC=$(realpath $(SUNDIALS_DIR)/include)
+SUNDIALS_LIB=$(realpath $(SUNDIALS_DIR)/lib)
 
 SUNFLAGS=-I$(SUNDIALS_INC)
 SUN_LINK_FLAGS = -L$(SUNDIALS_LIB) -Wl,-rpath $(SUNDIALS_LIB) -lsundials_arkode -lsundials_nvecserial
 
 TOML11_DIR ?= ./toml11
-TOML_FLAGS = -I$(TOML11_DIR)
+TOML_FLAGS = -I$(realpath $(TOML11_DIR))
 
 CXXFLAGS += $(TOML_FLAGS) $(SUNFLAGS)
 
 ifdef BOOST_DIR
-	BOOST_FLAGS = -I$(BOOST_DIR)
+	BOOST_FLAGS = -I$(realpath $(BOOST_DIR))
 	CXXFLAGS += $(BOOST_FLAGS)
 endif
 
 NETCDF_LINK_FLAGS =
 
 ifdef NETCDF_DIR
-	CXXFLAGS += -I$(NETCDF_DIR)/include
-	NETCDF_LINK_FLAGS = -L$(NETCDF_DIR)/lib -Wl,-rpath $(NETCDF_DIR)/lib
+	CXXFLAGS += -I$(realpath $(NETCDF_DIR))/include
+	NETCDF_LINK_FLAGS = -L$(realpath $(NETCDF_DIR))/lib -Wl,-rpath $(realpath $(NETCDF_DIR))/lib
+ifndef NETCDF_CXX_DIR
+	NETCDF_CXX_DIR = $(NETCDF_DIR)
+endif
 endif
 
 ifdef NETCDF_CXX_DIR
-	CXXFLAGS += -I$(NETCDF_CXX_DIR)/include
-	NETCDF_LINK_FLAGS += -L$(NETCDF_CXX_DIR)/lib -Wl,-rpath $(NETCDF_CXX_DIR)/lib
+	CXXFLAGS += -I$(realpath $(NETCDF_CXX_DIR))/include
+	NETCDF_LINK_FLAGS += -L$(realpath $(NETCDF_CXX_DIR))/lib -Wl,-rpath $(realpath $(NETCDF_CXX_DIR))/lib
 endif
 	
 
@@ -67,7 +70,7 @@ examples: examples/*.report
 
 
 examples/%.report: examples/%.conf MCTrans++
-	$(warning "WARNING: Replacing the old output $@ with current output of MCTrans++ $<)
+	$(warning "WARNING: Replacing the old output $@ with current output of MCTrans++ $<")
 	./MCTrans++ $< > $@
 
 test: MCTrans++
