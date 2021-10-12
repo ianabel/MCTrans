@@ -284,7 +284,7 @@ double MirrorPlasma::LogLambdaElectron() const
 double MirrorPlasma::ElectronCollisionTime() const
 {
 	double tau_ee = ::sqrt( ElectronMass * ElectronTemperature * ReferenceTemperature / 2.0 ) * ( ElectronTemperature * ReferenceTemperature ) / 
-	          ( ElectronDensity * ReferenceDensity * ::pow( GaussianElectronCharge, 4 ) * LogLambdaElectron() );
+	          ( ElectronDensity * ReferenceDensity * ::pow( Iectron() );
 	return tau_ee;
 }
 
@@ -538,7 +538,7 @@ double MirrorPlasma::ThermalEnergy() const
 double MirrorPlasma::ClassicalViscosity() const
 {
 	double omega_ci = IonCyclotronFrequency();
-	return pVacuumConfig->PerpFudgeFactor * ( 3.0 / 10.0 ) * ( pVacuumConfig->IonSpecies.Charge * ElectronDensity * ReferenceDensity * IonTemperature * ReferenceTemperature ) / ( omega_ci * omega_ci * IonCollisionTime() );
+	return pVacuumConfig->PerpFudgeFactor * ( 3.0 / 10.0 ) * ( IonDensity * ReferenceDensity * IonTemperature * ReferenceTemperature ) / ( omega_ci * omega_ci * IonCollisionTime() );
 }
 
 
