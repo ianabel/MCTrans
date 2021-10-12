@@ -21,7 +21,7 @@ Typical plasma scale lenghts are ~ 0.1 m  = 7.34 rho_i
 No auxiliary heating was included in this calculation.
 
 
-Operating Mach number is 5.32
+Operating Mach number is 5.31
 Alfven Mach number is 0.805
 
 Velocity is 1.67e+06 m/s
@@ -34,19 +34,19 @@ Total potential drop is 100 kV
 Radial Current Drawn from Power Supply 127 mA
 Power Required (at the plasma) to support rotation 12.7 kW
 	 Power Loss from viscous torque 6.97 kW
-	 Power Loss from parallel loss  5.69 kW
+	 Power Loss from parallel loss  5.71 kW
 
 Total Stored Energy is 5.57 kJ
  of which 4.38 kJ is kinetic energy in the rotation
       and 1.19 kJ is thermal energy of the plasma
 Energy Confinement Time is 171 ms
 Of which
-	Confinement time from parallel losses is 387 ms
-	Confinement time from perpendicular losses is 189 ms
+	Confinement time from parallel losses is 386 ms
+	Confinement time from perpendicular losses is 188 ms
 
-Particle (Ion) Confinement Time ~= 1.54 s
+Particle (Ion) Confinement Time ~= 1.53 s
 
-Ion-Electron Temperature Equilibration Time is 102 ms
+Ion-Electron Temperature Equilibration Time is 103 ms
 
 Plasma must be provided at a rate of 1.3e+18 electrons /s to maintain steady-state
 
@@ -61,6 +61,6 @@ Dimensionless parameters:
 	 Omega_i tau_ii = 2.02e+05
 
 Fusion Triple Product 
-	 n T τ = 2.75e+18 keV s /m^3
+	 n T τ = 2.74e+18 keV s /m^3
 
 No Nuclear Reaction Diagnostics for Ion species: Hydrogen

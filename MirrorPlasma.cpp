@@ -284,7 +284,7 @@ double MirrorPlasma::LogLambdaElectron() const
 double MirrorPlasma::ElectronCollisionTime() const
 {
 	double tau_ee = ::sqrt( ElectronMass * ElectronTemperature * ReferenceTemperature / 2.0 ) * ( ElectronTemperature * ReferenceTemperature ) / 
-	          ( ElectronDensity * ReferenceDensity * ::pow( Iectron() );
+	          ( ElectronDensity * ReferenceDensity * ::pow( GaussianElectronCharge, 4 ) * LogLambdaElectron() );
 	return tau_ee;
 }
 
