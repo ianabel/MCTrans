@@ -19,12 +19,12 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 
 		if ( algConfig.count( "PerpFudgeFactor" ) == 1 )
 			PerpFudgeFactor = algConfig.at( "PerpFudgeFactor" ).as_floating();
-		else 
+		else
 			PerpFudgeFactor = 1.0;
 
 		if ( algConfig.count( "UseAmbipolarPhi" ) == 1 )
 			AmbipolarPhi = algConfig.at( "UseAmbipolarPhi" ).as_boolean();
-		else 
+		else
 			AmbipolarPhi = true;
 
 		if ( algConfig.count( "InitialTemp" ) == 1 )
@@ -115,7 +115,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 
 	if ( mirrorConfig.count( "ReportThrust" ) == 1 )
 		ReportThrust = mirrorConfig.at( "ReportThrust" ).as_boolean();
-	else 
+	else
 		ReportThrust = false;
 
 	CentralCellFieldStrength =  mirrorConfig.at( "CentralCellField" ).as_floating();
@@ -188,7 +188,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 		ImposedVoltage = mirrorConfig.at( "Voltage" ).as_floating();
 	else if ( mirrorConfig.count( "Voltage" ) == 0 )
 		ImposedVoltage = 0.0;
-	else 
+	else
 		throw std::invalid_argument( "Imposed voltage specified more than once!" );
 
 	WallRadius = mirrorConfig.at( "WallRadius" ).as_floating();
@@ -203,7 +203,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	// This overrides the default for the chosen fuel
 	if ( mirrorConfig.count( "IncludeAlphaHeating" ) == 1 )
 		AlphaHeating = mirrorConfig.at( "IncludeAlphaHeating" ).as_boolean();
-	
+
 	// This overrides the default for the chosen fuel
 	if ( mirrorConfig.count( "ReportNuclearDiagnostics" ) == 1 )
 		ReportNuclearDiagnostics = mirrorConfig.at( "ReportNuclearDiagnostics" ).as_boolean();
@@ -280,12 +280,13 @@ double MirrorPlasma::LogLambdaElectron() const
 	return 24.0 - 0.5*::log( neNRL ) + ::log( TeNRL );
 }
 
-// tau_ee 
+// tau_ee
 double MirrorPlasma::ElectronCollisionTime() const
 {
-	double tau_ee = ::sqrt( ElectronMass * ElectronTemperature * ReferenceTemperature / 2.0 ) * ( ElectronTemperature * ReferenceTemperature ) / 
-	          ( ElectronDensity * ReferenceDensity * ::pow( GaussianElectronCharge, 4 ) * LogLambdaElectron() );
-	return tau_ee;
+	double PiThreeHalves = ::pow( M_PI, 1.5 ); // pi^(3/2)
+	double TeThreeHalves = ::pow( ElectronTemperature * ReferenceTemperature, 1.5 );
+	double ZIon = pVacuumConfig->IonSpecies.Charge;
+	return 12 * ::sqrt( ElectronMass ) * PiThreeHalves * TeThreeHalves * VacuumPermittivity * VacuumPermittivity / ( ::sqrt(2) ElectronDensity * ReferenceDensity * ::pow( ZIon, 2 ) * ::pow( ElectronCharge, 4 ) * LogLambdaIon() );
 }
 
 // NRL Formulary p34
@@ -302,7 +303,7 @@ double MirrorPlasma::IonCollisionTime() const
 	double PiThreeHalves = ::pow( M_PI, 1.5 ); // pi^(3/2)
 	double TiThreeHalves = ::pow( IonTemperature * ReferenceTemperature, 1.5 );
 	double ZIon = pVacuumConfig->IonSpecies.Charge;
-	return 12 * ::sqrt( pVacuumConfig->IonSpecies.Mass * ProtonMass ) * PiThreeHalves * TiThreeHalves * VacuumPermittivity * VacuumPermittivity / ( ElectronDensity * ReferenceDensity * ::pow( ZIon * ElectronCharge, 4 ) * LogLambdaIon() );
+	return 12 * ::sqrt( pVacuumConfig->IonSpecies.Mass * ProtonMass ) * PiThreeHalves * TiThreeHalves * VacuumPermittivity * VacuumPermittivity / ( ::sqrt(2) ElectronDensity * ReferenceDensity * ::pow( ZIon * ElectronCharge, 4 ) * LogLambdaIon() );
 }
 
 // Leading order contribution to Phi_0 in O(M^2)
@@ -385,14 +386,14 @@ double MirrorPlasma::ParallelIonParticleLoss() const
 double MirrorPlasma::ParallelIonHeatLoss() const
 {
 	// Energy loss per particle is ~ Chi_i + T_i
-	double Chi_i = pVacuumConfig->IonSpecies.Charge * AmbipolarPhi() * ( ElectronTemperature/IonTemperature ) + 
+	double Chi_i = pVacuumConfig->IonSpecies.Charge * AmbipolarPhi() * ( ElectronTemperature/IonTemperature ) +
 							0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
 	return ParallelIonPastukhovLossRate( Chi_i ) * ( IonTemperature * ReferenceTemperature ) * ( ::fabs( Chi_i )  + 1.0 );
 }
 /*
-double MirrorPlasma::ParallelCurrent( double Phi ) const 
+double MirrorPlasma::ParallelCurrent( double Phi ) const
 {
-	double Chi_i = pVacuumConfig->IonSpecies.Charge * Phi * ( ElectronTemperature/IonTemperature ) + 
+	double Chi_i = pVacuumConfig->IonSpecies.Charge * Phi * ( ElectronTemperature/IonTemperature ) +
 		0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
 	double Chi_e = -Phi; // Ignore small electron mass correction
 
@@ -423,7 +424,7 @@ double MirrorPlasma::AmbipolarPhi() const
 		// This gives us a first-order guess for the Ambipolar potential. Now we solve j_|| = 0 to get the better answer.
 		//
 		auto ParallelCurrent = [ & ]( double Phi ) {
-			double Chi_i = pVacuumConfig->IonSpecies.Charge * Phi * ( ElectronTemperature/IonTemperature ) + 
+			double Chi_i = pVacuumConfig->IonSpecies.Charge * Phi * ( ElectronTemperature/IonTemperature ) +
 			                 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
 			double Chi_e = -Phi; // Ignore small electron mass correction
 
@@ -446,7 +447,7 @@ double MirrorPlasma::AmbipolarPhi() const
 		if ( ::fabs( Phi_u - Phi_l )/2.0 > ::fabs( 0.01*AmbipolarPhi ) )
 		{
 			std::cerr << "Unable to find root of j_|| = 0, using approximation" << std::endl;
-			return CentrifugalPotential() + Correction/2.0;	
+			return CentrifugalPotential() + Correction/2.0;
 		}
 	}
 
@@ -456,34 +457,33 @@ double MirrorPlasma::AmbipolarPhi() const
 double MirrorPlasma::ParallelKineticEnergyLoss() const
 {
 	double IonLossRate = ParallelIonParticleLoss();
-	double EndExpansionRatio = 1.0; // If particles are hitting the wall at a radius larger than they are confined at, this increases momentum loss per particle 
+	double EndExpansionRatio = 1.0; // If particles are hitting the wall at a radius larger than they are confined at, this increases momentum loss per particle
 	// M^2 = u^2 / c_s^2 = m_i u^2 / T_e
 	double KineticEnergyPerIon = 0.5 * ElectronTemperature * ReferenceTemperature * ( EndExpansionRatio * EndExpansionRatio ) *  MachNumber * MachNumber;
 	// Convert to W/m^3 for consistency across loss rates
 	return IonLossRate * KineticEnergyPerIon;
 }
 
-
 double MirrorPlasma::ClassicalIonHeatLoss() const
 {
 	double omega_ci = IonCyclotronFrequency();
 	double IonMass = pVacuumConfig->IonSpecies.Mass * ProtonMass;
-	double kappa_perp = 2.0 * IonTemperature * ReferenceTemperature / ( IonMass * omega_ci * omega_ci * IonCollisionTime() );
+	double kappa_perp = 2.0 * IonDensity * IonTemperature * ReferenceTemperature * ReferenceDensity / ( IonMass * omega_ci * omega_ci * IonCollisionTime() );
 	double L_T = ( pVacuumConfig->PlasmaColumnWidth / 2.0 );
-	double IonThermalEnergy = 1.5 * IonDensity * IonTemperature * ReferenceTemperature * ReferenceDensity;
-	return kappa_perp * IonThermalEnergy /( L_T * L_T );
+	// Power density in W/m^3
+	return kappa_perp * IonTemperature * ReferenceTemperature /( L_T * L_T );
 }
 
 double MirrorPlasma::ClassicalElectronHeatLoss() const
 {
 	double omega_ce = ElectronCyclotronFrequency();
-	double kappa_perp = 4.66 * ElectronTemperature * ReferenceTemperature / ( ElectronMass * omega_ce * omega_ce * ElectronCollisionTime() );
+	double kappa_perp = 4.66 * ElectronDensity * ElectronTemperature * ReferenceTemperature * ReferenceDensity / ( ElectronMass * omega_ce * omega_ce * ElectronCollisionTime() );
 	double L_T = ( pVacuumConfig->PlasmaColumnWidth / 2.0 );
-	double ElectronThermalEnergy = 1.5 * ElectronDensity * ElectronTemperature * ReferenceTemperature * ReferenceDensity;
-	return kappa_perp * ElectronThermalEnergy /( L_T * L_T );
+	// Power density in W/m^3
+	return kappa_perp * ElectronTemperature * ReferenceTemperature /( L_T * L_T );
 }
 
-double MirrorPlasma::ClassicalHeatLosses() const 
+double MirrorPlasma::ClassicalHeatLosses() const
 {
 	return ClassicalIonHeatLoss() + ClassicalElectronHeatLoss();
 }
@@ -531,7 +531,7 @@ double MirrorPlasma::KineticEnergy() const
 
 double MirrorPlasma::ThermalEnergy() const
 {
-	return 1.5 * ( ElectronDensity * ElectronTemperature + IonDensity * IonTemperature ) * ReferenceDensity * ReferenceTemperature * pVacuumConfig->PlasmaVolume(); 
+	return 1.5 * ( ElectronDensity * ElectronTemperature + IonDensity * IonTemperature ) * ReferenceDensity * ReferenceTemperature * pVacuumConfig->PlasmaVolume();
 }
 
 // Braginskii eta_1
@@ -628,12 +628,12 @@ double MirrorPlasma::ElectronHeating() const
 
 void MirrorPlasma::SetMachFromVoltage()
 {
-	// u = E x B / B^2 
+	// u = E x B / B^2
 	// M = u/c_s ~ (V/aB)/cs
 	MachNumber = pVacuumConfig->ImposedVoltage / ( pVacuumConfig->PlasmaColumnWidth * pVacuumConfig->CentralCellFieldStrength * SoundSpeed() );
 }
 
-double MirrorPlasma::ParallelAngularMomentumLossRate() const 
+double MirrorPlasma::ParallelAngularMomentumLossRate() const
 {
 	double IonLoss = ParallelIonParticleLoss();
 	return IonLoss * pVacuumConfig->IonSpecies.Mass * ProtonMass * SoundSpeed() * MachNumber * pVacuumConfig->PlasmaCentralRadius();
@@ -651,10 +651,10 @@ double MirrorPlasma::RadialCurrent() const
 	double Torque = -ViscousTorque();
 	double ParallelLosses = -ParallelAngularMomentumLossRate();
 	// Inertial term = m_i n_i R^2 d omega / dt ~= m_i n_i R^2 d  / dt ( E/ ( R*B) )
-	//					~= m_i n_i (R/B) * d/dt ( V / a )	
+	//					~= m_i n_i (R/B) * d/dt ( V / a )
 	double Inertia;
 	if ( isTimeDependent )
-		Inertia = pVacuumConfig->IonSpecies.Mass * IonDensity * ( pVacuumConfig->PlasmaCentralRadius() / pVacuumConfig->CentralCellFieldStrength ) 
+		Inertia = pVacuumConfig->IonSpecies.Mass * IonDensity * ( pVacuumConfig->PlasmaCentralRadius() / pVacuumConfig->CentralCellFieldStrength )
 		            * VoltageFunction->prime( time );
 	else
 		Inertia = 0.0;
@@ -683,7 +683,7 @@ void MirrorPlasma::UpdateVoltage()
 	if ( !isTimeDependent )
 		return;
 	else
-		pVacuumConfig->ImposedVoltage = ( *VoltageFunction )( time );	
+		pVacuumConfig->ImposedVoltage = ( *VoltageFunction )( time );
 }
 
 void MirrorPlasma::SetTime( double new_time )
