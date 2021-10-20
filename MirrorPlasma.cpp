@@ -286,7 +286,7 @@ double MirrorPlasma::ElectronCollisionTime() const
 	double PiThreeHalves = ::pow( M_PI, 1.5 ); // pi^(3/2)
 	double TeThreeHalves = ::pow( ElectronTemperature * ReferenceTemperature, 1.5 );
 	double ZIon = pVacuumConfig->IonSpecies.Charge;
-	return 12 * ::sqrt( ElectronMass ) * PiThreeHalves * TeThreeHalves * VacuumPermittivity * VacuumPermittivity / ( ::sqrt(2) ElectronDensity * ReferenceDensity * ::pow( ZIon, 2 ) * ::pow( ElectronCharge, 4 ) * LogLambdaIon() );
+	return 12 * ::sqrt( ElectronMass ) * PiThreeHalves * TeThreeHalves * VacuumPermittivity * VacuumPermittivity / ( ::sqrt(2) * IonDensity * ReferenceDensity * ::pow( ZIon, 2 ) * ::pow( ElectronCharge, 4 ) * LogLambdaElectron() );
 }
 
 // NRL Formulary p34
@@ -303,7 +303,7 @@ double MirrorPlasma::IonCollisionTime() const
 	double PiThreeHalves = ::pow( M_PI, 1.5 ); // pi^(3/2)
 	double TiThreeHalves = ::pow( IonTemperature * ReferenceTemperature, 1.5 );
 	double ZIon = pVacuumConfig->IonSpecies.Charge;
-	return 12 * ::sqrt( pVacuumConfig->IonSpecies.Mass * ProtonMass ) * PiThreeHalves * TiThreeHalves * VacuumPermittivity * VacuumPermittivity / ( ::sqrt(2) ElectronDensity * ReferenceDensity * ::pow( ZIon * ElectronCharge, 4 ) * LogLambdaIon() );
+	return 12 * ::sqrt( pVacuumConfig->IonSpecies.Mass * ProtonMass ) * PiThreeHalves * TiThreeHalves * VacuumPermittivity * VacuumPermittivity / ( ::sqrt(2) * IonDensity * ReferenceDensity * ::pow( ZIon * ElectronCharge, 4 ) * LogLambdaIon() );
 }
 
 // Leading order contribution to Phi_0 in O(M^2)
