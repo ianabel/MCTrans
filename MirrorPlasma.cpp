@@ -376,9 +376,14 @@ double MirrorPlasma::ParallelIonPastukhovLossRate( double Chi_i ) const
 	return LossRate*pVacuumConfig->ParallelFudgeFactor;
 }
 
+double MirrorPlasma::Chi_i( double Phi ) const
+{
+	return pVacuumConfig->IonSpecies.Charge * Phi * ( ElectronTemperature/IonTemperature ) + 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
+}
+
 double MirrorPlasma::Chi_i() const
 {
-	return pVacuumConfig->IonSpecies.Charge * AmbipolarPhi() * ( ElectronTemperature/IonTemperature ) + 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
+	return Chi_i( AmbipolarPhi() );
 }
 
 double MirrorPlasma::ParallelIonParticleLoss() const
@@ -432,11 +437,11 @@ double MirrorPlasma::AmbipolarPhi() const
 			if ( pVacuumConfig->AlphaHeating )
 			{
 				double AlphaLossRate =  AlphaProductionRate() * PromptAlphaLossFraction();
-				return 2.0*AlphaLossRate + ParallelIonPastukhovLossRate( Chi_i() )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
+				return 2.0*AlphaLossRate + ParallelIonPastukhovLossRate( Chi_i( Phi ) )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
 			}
 			else
 			{
-				return ParallelIonPastukhovLossRate( Chi_i() )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
+				return ParallelIonPastukhovLossRate( Chi_i( Phi ) )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
 			}
 		};
 
