@@ -178,6 +178,7 @@ class MirrorPlasma {
 		double ParallelElectronParticleLoss() const;
 		double ParallelElectronHeatLoss() const;
 
+		double Chi_i() const;
 		double ParallelIonPastukhovLossRate( double Phi ) const;
 		double ParallelIonParticleLoss() const;
 		double ParallelIonHeatLoss() const;

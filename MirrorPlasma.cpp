@@ -376,19 +376,21 @@ double MirrorPlasma::ParallelIonPastukhovLossRate( double Chi_i ) const
 	return LossRate*pVacuumConfig->ParallelFudgeFactor;
 }
 
+double MirrorPlasma::Chi_i() const
+{
+	return pVacuumConfig->IonSpecies.Charge * AmbipolarPhi() * ( ElectronTemperature/IonTemperature ) + 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
+}
+
 double MirrorPlasma::ParallelIonParticleLoss() const
 {
 	// Electrostatic energy + centrifugal potential energy
-	double Chi_i = pVacuumConfig->IonSpecies.Charge * AmbipolarPhi() * ( ElectronTemperature/IonTemperature ) + 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
-	return ParallelIonPastukhovLossRate( Chi_i );
+	return ParallelIonPastukhovLossRate( Chi_i() );
 }
 
 double MirrorPlasma::ParallelIonHeatLoss() const
 {
 	// Energy loss per particle is ~ Chi_i + T_i
-	double Chi_i = pVacuumConfig->IonSpecies.Charge * AmbipolarPhi() * ( ElectronTemperature/IonTemperature ) +
-							0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
-	return ParallelIonPastukhovLossRate( Chi_i ) * ( IonTemperature * ReferenceTemperature ) * ( ::fabs( Chi_i )  + 1.0 );
+	return ParallelIonPastukhovLossRate( Chi_i() ) * ( IonTemperature * ReferenceTemperature ) * ( ::fabs( Chi_i() )  + 1.0 );
 }
 /*
 double MirrorPlasma::ParallelCurrent( double Phi ) const
@@ -424,19 +426,17 @@ double MirrorPlasma::AmbipolarPhi() const
 		// This gives us a first-order guess for the Ambipolar potential. Now we solve j_|| = 0 to get the better answer.
 		//
 		auto ParallelCurrent = [ & ]( double Phi ) {
-			double Chi_i = pVacuumConfig->IonSpecies.Charge * Phi * ( ElectronTemperature/IonTemperature ) +
-			                 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
 			double Chi_e = -Phi; // Ignore small electron mass correction
 
 			// If Alphas are included, they correspond to a (small) charge flow
 			if ( pVacuumConfig->AlphaHeating )
 			{
 				double AlphaLossRate =  AlphaProductionRate() * PromptAlphaLossFraction();
-				return 2.0*AlphaLossRate + ParallelIonPastukhovLossRate( Chi_i )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
+				return 2.0*AlphaLossRate + ParallelIonPastukhovLossRate( Chi_i() )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
 			}
 			else
 			{
-				return ParallelIonPastukhovLossRate( Chi_i )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
+				return ParallelIonPastukhovLossRate( Chi_i() )*pVacuumConfig->IonSpecies.Charge - ParallelElectronPastukhovLossRate( Chi_e );
 			}
 		};
 
@@ -444,6 +444,7 @@ double MirrorPlasma::AmbipolarPhi() const
 		boost::math::tools::eps_tolerance<double> tol( 11 ); // only bother getting part in 1024 accuracy
 		auto [ Phi_l, Phi_u ] = boost::math::tools::bracket_and_solve_root( ParallelCurrent, AmbipolarPhi, 1.2, false, tol, iters );
 		AmbipolarPhi = ( Phi_l + Phi_u )/2.0;
+
 		if ( ::fabs( Phi_u - Phi_l )/2.0 > ::fabs( 0.01*AmbipolarPhi ) )
 		{
 			std::cerr << "Unable to find root of j_|| = 0, using approximation" << std::endl;
@@ -670,8 +671,7 @@ double MirrorPlasma::RadialCurrent() const
 // assume parallel kinetic energy contains Chi_i
 double MirrorPlasma::ParallelIonThrust() const
 {
-	double Chi_i = pVacuumConfig->IonSpecies.Charge * AmbipolarPhi() * ( ElectronTemperature/IonTemperature ) + 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/pVacuumConfig->MirrorRatio ) * ( ElectronTemperature / IonTemperature );
-	double ParallelKineticEnergy = ( Chi_i + 1.0 ) * IonTemperature * ReferenceTemperature;
+	double ParallelKineticEnergy = ( Chi_i() + 1.0 ) * IonTemperature * ReferenceTemperature;
 	double ParallelMomentum = ::sqrt( 2.0  *  ParallelKineticEnergy * pVacuumConfig->IonSpecies.Mass * ProtonMass );
 	// Only half the particle loss, as the Thrust diagnostics need each end separately.
 	return ParallelMomentum * ( ParallelIonParticleLoss() / 2.0 ) * pVacuumConfig->PlasmaVolume();
