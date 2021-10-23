@@ -260,11 +260,11 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 
 	if ( mirrorConfig.count( "VoltageTrace" ) == 1 ) {
 		ReadVoltageFile( mirrorConfig.at( "VoltageTrace" ).as_string() );
-		SetTime( 0 );
 		isTimeDependent = true;
+		SetTime( 0 );
 	} else {
-		time = std::nan( "" );
 		isTimeDependent = false;
+		time = -1;
 	}
 
 }
@@ -654,15 +654,14 @@ double MirrorPlasma::RadialCurrent() const
 	//					~= m_i n_i (R/B) * d/dt ( V / a )	
 	double Inertia;
 	if ( isTimeDependent )
-		Inertia = pVacuumConfig->IonSpecies.Mass * IonDensity * ( pVacuumConfig->PlasmaCentralRadius() / pVacuumConfig->CentralCellFieldStrength ) 
+		Inertia = pVacuumConfig->IonSpecies.Mass * ProtonMass * IonDensity * ( pVacuumConfig->PlasmaCentralRadius() / pVacuumConfig->CentralCellFieldStrength ) 
 		            * VoltageFunction->prime( time );
 	else
 		Inertia = 0.0;
 
-	Inertia = 0.0;
 	// R J_R = (<Torque> + <ParallelLosses> + <Inertia>)/B_z
 	// I_R = 2*Pi*R*L*J_R
-	double I_radial = 2.0 * M_PI * pVacuumConfig->PlasmaLength * ( Torque + ParallelLosses ) / pVacuumConfig->CentralCellFieldStrength;
+	double I_radial = 2.0 * M_PI * pVacuumConfig->PlasmaLength * ( Torque + ParallelLosses + Inertia ) / pVacuumConfig->CentralCellFieldStrength;
 	return I_radial;
 }
 

@@ -154,7 +154,7 @@ void MirrorPlasma::PrintReport()
 	out << "Plasma must be provided at a rate of " << ElectronLossRate*pVacuumConfig->PlasmaVolume() << " electrons /s to maintain steady-state" << std::endl;
 
 	out << std::endl;
-	double Resistance = ElectricPotential() * ElectricPotential() /(  (  ViscousHeating() + ParallelKineticEnergyLoss() )*pVacuumConfig->PlasmaVolume() );
+	double Resistance = ElectricPotential() / JRadial;
 	double Capacitance = 2.0*KineticStoredEnergy / ( ElectricPotential() * ElectricPotential() );
 	out << "Electrical Properties of the Plasma:" << std::endl;
 	out << "\tResistance  = "; PrintWithUnit( out, Resistance,  "Ω" ); out << std::endl;
