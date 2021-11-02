@@ -20,6 +20,11 @@ double meanFreePath( double density, double crossSection )
 	return 1.0 / ( density * crossSection );
 }
 
+bool shortMeanFreePathRegime( double meanFreePath, double characteristicLength, double minRatio = 10.0 )
+{
+	return ( characteristicLength / meanFreePath ) >= minRatio;
+}
+
 // Density should be neutral density
 double CXRate( double density, double sigmaV )
 {
