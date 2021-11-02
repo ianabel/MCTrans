@@ -20,6 +20,14 @@ double meanFreePath( double density, double crossSection )
 	return 1.0 / ( density * crossSection );
 }
 
+double hydrogenIonizationFraction( double ElectronDensity, double ElectronTemperature)
+{
+	// Analytical solution from the equilibrium solution to Saha equation
+	// derivation here: http://www.astro.wisc.edu/~townsend/resource/teaching/astro-310-F09/hydrogen-ionization.pdf
+	constexpr double hydrogenIonizationPotential = 13.6; // in units of eV
+	return ::pow( 2.0 * M_PI * ElectronMass * ElectronTemperature / ::pow( PlanckConstant, 2.0 ), 1.5 ) * ::exp( -hydrogenIonizationPotential / ElectronTemperature ) / ElectronDensity;
+}
+
 bool shortMeanFreePathRegime( double meanFreePath, double characteristicLength, double minRatio = 10.0 )
 {
 	return ( characteristicLength / meanFreePath ) >= minRatio;
