@@ -54,7 +54,7 @@ class CrossSection {
 			ReducedMass = mu;
 			RelativeMass = mr;
 		};
-		
+
 		// Masses in units of the proton mass
 		double ReducedMass,RelativeMass;
 		// in units of electron volts (not keV!)
@@ -70,21 +70,35 @@ class CrossSection {
 		std::function<double( double )> sigmaImplementation;
 };
 
-
 double IonNeutralCrossSection( double Ti )
 {
 	// Need to implement cross section dependent on the FuelName
-	// Janev 1987 3.1.8
-	double sigma_1s = 0.6937e-14 * ::pow( 1 - 0.155 * ::log10( Ti ), 2 ) / (1 + 0.1112E-14 * ::pow( Ti, 3.3 ));
+
+	// Minimum energy of cross section in eV
+	const double minimumEnergySigma_1s = 0.1;
+	const double minimumEnergySigma_2p = 19.0;
+	const double minimumEnergySigma_2s = 0.1;
 
 	// Janev 1987 3.1.9
+	// p + H(1s) --> H(2p) + p
 	std::vector<double> aSigma_2p = {-2.197571949935e+01, -4.742502251260e+01, 3.628013140596e+01, -1.423003075866e+01, 3.273090240144e+00, -4.557928912260e-01, 3.773588347458e-02, -1.707904867106e-03, 3.251203344615e-05};
 	// Janev 1987 3.1.10
+	// p + H(1s) --> H(2s) + p
 	std::vector<double> aSigma_2s = {-1.327325087764e+04, 1.317576614520e+04, -5.683932157858e+03, 1.386309780149e+03, -2.089794561307e+02, 1.992976245274e+01, -1.173800576157e+00, 3.902422810767e-02, -5.606240339932e-04};
+
+	// Contribution from ground -> ground state
+	// Janev 1987 3.1.8
+	// p + H(1s) --> H(1s) + p
+	double sigma_1s;
+	if ( Ti < minimumEnergySigma_2p ) {
+		sigma_1s = 0;
+	} else {
+		sigma_1s = 0.6937e-14 * ::pow( 1 - 0.155 * ::log10( Ti ), 2 ) / (1 + 0.1112e-14 * ::pow( Ti, 3.3 ));
+	}
 
 	// Contribution from ground -> 2p orbital
 	double sigma_2p;
-	if ( Ti < 19.0 ) {
+	if ( Ti < minimumEnergySigma_2p ) {
 		sigma_2p = 0;
 	} else {
 		sigma_2p = EvaluateJanevCrossSectionFit( aSigma_2p, Ti );
@@ -92,7 +106,7 @@ double IonNeutralCrossSection( double Ti )
 
 	// Contribution from ground -> 2s orbital
 	double sigma_2s;
-	if ( Ti < 0.1 ) {
+	if ( Ti < minimumEnergySigma_2s ) {
 		sigma_2s = 0;
 	} else {
 		sigma_2s = EvaluateJanevCrossSectionFit( aSigma_2s, Ti );
@@ -101,7 +115,24 @@ double IonNeutralCrossSection( double Ti )
 	return sigma_1s + sigma_2p + sigma_2s;
 }
 
+double electronHydrogenIonizationCrossSection( double Te )
+{
+	// Minimum energy of cross section in eV
+	const double minimumEnergySigma = 14.3;
 
+	// Contribution from ground state
+	// Janev 1987 2.1.5
+	// e + H(1s) --> e+ H+ + e
+	// Error is ~0.1, so it may be worth it to find a better fit
+	std::vector<double> aSigma = { -7.778213049931e+02, 9.540190857268e+02, -5.227766973807e+02, 1.592701052833e+02, -2.952557198074e+01, 3.413024145539e+00, -2.405520814365e-01, 9.465181268476e-03, -1.594325350979e-04 };
+	double sigma;
+	if ( Te < minimumEnergySigma ) {
+		sigma = 0;
+	} else {
+		sigma = EvaluateJanevCrossSectionFit( aSigma, Te );
+	}
+	return sigma;
+}
 
 double rateCoeff( double Ti, CrossSection const & sigma )
 {
@@ -178,4 +209,3 @@ double IonCXMeanFreePath( double NeutralDensity, double IonTemperature )
 	throw std::logic_error( "Unimplemented Function." );
 	return 0.0;
 }
-
