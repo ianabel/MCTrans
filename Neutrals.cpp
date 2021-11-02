@@ -1,11 +1,14 @@
 
 #include "MirrorPlasma.hpp"
+
+#include "PlasmaPhysics.hpp"
+
 #include <cmath>
 #include <iostream>
+#include <vector>
+#include <string>
 
-constexpr double KB = 8.617E-5 // [eV/K]
-constexpr double MP = 1.673E-27 // [kg]
-constexpr double QE = 1.602e-19 // [C]
+#include <boost/math/quadrature/trapezoidal.hpp>
 
 // Reference Cross-section for Charge-Exchange neutral cross-section
 // in cm^2
@@ -20,72 +23,101 @@ double meanFreePath( double density, double crossSection )
 // Density should be neutral density
 double CXRate( double density, double sigmaV )
 {
-	return density * sigmaV
-}
-
-double trapz( double yi[], double xi[] )
-{
-	if ( xi.size() != yi.size() )
-		throw std::invalid_argument( "The xi and yi lists must be the same length" );
-
-	double sum = 0.0;
-	for(int i = 0; i<xi.size(); i++){
-      sum += 0.5 * ( yi[i] + yi[i + 1] ) / ( xi[i] - xi[i + 1] );
-   }
-	 return sum;
+	return density * sigmaV;
 }
 
 // Fits for sigma are given starting on pg 234 in Janev, 1987
-double JanevCrossSectionFit ( double a[], double Energy )
+// <cite>
+// Energy in electron Volts
+
+constexpr unsigned int N_JANEV_COEFFS = 9;
+
+double EvaluateJanevCrossSectionFit ( std::vector<double> PolynomialCoefficients, double Energy )
 {
+	if ( PolynomialCoefficients.size() != N_JANEV_COEFFS )
+		throw std::invalid_argument( "Janev uses fixed order fits, there are not " + std::to_string( N_JANEV_COEFFS ) + " numbers. Something is wrong." );
 	double sum = 0.0;
-	for(int n = 0; n < an.size(); n++){
-      sum += a[n] * ::pow( ::log(Energy), n )
+	for ( size_t n = 0; n < PolynomialCoefficients.size(); n++ ) {
+      sum += PolynomialCoefficients.at( n ) * ::pow( ::log(Energy), n );
    }
-	double sigma = ::exp(sum)
-	return sigma
+	double sigma = ::exp(sum);
+	return sigma;
 }
+
+class CrossSection {
+	public:
+		CrossSection( std::function<double( double )> sigma, double E_min, double E_max, double mu, double mr )
+		{
+			sigmaImplementation = sigma;
+			MinEnergy = E_min;
+			MaxEnergy = E_max;
+			ReducedMass = mu;
+			RelativeMass = mr;
+		};
+		
+		// Masses in units of the proton mass
+		double ReducedMass,RelativeMass;
+		// in units of electron volts (not keV!)
+		double MinEnergy,MaxEnergy;
+
+		// Return the cross section in cm^2 -- not barns, not m^2
+		double operator()( double CentreOfMassEnergy ) const
+		{
+			return sigmaImplementation( CentreOfMassEnergy );
+		}
+
+	private:
+		std::function<double( double )> sigmaImplementation;
+};
+
 
 double IonNeutralCrossSection( double Ti )
 {
 	// Need to implement cross section dependent on the FuelName
 	// Janev 1987 3.1.8
-	double sigma_1s = 0.6937E-14 * ::pow( 1 - 0.155 * ::log10( Ti ), 2 ) / (1 + 0.1112E-14 * ::pow( Ti, 3.3 ));
+	double sigma_1s = 0.6937e-14 * ::pow( 1 - 0.155 * ::log10( Ti ), 2 ) / (1 + 0.1112E-14 * ::pow( Ti, 3.3 ));
 
 	// Janev 1987 3.1.9
-	double aSigma_2p[9] = {-2.197571949935e+01, -4.742502251260e+01, 3.628013140596e+01,
-												 -1.423003075866e+01, 3.273090240144e+00, -4.557928912260e-01,
-												 3.773588347458e-02, -1.707904867106e-03, 3.251203344615e-05};
-	if Ti < 19.0{
-		double sigma_2p = 0
-	} else{
-		double sigma_2p = JanevCrossSectionFit(aSigma_2s, Ti)
+	std::vector<double> aSigma_2p = {-2.197571949935e+01, -4.742502251260e+01, 3.628013140596e+01, -1.423003075866e+01, 3.273090240144e+00, -4.557928912260e-01, 3.773588347458e-02, -1.707904867106e-03, 3.251203344615e-05};
+	// Janev 1987 3.1.10
+	std::vector<double> aSigma_2s = {-1.327325087764e+04, 1.317576614520e+04, -5.683932157858e+03, 1.386309780149e+03, -2.089794561307e+02, 1.992976245274e+01, -1.173800576157e+00, 3.902422810767e-02, -5.606240339932e-04};
+
+	// Contribution from ground -> 2p orbital
+	double sigma_2p;
+	if ( Ti < 19.0 ) {
+		sigma_2p = 0;
+	} else {
+		sigma_2p = EvaluateJanevCrossSectionFit( aSigma_2p, Ti );
 	}
 
-	// Janev 1987 3.1.10
-	double aSigma_2s[9] = {-1.327325087764e+04, 1.317576614520e+04, -5.683932157858e+03,
-												 1.386309780149e+03, -2.089794561307e+02, 1.992976245274e+01,
-											 	 -1.173800576157e+00, 3.902422810767e-02, -5.606240339932e-04};
-	if Ti < 0.1{
-		double sigma_2s = 0
-	} else{
-		double sigma_2s = JanevCrossSectionFit(aSigma_2s, Ti)
+	// Contribution from ground -> 2s orbital
+	double sigma_2s;
+	if ( Ti < 0.1 ) {
+		sigma_2s = 0;
+	} else {
+		sigma_2s = EvaluateJanevCrossSectionFit( aSigma_2s, Ti );
 	}
 
 	return sigma_1s + sigma_2p + sigma_2s;
 }
 
-double rateCoeff( double Energy, double Ti, double sigma, double mu, double mr )
+
+
+double rateCoeff( double Ti, CrossSection const & sigma )
 {
 	// E and T in eV, sigma in cm^2
 	// k=<σv> in m^3/s
 	// mu, mr is in proton masses
 	// Assumes a Maxwellian distribution, COM energy (as opposed to incident)
-	sigma *= 1e-4; // Convert to m^2
-	Energy *= QE * mr; // Convert to J and COM energy
-	Ti *= QE; // Convert to J
-	mu *= MP;
-	return 4 / np.sqrt(2 * M_PI * mu * Ti) / Ti * trapz( Energy * sigma * ::exp( -Energy / Ti ), Energy );
+	Ti *= ElectronCharge; // Convert to Joules
+
+	auto integrand = [&]( double Energy ) {
+		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
+		return Energy * sigmaM2 * ::exp( -Energy / Ti );
+	};
+
+	constexpr double tolerance = 1e-6;
+	return ( 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * ProtonMass * Ti) * Ti ) ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
 }
 
 // Ionization Rate as a function of

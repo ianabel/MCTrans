@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Ian G Abel
+# Copyright (c) 2021 Ian G Abel, Nick R. Schwartz
 # This file is part of the MCTrans software package, for more information and source code availability
 # see http://github.com/ianabel/MCTrans
 
@@ -13,7 +13,7 @@ The toml11 library is redistributed under its own licence.
 
 LICENCE
 
-MCTRans is free software; you can redistribute it and/or modify it under the terms
+MCTrans is free software; you can redistribute it and/or modify it under the terms
 of the BSD 3-Clause licence, see the LICENCE.md file for details.
 
 MCTrans is distributed in the hope that it will be useful, but WITHOUT ANY

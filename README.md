@@ -22,6 +22,7 @@ To compile and use MCTrans++ you will need a system with the following
  - The Boost C++ Template Library
  - The TOML11 library
  - The SUNDIALS library
+ - NETCDF C++ 4.3 or newer (depends upon netcdf C interface 4.6.0 or newer)
 
 Precise dependencies have not been exhaustively tested. 
 
@@ -101,6 +102,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 * **Ian Abel** - *C++ Version* - [Ian Abel at UMD](https://ireap.umd.edu/faculty/abel)
 * **Adil Hassam** - *Original MCTrans Code*
+* **Nick Schwartz**
 
 For full copyright attribution, see the [COPYRIGHT](COPYRIGHT) file.
 For a summary of contributors, see the [contributors](http://github.com/ianabel/MCTrans/contributors) page.
