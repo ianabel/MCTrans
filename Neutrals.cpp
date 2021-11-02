@@ -122,7 +122,7 @@ double electronHydrogenIonizationCrossSection( double Te )
 
 	// Contribution from ground state
 	// Janev 1987 2.1.5
-	// e + H(1s) --> e+ H+ + e
+	// e + H(1s) --> e + H+ + e
 	// Error is ~0.1, so it may be worth it to find a better fit
 	std::vector<double> aSigma = { -7.778213049931e+02, 9.540190857268e+02, -5.227766973807e+02, 1.592701052833e+02, -2.952557198074e+01, 3.413024145539e+00, -2.405520814365e-01, 9.465181268476e-03, -1.594325350979e-04 };
 	double sigma;
@@ -130,6 +130,58 @@ double electronHydrogenIonizationCrossSection( double Te )
 		sigma = 0;
 	} else {
 		sigma = EvaluateJanevCrossSectionFit( aSigma, Te );
+	}
+	return sigma;
+}
+
+double evaluateJanevDFunction( double beta )
+{
+	// Function from Janev 1987 Appendix C
+	// Used in some analytical fits for cross sections
+	double DFunctionVal;
+	if ( beta < 1e-3 ){
+		DFunctionVal = 4 * beta * ::log( 1.4 / beta );
+	} else if ( beta > 10 ) {
+		DFunctionVal = beta / 2 * ::exp( - ::sqrt( 2 * beta ) );
+	} else {
+		// Create look up table and linearly interpolate to find DFunction
+		std::vector<double> betaInverse = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 8.0, 10.0, 12.5, 15.0, 20.0, 25.0, 30.0, 40.0, 60.0, 80.0, 100.0, 15.0, 200.0, 300.0, 400.0, 600.0, 800.0, 1000.0 };
+		std::vector<double> DFunction = { 0.057, 0.104, 0.135, 0.157, 0.175, 0.194, 0.230, 0.264, 0.296, 0.328, 0.367, 0.388, 0.399, 0.405, 0.410, 0.405, 0.399, 0.380, 0.345, 0.318, 0.285, 0.263, 0.227, 0.205, 0.190, 0.168, 0.141, 0.124, 0.110, 0.092, 0.080, 0.054, 0.042, 0.035, 0.028 };
+		for (size_t i = 0; i < betaInverse.size(); i++ ){
+			if ( 1.0 / beta < betaInverse.at( i ) ){}
+			else {
+				double x1 = betaInverse.at( i - 1 );
+				double x2 = betaInverse.at ( i );
+				double y1 = DFunction.at( i - 1 );
+				double y2 = DFunction.at ( i );
+				DFunctionVal = y1 + ( y2 - y1 ) * ( 1.0 / beta - x1 ) / ( x2 - x1 );
+			}
+		}
+	}
+	return DFunctionVal;
+}
+
+double protonHydrogenIonizationCrossSection( double Ti )
+{
+	// Minimum energy of cross section in eV
+	const double minimumEnergySigma = 13.6;
+
+	// Contribution from ground state
+	// Janev 1987 3.1.6
+	// p + H(1s) --> p + H+ + e
+	const double lambda_eff = 0.808;
+	const double lambda_01 = 0.7448;
+	const double omega_i = 0.5;
+	const double omega_01 = 0.375;
+	double v = 6.3246e-3 * ::sqrt( Ti );
+	double beta_i = lambda_eff * omega_i / ::pow( v, 2 );
+	double beta_01 = lambda_01 * omega_01 / ::pow( v, 2 );
+
+	double sigma;
+	if ( Ti < minimumEnergySigma ) {
+		sigma = 0;
+	} else {
+		sigma = 1.76e-16 * ( lambda_eff * evaluateJanevDFunction( beta_i ) / omega_i  + lambda_01 * evaluateJanevDFunction( beta_01 ) / ( 8 * omega_01 ) );
 	}
 	return sigma;
 }
