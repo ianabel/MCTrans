@@ -161,3 +161,21 @@ void MirrorPlasma::ComputeSteadyStateNeutrals()
  *
  * We can thus use beam stopping coefficients to try and work out the ionization rates..
  */
+
+
+// MFP of hydrogen atom in the plasma
+double NeutralCXMeanFreePath( double IonDensity, double IonTemperature )
+{
+	// TODO
+	throw std::logic_error( "Unimplemented Function." );
+	return 0.0;
+}
+
+// MFP of proton in neutral atomic hydrogen
+double IonCXMeanFreePath( double NeutralDensity, double IonTemperature )
+{
+	// TODO
+	throw std::logic_error( "Unimplemented Function." );
+	return 0.0;
+}
+
