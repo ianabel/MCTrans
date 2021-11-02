@@ -12,6 +12,17 @@ constexpr double QE = 1.602e-19 // [C]
 constexpr double BaseCXCrossSection = 1e-15;
 constexpr double BaseIonizationCrossSection = 1e-10;
 
+double meanFreePath( double density, double crossSection )
+{
+	return 1.0 / ( density * crossSection );
+}
+
+// Density should be neutral density
+double CXRate( double density, double sigmaV )
+{
+	return density * sigmaV
+}
+
 double trapz( double yi[], double xi[] )
 {
 	if ( xi.size() != yi.size() )
@@ -24,10 +35,44 @@ double trapz( double yi[], double xi[] )
 	 return sum;
 }
 
+// Fits for sigma are given starting on pg 234 in Janev, 1987
+double JanevCrossSectionFit ( double a[], double Energy )
+{
+	double sum = 0.0;
+	for(int n = 0; n < an.size(); n++){
+      sum += a[n] * ::pow( ::log(Energy), n )
+   }
+	double sigma = ::exp(sum)
+	return sigma
+}
+
 double IonNeutralCrossSection( double Ti )
 {
 	// Need to implement cross section dependent on the FuelName
-	return 0.6937E-14 * ::pow( 1 - 0.155 * ::log10( Ti ), 2 ) / (1 + 0.1112E-14 * ::pow( Ti, 3.3 ));
+	// Janev 1987 3.1.8
+	double sigma_1s = 0.6937E-14 * ::pow( 1 - 0.155 * ::log10( Ti ), 2 ) / (1 + 0.1112E-14 * ::pow( Ti, 3.3 ));
+
+	// Janev 1987 3.1.9
+	double aSigma_2p[9] = {-2.197571949935e+01, -4.742502251260e+01, 3.628013140596e+01,
+												 -1.423003075866e+01, 3.273090240144e+00, -4.557928912260e-01,
+												 3.773588347458e-02, -1.707904867106e-03, 3.251203344615e-05};
+	if Ti < 19.0{
+		double sigma_2p = 0
+	} else{
+		double sigma_2p = JanevCrossSectionFit(aSigma_2s, Ti)
+	}
+
+	// Janev 1987 3.1.10
+	double aSigma_2s[9] = {-1.327325087764e+04, 1.317576614520e+04, -5.683932157858e+03,
+												 1.386309780149e+03, -2.089794561307e+02, 1.992976245274e+01,
+											 	 -1.173800576157e+00, 3.902422810767e-02, -5.606240339932e-04};
+	if Ti < 0.1{
+		double sigma_2s = 0
+	} else{
+		double sigma_2s = JanevCrossSectionFit(aSigma_2s, Ti)
+	}
+
+	return sigma_1s + sigma_2p + sigma_2s;
 }
 
 double rateCoeff( double Energy, double Ti, double sigma, double mu, double mr )
