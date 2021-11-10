@@ -1,4 +1,4 @@
-\documentclass{revtex4}
+\documentclass{revtex4-2}
 
 \usepackage{amsmath}
 \usepackage{amsbsy}
@@ -298,6 +298,11 @@ The plasma is assumed to be optically thin, and so all radiation is lost onto th
 
 \appendix
 \section{Full Syntax for \mctrans{} configuration files}
+
+\section{Non-Physical Implementation}
+The use of "fudge-factors" has been included to simulate arbitrarily better or worse confinement. The default value is 1, and values less than or greater than 1 result in better or worse confinement, respectively. The fudge factors are applied to loss rates (either particle or heat). There are separate fudge factors for perpendicular and parallel, and viscous and thermal transport.
+
+
 \bibliographystyle{apsrev}
 \bibliography{references}
 \end{document}

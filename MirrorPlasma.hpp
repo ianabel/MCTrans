@@ -58,7 +58,7 @@ class MirrorPlasma {
 					return M_PI * ( PlasmaColumnWidth + 2 * AxialGapDistance ) * PlasmaColumnWidth * PlasmaLength;
 				};
 				double WallArea() const {
-					return 2.0 * M_PI * WallRadius * WallRadius * PlasmaLength; 
+					return 2.0 * M_PI * WallRadius * WallRadius * PlasmaLength;
 				};
 
 				double ImposedVoltage;
@@ -75,9 +75,9 @@ class MirrorPlasma {
 			pVacuumConfig( other.pVacuumConfig )
 		{
 			FuellingRate = other.FuellingRate;
-			IonDensity = other.IonDensity; 
+			IonDensity = other.IonDensity;
 			IonTemperature = other.IonTemperature;
-			ElectronDensity = other.ElectronDensity; 
+			ElectronDensity = other.ElectronDensity;
 			ElectronTemperature = other.ElectronTemperature;
 		   NeutralDensity = other.NeutralDensity;
 			NeutralSource = other.NeutralSource;
@@ -123,7 +123,7 @@ class MirrorPlasma {
 		double ElectronParticleLosses() const;
 
 		double ElectricPotential() const {
-			return pVacuumConfig->CentralCellFieldStrength * MachNumber * SoundSpeed() * pVacuumConfig->PlasmaColumnWidth; 
+			return pVacuumConfig->CentralCellFieldStrength * MachNumber * SoundSpeed() * pVacuumConfig->PlasmaColumnWidth;
 		};
 		double IonLarmorRadius() const {
 			return 1.02 * ::sqrt( pVacuumConfig->IonSpecies.Mass * IonTemperature * 1000 ) / ( pVacuumConfig->IonSpecies.Charge * pVacuumConfig->CentralCellFieldStrength * 10000 );
@@ -178,6 +178,9 @@ class MirrorPlasma {
 		double ParallelElectronParticleLoss() const;
 		double ParallelElectronHeatLoss() const;
 
+		double Chi_i( double ) const;
+		double Chi_i() const;
+
 		double ParallelIonPastukhovLossRate( double Phi ) const;
 		double ParallelIonParticleLoss() const;
 		double ParallelIonHeatLoss() const;
@@ -206,7 +209,7 @@ class MirrorPlasma {
 		double ElectronCyclotronFrequency() const
 		{
 			double MagneticField = pVacuumConfig->CentralCellFieldStrength;
-			return ElectronCharge * MagneticField / ElectronMass; 
+			return ElectronCharge * MagneticField / ElectronMass;
 		};
 
 		double FusionAlphaPowerDensity() const;
@@ -240,4 +243,3 @@ class MirrorPlasma {
 
 
 #endif // MIRRORPLASMA_HPP
-

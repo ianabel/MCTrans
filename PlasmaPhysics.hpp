@@ -3,12 +3,13 @@
 
 // SI Units, except with k_B = 1 and temperature in energy
 // units
-constexpr double ElectronMass = 9.10938356e-31; 
+constexpr double ElectronMass = 9.10938356e-31;
 
 constexpr double VacuumPermittivity = 8.8541878128e-12;
 constexpr double PermeabilityOfFreeSpace = 1.25663706212e-6; // post-2018 not exactly 4*pi * 10^-7
 constexpr double ElectronCharge = 1.60217662e-19;
 constexpr double ProtonMass = 1.6726219e-27;
+constexpr double PlanckConstant = 4.135667696e-15; // eV s^-1
 
 constexpr double SpeedOfLight = 2.99792458e8;
 

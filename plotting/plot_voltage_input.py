@@ -27,5 +27,3 @@ plt.ylabel("Voltage (V)" )
 plt.plot(t_var[:],volt_var[:],label='V',linewidth=1)
 plt.legend()
 plt.show()
-
-

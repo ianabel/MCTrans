@@ -2,8 +2,8 @@ The plasma is made up of electrons, Deuterium/Tritium Fuel and trace, radiating,
 Electron Density is 2e+20 m^-3
 Ion Density is 2e+20 m^-3
 
-Electron Temperature is 10.9 keV
-Ion Temperature is 10.6 keV
+Electron Temperature is 10 keV
+Ion Temperature is 10.2 keV
 Radius of central cell (first wall) is 0.8 m
 	 Inner radius of the plasma is 0.1 m
 	 Outer radius of the plasma is 0.5 m
@@ -15,61 +15,61 @@ Plasma Volume is 1.51 m^3
 Magnetic Field in the Central Cell is 4.5 T
 Magnetic Field at the Mirror Throat is 15 T
 
-Ion Larmor Radius in the central cell is 0.00369 m 
-Typical plasma scale lenghts are ~ 0.2 m  = 54.2 rho_i 
+Ion Larmor Radius in the central cell is 0.00362 m 
+Typical plasma scale lenghts are ~ 0.2 m  = 55.2 rho_i 
 
 No auxiliary heating was included in this calculation.
 
 Self-consistent Alpha Heating was included in this calculation. 
-  Alphas provide 0.617 MW of heating
-  Alpha particles are lost directly at a rate of 2.15e+17 /s
-  Prompt Alpha Losses towards the end plates give 0.121 MW of energy losses
-  The alpha particle slowing-down time is 0.154 s
+  Alphas provide 0.563 MW of heating
+  Alpha particles are lost directly at a rate of 1.96e+17 /s
+  Prompt Alpha Losses towards the end plates give 0.11 MW of energy losses
+  The alpha particle slowing-down time is 0.136 s
 
-Operating Mach number is 6.44
+Operating Mach number is 6.72
 Alfven Mach number is 0.949
 
 Velocity is 4.17e+06 m/s
 Angular Velocity at the plasma centre (R = 0.3 m) is 1.39e+07 /s
 
-Viscous Heating is 255 kW
-Bremsstrahlung losses are 213 kW
+Viscous Heating is 366 kW
+Bremsstrahlung losses are 204 kW
 
 Total potential drop is 7.5 MV
-Radial Current Drawn from Power Supply 232 mA
-Power Required (at the plasma) to support rotation 1.74 MW
-	 Power Loss from viscous torque 255 kW
-	 Power Loss from parallel loss  1.49 MW
+Radial Current Drawn from Power Supply 273 mA
+Power Required (at the plasma) to support rotation 2.05 MW
+	 Power Loss from viscous torque 366 kW
+	 Power Loss from parallel loss  1.68 MW
 
-Total Stored Energy is 12.5 MJ
+Total Stored Energy is 12.4 MJ
  of which 10.9 MJ is kinetic energy in the rotation
-      and 1.56 MJ is thermal energy of the plasma
-Energy Confinement Time is 1.79 s
+      and 1.47 MJ is thermal energy of the plasma
+Energy Confinement Time is 1.58 s
 Of which
-	Confinement time from parallel losses is 2.61 s
-	Confinement time from perpendicular losses is 12.9 s
+	Confinement time from parallel losses is 2.19 s
+	Confinement time from perpendicular losses is 13.5 s
 
-Particle (Ion) Confinement Time ~= 14.7 s
+Particle (Ion) Confinement Time ~= 13 s
 
-Ion-Electron Temperature Equilibration Time is 422 ms
+Ion-Electron Temperature Equilibration Time is 158 ms
 
-Plasma must be provided at a rate of 2.1e+19 electrons /s to maintain steady-state
+Plasma must be provided at a rate of 2.37e+19 electrons /s to maintain steady-state
 
 Electrical Properties of the Plasma:
-	Resistance  = 56.3 MΩ
+	Resistance  = 46.6 MΩ
 	Capacitance = 389 pF
 
 Dimensionless parameters:
-	 β  = 8.57%
-	 ν* = 0.00035 (ions) 
-	 ρ* = 0.0185
-	 Omega_i tau_ii = 1.52e+06
+	 β  = 8.06%
+	 ν* = 0.000546 (ions) 
+	 ρ* = 0.0181
+	 Omega_i tau_ii = 1.02e+06
 
 Fusion Triple Product 
-	 n T τ = 3.8e+21 keV s /m^3
+	 n T τ = 3.23e+21 keV s /m^3
 
  === Reactor Output Assuming D/T Reactor Fuel === 
-Fusion Power Output as Alphas:   0.738 MW
-                    as Neutrons: 2.96 MW
-Neutron Wall Loading is 0.368 MW/m^2
-Total Thermal Power Output is 4.7 MW
+Fusion Power Output as Alphas:   0.673 MW
+                    as Neutrons: 2.7 MW
+Neutron Wall Loading is 0.335 MW/m^2
+Total Thermal Power Output is 4.29 MW
