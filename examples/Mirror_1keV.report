@@ -16,7 +16,7 @@ Magnetic Field in the Central Cell is 0.3 T
 Magnetic Field at the Mirror Throat is 3 T
 
 Ion Larmor Radius in the central cell is 0.0108 m 
-Typical plasma scale lenghts are ~ 0.1 m  = 9.3 rho_i 
+Typical plasma scale lengths are ~ 0.1 m  = 9.3 rho_i
 
 No auxiliary heating was included in this calculation.
 
@@ -51,7 +51,7 @@ Ion-Electron Temperature Equilibration Time is 41.8 ms
 Plasma must be provided at a rate of 3.64e+18 electrons /s to maintain steady-state
 
 Electrical Properties of the Plasma:
-	Resistance  = 498 kΩ
+	Resistance  = 356 kΩ
 	Capacitance = 876 pF
 
 Dimensionless parameters:
