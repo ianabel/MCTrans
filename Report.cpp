@@ -63,7 +63,7 @@ void MirrorPlasma::PrintReport()
 	out << "Magnetic Field at the Mirror Throat is " << pVacuumConfig->MirrorRatio * pVacuumConfig->CentralCellFieldStrength << " T" << std::endl;
 	out << "" << std::endl;
 	out << "Ion Larmor Radius in the central cell is " << IonLarmorRadius() << " m " << std::endl;
-	out << "Typical plasma scale lenghts are ~ " << pVacuumConfig->PlasmaColumnWidth/2.0 << " m  = " << pVacuumConfig->PlasmaColumnWidth / ( 2.0 * IonLarmorRadius() ) << " rho_i " << std::endl;
+	out << "Typical plasma scale lengths are ~ " << pVacuumConfig->PlasmaColumnWidth/2.0 << " m  = " << pVacuumConfig->PlasmaColumnWidth / ( 2.0 * IonLarmorRadius() ) << " rho_i " << std::endl;
 
 	out << std::endl;
 
