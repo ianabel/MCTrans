@@ -131,18 +131,27 @@ double IonNeutralCrossSection( double Ti )
 double electronHydrogenIonizationCrossSection( double Te )
 {
 	// Minimum energy of cross section in eV
-	const double minimumEnergySigma = 14.3;
+	const double ionizationEnergy = 13.6;
+	const double minimumEnergySigma = ionizationEnergy;
 
 	// Contribution from ground state
-	// Janev 1987 2.1.5
+	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
+	// Equation 1.2.1
 	// e + H(1s) --> e + H+ + e
-	// Error is ~0.1, so it may be worth it to find a better fit
-	std::vector<double> aSigma = { -7.778213049931e+02, 9.540190857268e+02, -5.227766973807e+02, 1.592701052833e+02, -2.952557198074e+01, 3.413024145539e+00, -2.405520814365e-01, 9.465181268476e-03, -1.594325350979e-04 };
+	// Accuracy is 10% or better
+	double fittingParamA = 0.18450;
+	std::vector<double> fittingParamB = { -0.032226, -0.034539, 1.4003, -2.8115, 2.2986 };
+
 	double sigma;
 	if ( Te < minimumEnergySigma ) {
 		sigma = 0;
-	} else {
-		sigma = EvaluateJanevCrossSectionFit( aSigma, Te );
+	}
+	else {
+		double sum = 0.0;
+		for ( size_t n = 0; n < fittingParamB.size(); n++ ) {
+	      sum += fittingParamB.at( n ) * ::pow( 1 - ionizationEnergy / Te, n );
+	   }
+		sigma = 1.0e-13 / ( ionizationEnergy * Te ) * ( fittingParamA * ::log( Te / ionizationEnergy ) + sum );
 	}
 	return sigma;
 }
