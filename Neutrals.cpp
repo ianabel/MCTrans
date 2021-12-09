@@ -274,6 +274,39 @@ double electronHydrogenExcitationN2CrossSection( double Te )
 	return sigma;
 }
 
+double protonHydrogenExcitationN2CrossSection( double Ti )
+{
+	// Minimum energy of cross section in keV
+	const double minimumEnergySigma = 0.6;
+	double TiKEV = Ti / 1000;
+
+	// Contribution from ground state
+	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
+	// Equation 2.2.1
+	// H+ + H(1s) --> H+ + H+ + e
+	// Accuracy is 100% or better
+	const double A1 = 34.433;
+	const double A2 = 44.057;
+	const double A3 = 0.56870;
+	const double A4 = 8.5476;
+	const double A5 = 7.8501;
+	const double A6 = -9.2217;
+	const double A7 = 1.8020e-2;
+	const double A8 = 1.6931;
+	const double A9 = 1.9422e-3;
+	const double A10 = 2.9068;
+
+	double sigma;
+	if ( TiKEV < minimumEnergySigma ) {
+		sigma = 0;
+	}
+	else {
+		// Energy is in units of keV
+		sigma = 1e-16 * A1 * ( ::exp( -A2 / TiKEV ) * ::log( 1 + A3 * TiKEV ) / TiKEV + A4 * ::exp( -A5 * TiKEV ) / ( ::pow( TiKEV, A6 ) ) + A7 * ::exp( -A8 / TiKEV ) / ( 1 + A9 * ::pow( TiKEV, A10 ) ) );
+	}
+	return sigma;
+}
+
 double rateCoeff( double Ti, CrossSection const & sigma )
 {
 	// E and T in eV, sigma in cm^2
