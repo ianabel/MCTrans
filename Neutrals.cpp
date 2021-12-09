@@ -28,9 +28,14 @@ double hydrogenIonizationFraction( double ElectronDensity, double ElectronTemper
 	return ::pow( 2.0 * M_PI * ElectronMass * ElectronTemperature / ::pow( PlanckConstant, 2.0 ), 1.5 ) * ::exp( -hydrogenIonizationPotential / ElectronTemperature ) / ElectronDensity;
 }
 
-bool shortMeanFreePathRegime( double meanFreePath, double characteristicLength, double minRatio = 10.0 )
+bool isShortMeanFreePathRegime( double meanFreePath, double characteristicLength, double minRatio = 10.0 )
 {
 	return ( characteristicLength / meanFreePath ) >= minRatio;
+}
+
+bool isCoronalEquilibrium( double excitationRate, double deexcitationRate, double minRatio = 10.0 )
+{
+	return ( deexcitationRate / excitationRate ) >= minRatio;
 }
 
 // Density should be neutral density

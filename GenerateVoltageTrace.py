@@ -23,7 +23,7 @@ VoltageVar = nc_root.createVariable("Voltage","f8",("Time",));
 # up to V_2 at t_2, then constant to t_end
 
 t1 = 0.010
-t2 = 0.050
+t2 = 0.015
 t_end = 0.100
 
 V1 = 10000

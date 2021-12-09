@@ -63,7 +63,7 @@ void MirrorPlasma::PrintReport()
 	out << "Magnetic Field at the Mirror Throat is " << pVacuumConfig->MirrorRatio * pVacuumConfig->CentralCellFieldStrength << " T" << std::endl;
 	out << "" << std::endl;
 	out << "Ion Larmor Radius in the central cell is " << IonLarmorRadius() << " m " << std::endl;
-	out << "Typical plasma scale lenghts are ~ " << pVacuumConfig->PlasmaColumnWidth/2.0 << " m  = " << pVacuumConfig->PlasmaColumnWidth / ( 2.0 * IonLarmorRadius() ) << " rho_i " << std::endl;
+	out << "Typical plasma scale lengths are ~ " << pVacuumConfig->PlasmaColumnWidth/2.0 << " m  = " << pVacuumConfig->PlasmaColumnWidth / ( 2.0 * IonLarmorRadius() ) << " rho_i" << std::endl;
 
 	out << std::endl;
 
@@ -154,7 +154,7 @@ void MirrorPlasma::PrintReport()
 	out << "Plasma must be provided at a rate of " << ElectronLossRate*pVacuumConfig->PlasmaVolume() << " electrons /s to maintain steady-state" << std::endl;
 
 	out << std::endl;
-	double Resistance = ElectricPotential() * ElectricPotential() /(  (  ViscousHeating() + ParallelKineticEnergyLoss() )*pVacuumConfig->PlasmaVolume() );
+	double Resistance = ElectricPotential() / JRadial;
 	double Capacitance = 2.0*KineticStoredEnergy / ( ElectricPotential() * ElectricPotential() );
 	out << "Electrical Properties of the Plasma:" << std::endl;
 	out << "\tResistance  = "; PrintWithUnit( out, Resistance,  "Ω" ); out << std::endl;
