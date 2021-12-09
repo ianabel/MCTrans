@@ -183,7 +183,7 @@ double evaluateJanevDFunction( double beta )
 	return DFunctionVal;
 }
 
-double protonHydrogenIonizationCrossSection( double Ti )
+double protonHydrogenIonizationCrossSection1( double Ti )
 {
 	// Minimum energy of cross section in eV
 	const double minimumEnergySigma = 13.6;
@@ -204,6 +204,37 @@ double protonHydrogenIonizationCrossSection( double Ti )
 		sigma = 0;
 	} else {
 		sigma = 1.76e-16 * ( lambda_eff * evaluateJanevDFunction( beta_i ) / omega_i  + lambda_01 * evaluateJanevDFunction( beta_01 ) / ( 8 * omega_01 ) );
+	}
+	return sigma;
+}
+
+double protonHydrogenIonizationCrossSection2( double Ti )
+{
+	// Minimum energy of cross section in keV
+	const double minimumEnergySigma = 0.2;
+	double TiKEV = Ti / 1000;
+
+	// Contribution from ground state
+	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
+	// Equation 2.2.1
+	// H+ + H(1s) --> H+ + H+ + e
+	// Accuracy is 30% or better
+	const double A1 = 12.899;
+	const double A2 = 61.897;
+	const double A3 = 9.2731e3;
+	const double A4 = 4.9749e-4;
+	const double A5 = 3.9890e-2;
+	const double A6 = -1.5900;
+	const double A7 = 3.1834;
+	const double A8 = -3.7154;
+
+	double sigma;
+	if ( TiKEV < minimumEnergySigma ) {
+		sigma = 0;
+	}
+	else {
+		// Energy is in units of keV
+		sigma = 1e-16 * A1 * ( ::exp( -A2 / TiKEV ) * ::log( 1 + A3 * TiKEV ) / TiKEV + A4 * ::exp( -A5 * TiKEV ) / ( ::pow( TiKEV, A6 ) + A7 * ::pow( TiKEV, A8 ) ) );
 	}
 	return sigma;
 }
