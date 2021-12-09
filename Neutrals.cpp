@@ -239,6 +239,41 @@ double protonHydrogenIonizationCrossSection2( double Ti )
 	return sigma;
 }
 
+double electronHydrogenExcitationN2CrossSection( double Te )
+{
+	// Minimum energy of cross section in eV
+	const double excitationEnergy = 10.2;
+	const double cutoffEnergy1 = 11.56;
+	const double cutoffEnergy2 = 12.23;
+
+	// Contribution from ground state
+	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
+	// Equation 1.1.3
+	// e + H(1s) --> e + H*(n=2)
+	// Accuracy is 10% or better
+	std::vector<double> fittingParamA = { 1.4182, -20.877, 49.735, -46.249, 17.442, 4.4979 };
+
+	double sigma;
+	if ( Te < excitationEnergy ) {
+		sigma = 0;
+	}
+	else if ( Te < cutoffEnergy1 ) {
+		sigma = 1e-16 * ( 0.255 + 0.1865 * ( Te - excitationEnergy ) );
+	}
+	else if ( Te < cutoffEnergy2 ) {
+		sigma = 5.025e-17;
+	}
+	else {
+		double sum = 0.0;
+		double XEnergy = Te / excitationEnergy;
+		for ( size_t n = 0; n < fittingParamA.size() - 1; n++ ) {
+	      sum += fittingParamA.at( n ) / ::pow( XEnergy, n - 1 );
+	   }
+		sigma = 5.984e-16 / Te * ( sum + fittingParamA.back() * ::log( XEnergy ) );
+	}
+	return sigma;
+}
+
 double rateCoeff( double Ti, CrossSection const & sigma )
 {
 	// E and T in eV, sigma in cm^2
