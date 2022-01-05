@@ -136,18 +136,27 @@ double IonNeutralCrossSection( double Ti )
 double electronHydrogenIonizationCrossSection( double Te )
 {
 	// Minimum energy of cross section in eV
-	const double minimumEnergySigma = 14.3;
+	const double ionizationEnergy = 13.6;
+	const double minimumEnergySigma = ionizationEnergy;
 
 	// Contribution from ground state
-	// Janev 1987 2.1.5
+	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
+	// Equation 1.2.1
 	// e + H(1s) --> e + H+ + e
-	// Error is ~0.1, so it may be worth it to find a better fit
-	std::vector<double> aSigma = { -7.778213049931e+02, 9.540190857268e+02, -5.227766973807e+02, 1.592701052833e+02, -2.952557198074e+01, 3.413024145539e+00, -2.405520814365e-01, 9.465181268476e-03, -1.594325350979e-04 };
+	// Accuracy is 10% or better
+	double fittingParamA = 0.18450;
+	std::vector<double> fittingParamB = { -0.032226, -0.034539, 1.4003, -2.8115, 2.2986 };
+
 	double sigma;
 	if ( Te < minimumEnergySigma ) {
 		sigma = 0;
-	} else {
-		sigma = EvaluateJanevCrossSectionFit( aSigma, Te );
+	}
+	else {
+		double sum = 0.0;
+		for ( size_t n = 0; n < fittingParamB.size(); n++ ) {
+	      sum += fittingParamB.at( n ) * ::pow( 1 - ionizationEnergy / Te, n );
+	   }
+		sigma = 1.0e-13 / ( ionizationEnergy * Te ) * ( fittingParamA * ::log( Te / ionizationEnergy ) + sum );
 	}
 	return sigma;
 }
@@ -179,7 +188,7 @@ double evaluateJanevDFunction( double beta )
 	return DFunctionVal;
 }
 
-double protonHydrogenIonizationCrossSection( double Ti )
+double protonHydrogenIonizationCrossSection1( double Ti )
 {
 	// Minimum energy of cross section in eV
 	const double minimumEnergySigma = 13.6;
@@ -200,6 +209,105 @@ double protonHydrogenIonizationCrossSection( double Ti )
 		sigma = 0;
 	} else {
 		sigma = 1.76e-16 * ( lambda_eff * evaluateJanevDFunction( beta_i ) / omega_i  + lambda_01 * evaluateJanevDFunction( beta_01 ) / ( 8 * omega_01 ) );
+	}
+	return sigma;
+}
+
+double protonHydrogenIonizationCrossSection2( double Ti )
+{
+	// Minimum energy of cross section in keV
+	const double minimumEnergySigma = 0.2;
+	double TiKEV = Ti / 1000;
+
+	// Contribution from ground state
+	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
+	// Equation 2.2.1
+	// H+ + H(1s) --> H+ + H+ + e
+	// Accuracy is 30% or better
+	const double A1 = 12.899;
+	const double A2 = 61.897;
+	const double A3 = 9.2731e3;
+	const double A4 = 4.9749e-4;
+	const double A5 = 3.9890e-2;
+	const double A6 = -1.5900;
+	const double A7 = 3.1834;
+	const double A8 = -3.7154;
+
+	double sigma;
+	if ( TiKEV < minimumEnergySigma ) {
+		sigma = 0;
+	}
+	else {
+		// Energy is in units of keV
+		sigma = 1e-16 * A1 * ( ::exp( -A2 / TiKEV ) * ::log( 1 + A3 * TiKEV ) / TiKEV + A4 * ::exp( -A5 * TiKEV ) / ( ::pow( TiKEV, A6 ) + A7 * ::pow( TiKEV, A8 ) ) );
+	}
+	return sigma;
+}
+
+double electronHydrogenExcitationN2CrossSection( double Te )
+{
+	// Minimum energy of cross section in eV
+	const double excitationEnergy = 10.2;
+	const double cutoffEnergy1 = 11.56;
+	const double cutoffEnergy2 = 12.23;
+
+	// Contribution from ground state
+	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
+	// Equation 1.1.3
+	// e + H(1s) --> e + H*(n=2)
+	// Accuracy is 10% or better
+	std::vector<double> fittingParamA = { 1.4182, -20.877, 49.735, -46.249, 17.442, 4.4979 };
+
+	double sigma;
+	if ( Te < excitationEnergy ) {
+		sigma = 0;
+	}
+	else if ( Te < cutoffEnergy1 ) {
+		sigma = 1e-16 * ( 0.255 + 0.1865 * ( Te - excitationEnergy ) );
+	}
+	else if ( Te < cutoffEnergy2 ) {
+		sigma = 5.025e-17;
+	}
+	else {
+		double sum = 0.0;
+		double XEnergy = Te / excitationEnergy;
+		for ( size_t n = 0; n < fittingParamA.size() - 1; n++ ) {
+	      sum += fittingParamA.at( n ) / ::pow( XEnergy, n - 1 );
+	   }
+		sigma = 5.984e-16 / Te * ( sum + fittingParamA.back() * ::log( XEnergy ) );
+	}
+	return sigma;
+}
+
+double protonHydrogenExcitationN2CrossSection( double Ti )
+{
+	// Minimum energy of cross section in keV
+	const double minimumEnergySigma = 0.6;
+	double TiKEV = Ti / 1000;
+
+	// Contribution from ground state
+	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
+	// Equation 2.2.1
+	// H+ + H(1s) --> H+ + H+ + e
+	// Accuracy is 100% or better
+	const double A1 = 34.433;
+	const double A2 = 44.057;
+	const double A3 = 0.56870;
+	const double A4 = 8.5476;
+	const double A5 = 7.8501;
+	const double A6 = -9.2217;
+	const double A7 = 1.8020e-2;
+	const double A8 = 1.6931;
+	const double A9 = 1.9422e-3;
+	const double A10 = 2.9068;
+
+	double sigma;
+	if ( TiKEV < minimumEnergySigma ) {
+		sigma = 0;
+	}
+	else {
+		// Energy is in units of keV
+		sigma = 1e-16 * A1 * ( ::exp( -A2 / TiKEV ) * ::log( 1 + A3 * TiKEV ) / TiKEV + A4 * ::exp( -A5 * TiKEV ) / ( ::pow( TiKEV, A6 ) ) + A7 * ::exp( -A8 / TiKEV ) / ( 1 + A9 * ::pow( TiKEV, A10 ) ) );
 	}
 	return sigma;
 }
