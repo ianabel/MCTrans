@@ -148,8 +148,8 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 			throw std::invalid_argument( toml::format_error( "[error] When PlasmaRadiusMin is specified you must also set PlasmaRadiusMax",mirrorConfig.at( "PlasmaRadiusMin" )," min radius set here" ) );
 		}
 		// set Plasma Radii directly
-		double PlasmaMinRadius = mirrorConfig.at( "PlasmaMinRadius" ).as_floating();
-		double PlasmaMaxRadius = mirrorConfig.at( "PlasmaMaxRadius" ).as_floating();
+		double PlasmaMinRadius = mirrorConfig.at( "PlasmaRadiusMin" ).as_floating();
+		double PlasmaMaxRadius = mirrorConfig.at( "PlasmaRadiusMax" ).as_floating();
 
 		AxialGapDistance = PlasmaMinRadius;
 		PlasmaColumnWidth = PlasmaMaxRadius - PlasmaMinRadius;
