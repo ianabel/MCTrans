@@ -9,6 +9,20 @@
 
 MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value const& plasmaConfig )
 {
+	if ( plasmaConfig.count( "AsciiOutputFile" ) == 1 )
+	{
+		OutputFile = plasmaConfig.at( "AsciiOutputFile" ).as_string();
+	} else {
+		OutputFile = "";
+	}
+
+	if ( plasmaConfig.count( "NetcdfOutput" ) == 1 )
+	{
+		NetcdfOutputFile = plasmaConfig.at( "NetcdfOutput" ).as_string();
+	} else {
+		NetcdfOutputFile = "";
+	}
+
 	if ( plasmaConfig.count( "algorithm" ) != 0 ) {
 		const auto algConfig = toml::find<toml::table>( plasmaConfig, "algorithm" );
 
@@ -53,19 +67,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 #endif
 		}
 
-		if ( algConfig.count( "AsciiOutputFile" ) == 1 )
-		{
-			OutputFile = algConfig.at( "AsciiOutputFile" ).as_string();
-		} else {
-			OutputFile = "";
-		}
 
-		if ( algConfig.count( "NetcdfOutput" ) == 1 )
-		{
-			NetcdfOutputFile = algConfig.at( "NetcdfOutput" ).as_string();
-		} else {
-			NetcdfOutputFile = "";
-		}
 		Collisional = false;
 
 	} else {
@@ -494,13 +496,27 @@ double MirrorPlasma::ClassicalHeatLosses() const
 	return ClassicalIonHeatLoss() + ClassicalElectronHeatLoss();
 }
 
+double MirrorPlasma::RadiationLosses() const
+{
+	return BremsstrahlungLosses() + CyclotronLosses();
+}
+
 // Formula from the NRL formulary page 58 and the definition of Z_eff:
 // n_e Z_eff = Sum_i n_i Z_i^2 (sum over all species that aren't electrons)
 double MirrorPlasma::BremsstrahlungLosses() const
 {
 	// NRL formulary with reference values factored out
-	// Rteurn units are W/m^3
+	// Return units are W/m^3
 	return 169 * ::sqrt( 1000 * ElectronTemperature ) * Zeff * ElectronDensity * ElectronDensity;
+}
+
+// Formula (34) on page 58 of the NRL formulary
+double MirrorPlasma::CyclotronLosses() const
+{
+	// NRL formulary with reference values factored out
+	// Return units are W/m^3
+	double B_central = pVacuumConfig->CentralCellFieldStrength; // in Tesla
+	return 6.21 * 1000 * ElectronDensity * ElectronTemperature * B_central * B_central;
 }
 
 double MirrorPlasma::Beta() const
@@ -609,7 +625,7 @@ double MirrorPlasma::IonHeatLosses() const
 
 double MirrorPlasma::ElectronHeatLosses() const
 {
-	return ParallelElectronHeatLoss() + BremsstrahlungLosses();
+	return ParallelElectronHeatLoss() + RadiationLosses();
 }
 
 double MirrorPlasma::IonHeating() const

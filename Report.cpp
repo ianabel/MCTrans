@@ -102,9 +102,12 @@ void MirrorPlasma::PrintReport()
 	{
 		out << "Bremsstrahlung losses are ";
 		PrintWithUnit( out, BremsstrahlungLosses()*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
+		out << "Cyclotron emission losses are ";
+		PrintWithUnit( out, CyclotronLosses()*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
 	}
 	else
 		out << "No radiation losses were included." << std::endl;
+
 	out << std::endl;
 		
 	out << "Total potential drop is ";
@@ -137,7 +140,7 @@ void MirrorPlasma::PrintReport()
 	out << "\tConfinement time from perpendicular losses is "; PrintWithUnit( out, PerpConfinementTime, "s" ); out << std::endl;
 	out << std::endl;
 
-	double ParallelParticleConfinementTime = ( IonDensity * ReferenceDensity ) /(  ParallelIonParticleLoss() );
+	double ParallelParticleConfinementTime = ( IonDensity * ReferenceDensity ) /(  ParallelIonParticleLoss() + ClassicalIonParticleLosses() );
 	out << "Particle (Ion) Confinement Time ~= "; PrintWithUnit( out, ParallelParticleConfinementTime, "s" ); out << std::endl;
 	out << std::endl;
 
@@ -152,6 +155,12 @@ void MirrorPlasma::PrintReport()
 	out << std::endl;
 	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
 	out << "Plasma must be provided at a rate of " << ElectronLossRate*pVacuumConfig->PlasmaVolume() << " electrons /s to maintain steady-state" << std::endl;
+
+	out << std::endl;
+	double IonLossRate = ParallelIonParticleLoss() + ClassicalIonParticleLosses();
+	out << "The Ion Loss Rate is " << IonLossRate * pVacuumConfig->PlasmaVolume() << " ions/s " << std::endl;
+
+	
 
 	out << std::endl;
 	double Resistance = ElectricPotential() / JRadial;
@@ -191,6 +200,10 @@ void MirrorPlasma::PrintReport()
 			out << " D/D Neutrons (2.45 MeV) per second: " << DDNeutronRate() << std::endl;
 			// out << " D/T Neutrons (14.1 MeV) from Fusion-Produced-Tritium: " << DDEnergeticNeutronRate() << std::endl;
 			out << std::endl;
+
+			out << " === Effective D/T Figures of Merit, assuming an identical plasma === " << std::endl;
+			double Yield = ( 14.1/3.52 + 1.0 ) * FusionAlphaPowerDensity()*pVacuumConfig->PlasmaVolume();
+			out << " Q_(Scientific DT equivalent) = " << Yield / ElectricPotential()*JRadial << std::endl;
 		} else if ( pVacuumConfig->IonSpecies.Name == "Deuterium/Tritium Fuel" ) {
 			out << " === Reactor Output Assuming D/T Reactor Fuel === " << std::endl;
 
@@ -200,6 +213,16 @@ void MirrorPlasma::PrintReport()
 			out << "                    as Neutrons: " << FusionNeutronPower << " MW" << std::endl;
 			out << "Neutron Wall Loading is " << NeutronWallLoading() << " MW/m^2" << std::endl;
 			out << "Total Thermal Power Output is " << ThermalPowerOutput() << " MW" << std::endl;
+
+			out << " === Figures of Merit === " << std::endl;
+			double TotalOutputPower1 = FusionNeutronPower + FusionAlphaPower;
+			double TotalOutputPower2 = ThermalPowerOutput();
+			double TotalInputPower1 = ElectricPotential() * JRadial / 1e6; // Because the output is in MW
+			double RotationDriveEta = 0.75;
+			double TotalInputPower2 = ElectricPotential() * JRadial / ( RotationDriveEta * 1e6 ); // ditto
+
+			out << "\t Q_scientific (not including Tritium Breeding or efficiencies ) = " << TotalOutputPower1/TotalInputPower1 << std::endl;
+			out << "\t Q_engineering (including Tritium Breeding at TBR of 1.0 and assuming efficiency " << RotationDriveEta << " for electric drive of rotation ) = " << TotalOutputPower2/TotalInputPower2 << std::endl;
 
 		} else {
 			out << "No Nuclear Reaction Diagnostics for Ion species: " << pVacuumConfig->IonSpecies.Name << std::endl;

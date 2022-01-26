@@ -170,6 +170,9 @@ class MirrorPlasma {
 		double IonToElectronHeatTransfer() const;
 
 		double BremsstrahlungLosses() const;
+		double CyclotronLosses() const;
+		double RadiationLosses() const;
+
 		double NeutralLosses() const;
 		double ClassicalHeatLosses() const;
 		double ParallelHeatLosses() const;

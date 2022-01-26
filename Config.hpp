@@ -29,7 +29,7 @@ class MCTransConfig {
 				EndTime = timestep_conf.at( "EndTime" ).as_floating();
 			} else {
 				OutputDeltaT = 0.0005; // 500µs cadence
-				EndTime = 0.500; // 500 ms run time
+				EndTime = 1.00; // 1s run time
 			}
 		};
 		enum SolveType {
