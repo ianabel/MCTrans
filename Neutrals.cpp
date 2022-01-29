@@ -1,13 +1,11 @@
 
 #include "MirrorPlasma.hpp"
-
 #include "PlasmaPhysics.hpp"
 
 #include <cmath>
 #include <iostream>
 #include <vector>
 #include <string>
-
 #include <boost/math/quadrature/trapezoidal.hpp>
 
 // Reference Cross-section for Charge-Exchange neutral cross-section
@@ -327,6 +325,25 @@ double rateCoeff( double Ti, CrossSection const & sigma )
 
 	constexpr double tolerance = 1e-6;
 	return ( 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * ProtonMass * Ti) * Ti ) ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
+}
+
+double neutralsRateCoeff( CrossSection const & sigma, std::shared_ptr<MirrorPlasma> pMirrorPlasma )
+{
+	// sigma in cm^2
+	// k=<σv> in m^3/s
+	// mu, mr is in proton masses
+	// Assumes ions are Maxwellian and neutrals are stationary
+	double IonThermalSpeed = ::sqrt( 2.0 * pMirrorPlasma->IonTemperature * ReferenceTemperature / pMirrorPlasma->pVacuumConfig->IonSpecies.Mass );
+
+	auto integrand = [&]( double Energy ) {
+		double velocity = ::sqrt( 2.0 * Energy / pMirrorPlasma->pVacuumConfig->IonSpecies.Mass );
+		double u = velocity / IonThermalSpeed;
+		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
+		return u * u * sigmaM2 * ( ::exp( -::pow(pMirrorPlasma->MachNumber - u, 2) ) - ::exp( -::pow(pMirrorPlasma->MachNumber + u, 2) ) );
+	};
+
+	constexpr double tolerance = 1e-6;
+	return IonThermalSpeed / ( pMirrorPlasma->MachNumber * ::sqrt(M_PI) ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
 }
 
 // Ionization Rate as a function of
