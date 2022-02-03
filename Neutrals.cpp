@@ -43,7 +43,7 @@ class CrossSection {
 		std::function<double( double )> sigmaImplementation;
 };
 
-double hotNeutralsRateCoefficent( CrossSection const & sigma, std::shared_ptr<MirrorPlasma> pMirrorPlasma )
+double neutralsRateCoefficentHot( CrossSection const & sigma, std::shared_ptr<MirrorPlasma> pMirrorPlasma )
 {
 	// E and T in eV, sigma in cm^2
 	// k=<σv> in m^3/s
@@ -57,10 +57,10 @@ double hotNeutralsRateCoefficent( CrossSection const & sigma, std::shared_ptr<Mi
 	};
 
 	constexpr double tolerance = 1e-6;
-	return ( 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * pMirrorPlasma->pVacuumConfig->IonSpecies.Mass * Ti) * Ti ) ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
+	return 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * Ti) * Ti ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
 }
 
-double coldNeutralsRateCoefficient( CrossSection const & sigma, std::shared_ptr<MirrorPlasma> pMirrorPlasma )
+double neutralsRateCoefficentCold( CrossSection const & sigma, std::shared_ptr<MirrorPlasma> pMirrorPlasma )
 {
 	// sigma in cm^2
 	// k=<σv> in m^3/s
