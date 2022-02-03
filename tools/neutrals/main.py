@@ -39,7 +39,7 @@ plt.ylim([1e-14, 1e-6])
 plt.savefig('HotRateCoefficients.png', dpi=150)
 
 plt.figure(3)
-plt.title('Cold Rate Coefficients')
+plt.title(f'Cold Rate Coefficients (M={MachNumber})')
 plt.xlabel('T (eV)')
 plt.ylabel('$<\sigma v>$ (cm$^3$/s)')
 plt.legend()
