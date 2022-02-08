@@ -29,6 +29,7 @@ Angular Velocity at the plasma centre (R = 0.25 m) is 6.02e+06 /s
 
 Viscous Heating is 9.8 kW
 Bremsstrahlung losses are 30.2 W
+Cyclotron emission losses are 587 µW
 
 Total potential drop is 90.3 kV
 Radial Current Drawn from Power Supply 254 mA
@@ -44,11 +45,14 @@ Of which
 	Confinement time from parallel losses is 129 ms
 	Confinement time from perpendicular losses is 164 ms
 
-Particle (Ion) Confinement Time ~= 544 ms
+Particle (Ion) Confinement Time ~= 518 ms
 
 Ion-Electron Temperature Equilibration Time is 41.8 ms
 
 Plasma must be provided at a rate of 3.64e+18 electrons /s to maintain steady-state
+
+Neutral gas must be provided at a rate of 3.64e+18 particles/s to refuel the plasma
+This leads to a steady-state neutral density of 3.61e+10/m^3
 
 Electrical Properties of the Plasma:
 	Resistance  = 356 kΩ

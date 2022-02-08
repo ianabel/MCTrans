@@ -1,7 +1,7 @@
 
 #include "MirrorPlasma.hpp"
 #include "PlasmaPhysics.hpp"
-#include "Species.hpp"
+#include "AtomicPhysics.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -9,66 +9,33 @@
 #include <string>
 #include <boost/math/quadrature/trapezoidal.hpp>
 
-// Reference Cross-section for Charge-Exchange neutral cross-section
-// in cm^2
-constexpr double BaseCXCrossSection = 1e-15;
-constexpr double BaseIonizationCrossSection = 1e-10;
 
-class CrossSection {
-	public:
-		CrossSection( std::function<double( double )> sigma, double E_min, double E_max, Species_t s1, Species_t s2 )
-		{
-			sigmaImplementation = sigma;
-			MinEnergy = E_min;
-			MaxEnergy = E_max;
-			Species1 = s1;
-			Species2 = s2;
-			ReducedMass = Species1.Mass * Species2.Mass / ( Species1.Mass + Species2.Mass );
-		};
-
-		// Masses in units of the proton mass
-		double ReducedMass;
-		// in units of electron volts (not keV!)
-		double MinEnergy,MaxEnergy;
-		// Species types
-		Species_t Species1,Species2;
-
-		// Return the cross section in cm^2 -- not barns, not m^2
-		double operator()( double CentreOfMassEnergy ) const
-		{
-			return sigmaImplementation( CentreOfMassEnergy );
-		}
-
-	private:
-		std::function<double( double )> sigmaImplementation;
-};
-
-double neutralsRateCoefficentHot( CrossSection const & sigma, std::shared_ptr<MirrorPlasma> pMirrorPlasma )
+double neutralsRateCoefficentHot( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
 	// E and T in eV, sigma in cm^2
 	// k=<σv> in m^3/s
 	// Assumes a Maxwellian distribution, COM energy (as opposed to incident)
-	double Ti = pMirrorPlasma->IonTemperature * ReferenceTemperature * ElectronCharge; // Convert to Joules
-	double mi = pMirrorPlasma->pVacuumConfig->IonSpecies.Mass * ProtonMass; // Convert to kg
+	double Ti = plasma.IonTemperature * ReferenceTemperature; // Convert to Joules
+	double mi = plasma.pVacuumConfig->IonSpecies.Mass * ProtonMass; // Convert to kg
 
 	auto integrand = [&]( double Energy ) {
 		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
-		return Energy * sigmaM2 * ::exp( -Energy / ( pMirrorPlasma->IonTemperature * ReferenceTemperature ) );
+		return Energy * sigmaM2 * ::exp( -Energy / ( plasma.IonTemperature * 1000 ) );
 	};
 
 	constexpr double tolerance = 1e-6;
 	return 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * Ti) * Ti ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
 }
 
-double neutralsRateCoefficentCold( CrossSection const & sigma, std::shared_ptr<MirrorPlasma> pMirrorPlasma )
+double neutralsRateCoefficentCold( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
 	// sigma in cm^2
 	// k=<σv> in m^3/s
 	// Assumes ions are Maxwellian and neutrals are stationary
-	double Ti = pMirrorPlasma->IonTemperature * ReferenceTemperature * ElectronCharge; // Convert to Joules
-	double mi = pMirrorPlasma->pVacuumConfig->IonSpecies.Mass * ProtonMass; // Convert to kg
-	double IonThermalSpeed = ::sqrt( 2.0 * Ti / pMirrorPlasma->pVacuumConfig->IonSpecies.Mass );
-	double thermalMachNumber = pMirrorPlasma->MachNumber * ::sqrt( pMirrorPlasma->pVacuumConfig->IonSpecies.Charge * pMirrorPlasma->ElectronTemperature / ( 2 * pMirrorPlasma->IonTemperature ) );
+	double Ti = plasma.IonTemperature * ReferenceTemperature; // Convert to Joules
+	double mi = plasma.pVacuumConfig->IonSpecies.Mass * ProtonMass; // Convert to kg
+	double IonThermalSpeed = ::sqrt( 2.0 * Ti / mi );
+	double thermalMachNumber = plasma.MachNumber * ::sqrt( plasma.pVacuumConfig->IonSpecies.Charge * plasma.ElectronTemperature / ( 2 * plasma.IonTemperature ) );
 
 	auto integrand = [&]( double Energy ) {
 		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / mi );
@@ -81,6 +48,7 @@ double neutralsRateCoefficentCold( CrossSection const & sigma, std::shared_ptr<M
 	return IonThermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
 }
 
+/*
 double meanFreePath( double density, double crossSection )
 {
 	return 1.0 / ( density * crossSection );
@@ -95,6 +63,7 @@ bool isCoronalEquilibrium( double excitationRate, double deexcitationRate, doubl
 {
 	return ( deexcitationRate / excitationRate ) >= minRatio;
 }
+*/
 
 double reactionRate( double density_1, double density_2, double rateCoefficient, std::shared_ptr<MirrorPlasma> pMirrorPlasma )
 {
@@ -114,6 +83,7 @@ double EvaluateJanevCrossSectionFit ( std::vector<double> PolynomialCoefficients
 	return sigma;
 }
 
+/*
 double evaluateJanevDFunction( double beta )
 {
 	// Function from Janev 1987 Appendix C
@@ -140,14 +110,13 @@ double evaluateJanevDFunction( double beta )
 	}
 	return DFunctionVal;
 }
+*/
 
-double electronImpactIonizationCrossSection( std::shared_ptr<MirrorPlasma> pMirrorPlasma )
+double electronImpactIonizationCrossSection( double CoMEnergy )
 {
 	// Minimum energy of cross section in eV
 	const double ionizationEnergy = 13.6;
 	const double minimumEnergySigma = ionizationEnergy;
-
-	double Te = pMirrorPlasma->ElectronTemperature;
 
 	// Contribution from ground state
 	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
@@ -158,51 +127,26 @@ double electronImpactIonizationCrossSection( std::shared_ptr<MirrorPlasma> pMirr
 	std::vector<double> fittingParamB = { -0.032226, -0.034539, 1.4003, -2.8115, 2.2986 };
 
 	double sigma;
-	if ( Te < minimumEnergySigma ) {
+	if ( CoMEnergy < minimumEnergySigma ) {
 		sigma = 0;
 	}
 	else {
 		double sum = 0.0;
 		for ( size_t n = 0; n < fittingParamB.size(); n++ ) {
-	      sum += fittingParamB.at( n ) * ::pow( 1 - ionizationEnergy / Te, n );
+	      sum += fittingParamB.at( n ) * ::pow( 1 - ionizationEnergy / CoMEnergy, n );
 	   }
-		sigma = 1.0e-13 / ( ionizationEnergy * Te ) * ( fittingParamA * ::log( Te / ionizationEnergy ) + sum );
+		sigma = 1.0e-13 / ( ionizationEnergy * CoMEnergy ) * ( fittingParamA * ::log( CoMEnergy / ionizationEnergy ) + sum );
 	}
 	return sigma;
 }
 
-double protonImpacIonizationCrossSection1( std::shared_ptr<MirrorPlasma> pMirrorPlasma )
+// Energy in electron volts, returns cross section in cm^2
+double protonImpactIonizationCrossSection( double Energy )
 {
-	double Ti = pMirrorPlasma->IonTemperature;
-	// Minimum energy of cross section in eV
-	const double minimumEnergySigma = 13.6;
-
-	// Contribution from ground state
-	// Janev 1987 3.1.6
-	// p + H(1s) --> p + H+ + e
-	const double lambda_eff = 0.808;
-	const double lambda_01 = 0.7448;
-	const double omega_i = 0.5;
-	const double omega_01 = 0.375;
-	double v = 6.3246e-3 * ::sqrt( Ti );
-	double beta_i = lambda_eff * omega_i / ::pow( v, 2 );
-	double beta_01 = lambda_01 * omega_01 / ::pow( v, 2 );
-
-	double sigma;
-	if ( Ti < minimumEnergySigma ) {
-		sigma = 0;
-	} else {
-		sigma = 1.76e-16 * ( lambda_eff * evaluateJanevDFunction( beta_i ) / omega_i  + lambda_01 * evaluateJanevDFunction( beta_01 ) / ( 8 * omega_01 ) );
-	}
-	return sigma;
-}
-
-double protonImpactIonizationCrossSection2( std::shared_ptr<MirrorPlasma> pMirrorPlasma )
-{
-	double Ti = pMirrorPlasma->IonTemperature;
 	// Minimum energy of cross section in keV
 	const double minimumEnergySigma = 0.2;
-	double TiKEV = Ti / 1000;
+	// Convert to keV
+	double CoMEnergy = Energy / 1000;
 
 	// Contribution from ground state
 	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
@@ -219,20 +163,18 @@ double protonImpactIonizationCrossSection2( std::shared_ptr<MirrorPlasma> pMirro
 	const double A8 = -3.7154;
 
 	double sigma;
-	if ( TiKEV < minimumEnergySigma ) {
+	if ( CoMEnergy < minimumEnergySigma ) {
 		sigma = 0;
 	}
 	else {
 		// Energy is in units of keV
-		sigma = 1e-16 * A1 * ( ::exp( -A2 / TiKEV ) * ::log( 1 + A3 * TiKEV ) / TiKEV + A4 * ::exp( -A5 * TiKEV ) / ( ::pow( TiKEV, A6 ) + A7 * ::pow( TiKEV, A8 ) ) );
+		sigma = 1e-16 * A1 * ( ::exp( -A2 / CoMEnergy ) * ::log( 1 + A3 * CoMEnergy ) / CoMEnergy + A4 * ::exp( -A5 * CoMEnergy ) / ( ::pow( CoMEnergy, A6 ) + A7 * ::pow( CoMEnergy, A8 ) ) );
 	}
 	return sigma;
 }
 
-double chargeExchangeCrossSection( std::shared_ptr<MirrorPlasma> pMirrorPlasma )
+double HydrogenChargeExchangeCrossSection( double CoMEnergy )
 {
-	double Ti = pMirrorPlasma->IonTemperature;
-
 	// Minimum energy of cross section in eV
 	const double minimumEnergySigma_1s = 0.1;
 	const double minimumEnergySigma_2p = 19.0;
@@ -242,10 +184,10 @@ double chargeExchangeCrossSection( std::shared_ptr<MirrorPlasma> pMirrorPlasma )
 	// Janev 1987 3.1.8
 	// p + H(1s) --> H(1s) + p
 	double sigma_1s;
-	if ( Ti < minimumEnergySigma_2p ) {
+	if ( CoMEnergy < minimumEnergySigma_2p ) {
 		sigma_1s = 0;
 	} else {
-		sigma_1s = 0.6937e-14 * ::pow( 1 - 0.155 * ::log10( Ti ), 2 ) / (1 + 0.1112e-14 * ::pow( Ti, 3.3 ));
+		sigma_1s = 0.6937e-14 * ::pow( 1 - 0.155 * ::log10( CoMEnergy ), 2 ) / (1 + 0.1112e-14 * ::pow( CoMEnergy, 3.3 ));
 	}
 
 	// Janev 1987 3.1.9
@@ -257,18 +199,18 @@ double chargeExchangeCrossSection( std::shared_ptr<MirrorPlasma> pMirrorPlasma )
 
 	// Contribution from ground -> 2p orbital
 	double sigma_2p;
-	if ( Ti < minimumEnergySigma_2p ) {
+	if ( CoMEnergy < minimumEnergySigma_2p ) {
 		sigma_2p = 0;
 	} else {
-		sigma_2p = EvaluateJanevCrossSectionFit( aSigma_2p, Ti );
+		sigma_2p = EvaluateJanevCrossSectionFit( aSigma_2p, CoMEnergy );
 	}
 
 	// Contribution from ground -> 2s orbital
 	double sigma_2s;
-	if ( Ti < minimumEnergySigma_2s ) {
+	if ( CoMEnergy < minimumEnergySigma_2s ) {
 		sigma_2s = 0;
 	} else {
-		sigma_2s = EvaluateJanevCrossSectionFit( aSigma_2s, Ti );
+		sigma_2s = EvaluateJanevCrossSectionFit( aSigma_2s, CoMEnergy );
 	}
 
 	return sigma_1s + sigma_2p + sigma_2s;
@@ -342,42 +284,22 @@ double protonHydrogenExcitationN2CrossSection( double Ti )
 	return sigma;
 }
 
-// Ionization Rate as a function of
-// electron density and electron temperature
-// returned in ADAS-like units of m^3/s (so multiply by
-// n_neutral * n_e * Volume to get rate)
-double IonizationRate( double Ne, double Te )
-{
-	return 1.0;
-}
-
-// CX Rate as a function of
-// ion density and ion temperature
-double CXCrossSection( double Ni, double Ti )
-{
-	double IonThermalSpeed = ::sqrt( 2.0 * Ti * ReferenceTemperature / ElectronMass );
-	return BaseCXCrossSection * 1e-4 * IonThermalSpeed;
-}
-
-double RecombinationRate( double Ne, double Te )
-{
-	return 0.0;
-}
-
 /*
- * To the neutrals the plasma is an onrushing torrent. Moving to the plasma rest frame, the neutrals are a high-energy beam ( width is
- * determined by the temperature of the neutral gas, which is low ).
+ * Use the above functions to set steady-state neutral density/source
  *
- * We can thus use beam stopping coefficients to try and work out the ionization rates..
  */
 void MirrorPlasma::ComputeSteadyStateNeutrals()
 {
-	double CurrentIonizationRate = IonizationRate( ElectronDensity * ReferenceDensity, ElectronTemperature * ReferenceTemperature );
-	// Assume mix of neutrals is such that QN is maintained so we just need to produce enough electrons from the source gas
+	// Calculate the Ionization Rate of cold neutrals from proton and electron impact:
+	double IonizationRateCoefficient = neutralsRateCoefficentCold( protonImpactIonization, *this ) + neutralsRateCoefficentCold( electronImpactIonization, *this );
+	std::cerr << "Rate Coeff was " << IonizationRateCoefficient << std::endl;
+
+	// Assume mix of neutrals is such that the particle densities are maintained so we just need to produce enough electrons from the source gas to balance the losses
 	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
-	// Steady State requires Losses = n_N * n_e * IR
-	// so n_N = Losses / ( n_e * IR )
-	NeutralDensity = ElectronLossRate / ( ElectronDensity * ReferenceDensity * CurrentIonizationRate );
+	// Steady State requires 
+	//		Losses = n_N * n_e * IonizationRateCoefficient * Volume
+	// so n_N = (Losses/Volume) / ( n_e * IonizationRateCoefficient )
+	NeutralDensity = ElectronLossRate / ( ElectronDensity * ReferenceDensity * IonizationRateCoefficient );
 	// Normalize neutral density
 	NeutralDensity = NeutralDensity / ReferenceDensity;
 	NeutralSource = ElectronLossRate;

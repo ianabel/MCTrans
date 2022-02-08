@@ -146,21 +146,14 @@ void MirrorPlasma::PrintReport()
 
 	out << "Ion-Electron Temperature Equilibration Time is "; PrintWithUnit( out, CollisionalTemperatureEquilibrationTime(),"s" ); out << std::endl;
 
-	/*
-	out << std::endl;
-	out << "Neutral gas must be provided at a rate of " << NeutralSource * pVacuumConfig->PlasmaVolume() << " particles/s to refuel the plasma" << std::endl;
-	out << "This leads to a steady-state neutral density of " << NeutralDensity * ReferenceDensity << "/m^3" << std::endl;
-	*/
-
 	out << std::endl;
 	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
 	out << "Plasma must be provided at a rate of " << ElectronLossRate*pVacuumConfig->PlasmaVolume() << " electrons /s to maintain steady-state" << std::endl;
 
 	out << std::endl;
-	double IonLossRate = ParallelIonParticleLoss() + ClassicalIonParticleLosses();
-	out << "The Ion Loss Rate is " << IonLossRate * pVacuumConfig->PlasmaVolume() << " ions/s " << std::endl;
-
-	
+	ComputeSteadyStateNeutrals();
+	out << "Neutral gas must be provided at a rate of " << NeutralSource * pVacuumConfig->PlasmaVolume() << " particles/s to refuel the plasma" << std::endl;
+	out << "This leads to a steady-state neutral density of " << NeutralDensity * ReferenceDensity << "/m^3" << std::endl;
 
 	out << std::endl;
 	double Resistance = ElectricPotential() / JRadial;
