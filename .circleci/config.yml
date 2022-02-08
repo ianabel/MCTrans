@@ -25,7 +25,7 @@ jobs:
       - run:
           command: cp Makefile.local.example Makefile.local
       - run:
-          command: make
+          command: CXX="g++-11" make
       - run:
           command: make test
   buildubuntu:
@@ -42,7 +42,7 @@ jobs:
       - run:
           command: cp Makefile.local.example Makefile.local
       - run:
-          command: make
+          command: CXX="g++-11" make
       - run:
           command: make test
 workflows:
