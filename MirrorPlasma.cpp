@@ -510,13 +510,25 @@ double MirrorPlasma::BremsstrahlungLosses() const
 	return 169 * ::sqrt( 1000 * ElectronTemperature ) * Zeff * ElectronDensity * ElectronDensity;
 }
 
-// Formula (34) on page 58 of the NRL formulary
+// Formula (34) on page 58 of the NRL formulary is the vacuum emission
+// we use the modified loss rate given in Tamor (1988) including a transparency factor
 double MirrorPlasma::CyclotronLosses() const
 {
 	// NRL formulary with reference values factored out
 	// Return units are W/m^3
 	double B_central = pVacuumConfig->CentralCellFieldStrength; // in Tesla
-	return 6.21 * 1000 * ElectronDensity * ElectronTemperature * B_central * B_central;
+	double P_vacuum = 6.21 * 1000 * ElectronDensity * ElectronTemperature * B_central * B_central;
+
+	// Characteristic absorption length
+	// lambda_0 = (Electron Inertial Lenght) / ( Plasma Frequency / Cyclotron Frequency )  ; Eq (4) of Tamor
+	//				= (5.31 * 10^-4 / (n_e20)^1/2) / ( 3.21 * (n_e20)^1/2 / B ) ; From NRL Formulary, converted to our units (Tesla for B & 10^20 /m^3 for n_e)
+	double LambdaZero = ( 5.31e-4 / 3.21 ) * ( B_central / ElectronDensity );
+	double WallReflectivity = 0.95;
+	double OpticalThickness = ( pVacuumConfig->PlasmaColumnWidth / ( 1.0 - WallReflectivity ) ) / LambdaZero;
+	// This is the Phi introduced by Trubnikov and later approximated by Tamor 
+	double TransparencyFactor = ::pow( ElectronTemperature, 1.5 ) / ( 200.0 * ::sqrt( OpticalThickness ) );
+	// Moderate the vacuum emission by the transparency factor
+	return P_vacuum * TransparencyFactor;
 }
 
 double MirrorPlasma::Beta() const
