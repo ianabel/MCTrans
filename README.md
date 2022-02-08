@@ -18,7 +18,7 @@ You will need to download this codebase and compile it in order to run MCTrans++
 
 To compile and use MCTrans++ you will need a system with the following
 
- - A C++17 compliant C++ compiler.
+ - A C++20 compliant C++ compiler.
  - The Boost C++ Template Library
  - The TOML11 library
  - The SUNDIALS library, Version 5.7.0 or 5.8.0 -- **SUNDIALS v6.0.0 is unsupported at this time, please use v5.8.0 until this bug is fixed**

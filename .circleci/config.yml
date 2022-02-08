@@ -1,7 +1,7 @@
 version: 2.1
 
 executors:
-  debian-buster:
+  debian-bullseye:
     docker:
       - image: buildpack-deps:bullseye
   ubuntu-focal:
@@ -17,7 +17,7 @@ jobs:
     steps:
       - checkout
       - run:
-          command: apt-get update && apt-get install --quiet --yes libboost-dev cmake libnetcdf-dev libnetcdf-c++4-dev
+          command: apt-get update && apt-get install --quiet --yes g++-11 libboost-dev cmake libnetcdf-dev libnetcdf-c++4-dev
       - run:
           command: git clone https://github.com/ToruNiina/toml11.git toml11/
       - run:
@@ -34,7 +34,7 @@ jobs:
     steps:
       - checkout
       - run:
-          command: apt-get update && apt-get install --quiet --yes libboost-dev cmake libnetcdf-dev libnetcdf-c++4-dev
+          command: apt-get update && apt-get install --quiet --yes g++-11 libboost-dev cmake libnetcdf-dev libnetcdf-c++4-dev
       - run:
           command: git clone https://github.com/ToruNiina/toml11.git toml11/
       - run:
