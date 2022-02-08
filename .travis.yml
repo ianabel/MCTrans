@@ -1,8 +1,8 @@
 language: cpp
 
 compiler:
-  - clang
-  - gcc
+  - clang-11
+  - gcc-10
 
 os: linux
 dist: focal
@@ -14,7 +14,8 @@ addons:
       libnetcdf-c++4-dev
       libnetcdf-dev
       cmake
-      g++-11
+      g++-10
+      clang++-11
 
 #jobs:
 #  include:
