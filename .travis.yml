@@ -14,6 +14,7 @@ addons:
       libnetcdf-c++4-dev
       libnetcdf-dev
       cmake
+      g++-11
 
 #jobs:
 #  include:
