@@ -12,7 +12,7 @@ typedef struct Species_t {
 		Neutral
 	} type;
 	double Charge; // Units of e
-	double Mass; // Units of Proton Mass
+	double Mass; // kg
 	std::string Name; // For reporting
 } Species;
 

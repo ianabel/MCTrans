@@ -2,11 +2,11 @@ import matplotlib.pyplot as plt
 from scipy.integrate import cumtrapz
 from neutrals import *
 
-temperature = np.logspace(1, 5, 100) # eV
-energy = np.logspace(0, 5, 200) # eV
-density = 1e20 # m^-3
+temperature = np.array([819])#np.logspace(1, 5, 100) # eV
+energy = np.logspace(np.log10(200), 6, 200) # eV
+density = 1e19 # m^-3
 plasmaVolume = 10 # m^3
-MachNumber = 6
+MachNumber = 5.25257
 
 neutrals = Neutrals(MachNumber, temperature, energy)
 

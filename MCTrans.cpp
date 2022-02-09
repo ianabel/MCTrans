@@ -49,7 +49,7 @@ std::unique_ptr<MirrorPlasma> MCTransConfig::Solve()
 		default:
 			throw std::invalid_argument( "Unknown Solve Type" );
 	}
-	
+
 	return std::move( ReferencePlasmaState );
 }
 
@@ -86,7 +86,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 
 		// Update Mach Number from new T_e
 		plasma.SetMachFromVoltage();
-		
+
 		double HeatLoss = plasma.IonHeatLosses() + plasma.ElectronHeatLosses();
 		double Heating = plasma.IonHeating() + plasma.ElectronHeating();
 

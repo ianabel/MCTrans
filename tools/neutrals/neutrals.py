@@ -209,8 +209,9 @@ class Neutrals:
         temperature = self.temperature * QE # Convert to J
         thermalMachNumber = self.MachNumber * np.sqrt(crossSection.particle.charge / 2) # Assumes that Te = Ti
 
-        velocityCOM = np.sqrt(2 * self.energy * QE / mass) # Convert to COM, m/s
+        velocityCOM = np.sqrt(2 * self.energy * QE / (crossSection.reducedMass * MP)) # Convert to COM, m/s
         thermalVelocity = np.sqrt(2 * temperature / mass)
+        print(sigma)
 
         if isinstance(self.MachNumber, int) or isinstance(self.MachNumber, float):
             rateCoefficient = np.zeros(len(self.temperature))
@@ -240,17 +241,8 @@ class Neutrals:
         temperature = self.temperature * QE # Convert to J
         energy = crossSection.energy * QE # Convert to J
 
-        rateCoefficient = np.zeros(len(self.temperature))
-        if crossSection.particle.name == 'electron':
-            rateCoefficient = np.array([np.power(2 / T, 1.5) / np.sqrt( np.pi * reducedMass ) * np.trapz(energy * sigma * np.exp(-energy / T), x=energy) for T in temperature])
+        rateCoefficient = np.array([4 / np.sqrt(2 * np.pi * reducedMass * T) / T * np.trapz(energy * sigma * np.exp(-energy / T), x=energy) for T in temperature])
 
-        elif crossSection.particle.name == 'proton':
-            rateCoefficient = np.array([4 / np.sqrt(2 * np.pi * reducedMass * T) / T * np.trapz(energy * sigma * np.exp(-energy / T), x=energy) for T in temperature])
-
-        else:
-            print('Make sure the particle has an acceptable name')
-            return
-
-        rateCoefficient *= 1e6 # m^3/s
+        rateCoefficient *= 1e6 # cm^3/s
 
         return RateCoefficient(rateCoefficient, self.temperature, crossSection)

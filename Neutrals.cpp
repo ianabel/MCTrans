@@ -9,43 +9,60 @@
 #include <string>
 #include <boost/math/quadrature/trapezoidal.hpp>
 
-
 double neutralsRateCoefficentHot( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
 	// E and T in eV, sigma in cm^2
 	// k=<σv> in m^3/s
 	// Assumes a Maxwellian distribution, COM energy (as opposed to incident)
-	double Ti = plasma.IonTemperature * ReferenceTemperature; // Convert to Joules
-	double mi = plasma.pVacuumConfig->IonSpecies.Mass * ProtonMass; // Convert to kg
+	double temperature;
+	if ( sigma.Particle.Name == "Electron" ){
+		temperature = plasma.ElectronTemperature * ReferenceTemperature; // Convert to Joules
+	}
+	else{
+		temperature = plasma.IonTemperature * ReferenceTemperature; // Convert to Joules
+	}
 
 	auto integrand = [&]( double Energy ) {
 		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
-		return Energy * sigmaM2 * ::exp( -Energy / ( plasma.IonTemperature * 1000 ) );
+		double transformedIntegrand = Energy * ElectronCharge * sigmaM2 * ::exp( -Energy * ElectronCharge / temperature );
+		return transformedIntegrand * ElectronCharge; // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV
 	};
 
 	constexpr double tolerance = 1e-6;
-	return 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * Ti) * Ti ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
+	return 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * temperature) * temperature ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
 }
 
 double neutralsRateCoefficentCold( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
+	// Cross Section objects for integration
+	CrossSection protonImpactIonization( protonImpactIonizationCrossSection, 200, 1e6, Proton, NeutralHydrogen );
+	CrossSection HydrogenChargeExchange( HydrogenChargeExchangeCrossSection, 0.1, 1e6, Proton, NeutralHydrogen );
+	CrossSection electronImpactIonization( electronImpactIonizationCrossSection, 13.6, 1e6, Electron, NeutralHydrogen );
 	// sigma in cm^2
 	// k=<σv> in m^3/s
 	// Assumes ions are Maxwellian and neutrals are stationary
-	double Ti = plasma.IonTemperature * ReferenceTemperature; // Convert to Joules
-	double mi = plasma.pVacuumConfig->IonSpecies.Mass * ProtonMass; // Convert to kg
-	double IonThermalSpeed = ::sqrt( 2.0 * Ti / mi );
-	double thermalMachNumber = plasma.MachNumber * ::sqrt( plasma.pVacuumConfig->IonSpecies.Charge * plasma.ElectronTemperature / ( 2 * plasma.IonTemperature ) );
+	double temperature;
+	if ( sigma.Particle.Name == "Electron" ){
+		temperature = plasma.ElectronTemperature * ReferenceTemperature; // Convert to Joules
+	}
+	else{
+		temperature = plasma.IonTemperature * ReferenceTemperature; // Convert to Joules
+	}
+
+	double thermalSpeed = ::sqrt( 2.0 * temperature / sigma.Particle.Mass );
+	double thermalMachNumber = plasma.MachNumber * ::sqrt( ::abs( sigma.Particle.Charge ) * plasma.ElectronTemperature * ReferenceTemperature / ( 2 * temperature ) );
 
 	auto integrand = [&]( double Energy ) {
-		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / mi );
-		double u = velocity / IonThermalSpeed;
+		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / sigma.ReducedMass );
+		double u = velocity / thermalSpeed;
 		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
-		return u * u * sigmaM2 * ( ::exp( -::pow(thermalMachNumber - u, 2) ) - ::exp( -::pow(thermalMachNumber + u, 2) ) );
+		double transformedIntegrand = u * u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) );
+		return transformedIntegrand * ElectronCharge / (sigma.ReducedMass * u * thermalSpeed * thermalSpeed); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from du to dE
 	};
 
 	constexpr double tolerance = 1e-6;
-	return IonThermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
+	// std::cerr << boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy ) << std::endl;
+	return thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
 }
 
 /*
@@ -290,13 +307,17 @@ double protonHydrogenExcitationN2CrossSection( double Ti )
  */
 void MirrorPlasma::ComputeSteadyStateNeutrals()
 {
+	// Cross Section objects for integration
+	CrossSection protonImpactIonization( protonImpactIonizationCrossSection, 200, 1e6, Proton, NeutralHydrogen );
+	CrossSection HydrogenChargeExchange( HydrogenChargeExchangeCrossSection, 0.1, 1e6, Proton, NeutralHydrogen );
+	CrossSection electronImpactIonization( electronImpactIonizationCrossSection, 13.6, 1e6, Electron, NeutralHydrogen );
 	// Calculate the Ionization Rate of cold neutrals from proton and electron impact:
 	double IonizationRateCoefficient = neutralsRateCoefficentCold( protonImpactIonization, *this ) + neutralsRateCoefficentCold( electronImpactIonization, *this );
-	std::cerr << "Rate Coeff was " << IonizationRateCoefficient << std::endl;
+	std::cerr << "Rate Coeff was " << IonizationRateCoefficient * 1e6 << " cm^3/s " << std::endl;
 
 	// Assume mix of neutrals is such that the particle densities are maintained so we just need to produce enough electrons from the source gas to balance the losses
 	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
-	// Steady State requires 
+	// Steady State requires
 	//		Losses = n_N * n_e * IonizationRateCoefficient * Volume
 	// so n_N = (Losses/Volume) / ( n_e * IonizationRateCoefficient )
 	NeutralDensity = ElectronLossRate / ( ElectronDensity * ReferenceDensity * IonizationRateCoefficient );
