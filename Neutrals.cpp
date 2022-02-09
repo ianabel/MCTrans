@@ -14,6 +14,10 @@ double neutralsRateCoefficentHot( CrossSection const & sigma, MirrorPlasma const
 	// E and T in eV, sigma in cm^2
 	// k=<σv> in m^3/s
 	// Assumes a Maxwellian distribution, COM energy (as opposed to incident)
+	// Cross Section objects for integration
+	CrossSection protonImpactIonization( protonImpactIonizationCrossSection, 200, 1e6, Proton, NeutralHydrogen );
+	CrossSection HydrogenChargeExchange( HydrogenChargeExchangeCrossSection, 0.1, 1e6, Proton, NeutralHydrogen );
+	CrossSection electronImpactIonization( electronImpactIonizationCrossSection, 13.6, 1e6, Electron, NeutralHydrogen );
 	double temperature;
 	if ( sigma.Particle.Name == "Electron" ){
 		temperature = plasma.ElectronTemperature * ReferenceTemperature; // Convert to Joules
