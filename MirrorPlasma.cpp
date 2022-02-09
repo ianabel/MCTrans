@@ -255,9 +255,11 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 	if ( mirrorConfig.count( "NeutralDensity" ) == 1 ) {
 		NeutralSource = 0;
 		NeutralDensity = mirrorConfig.at( "NeutralDensity" ).as_floating();
+		FixedNeutralDensity = true;
 	} else {
 		NeutralSource = 0;
 		NeutralDensity = 0;
+		FixedNeutralDensity = false;
 	}
 
 	if ( mirrorConfig.count( "VoltageTrace" ) == 1 ) {

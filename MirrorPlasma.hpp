@@ -96,6 +96,8 @@ class MirrorPlasma {
 		double NeutralDensity,NeutralSource;
 		double Zeff;
 
+		bool FixedNeutralDensity;
+
 		double MachNumber; // Sonic Mach number defined with c_s^2 = Z T_e/m_i
 
 		double SoundSpeed() const {

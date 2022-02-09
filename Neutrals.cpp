@@ -14,10 +14,7 @@ double neutralsRateCoefficentHot( CrossSection const & sigma, MirrorPlasma const
 	// E and T in eV, sigma in cm^2
 	// k=<σv> in m^3/s
 	// Assumes a Maxwellian distribution, COM energy (as opposed to incident)
-	// Cross Section objects for integration
-	CrossSection protonImpactIonization( protonImpactIonizationCrossSection, 200, 1e6, Proton, NeutralHydrogen );
-	CrossSection HydrogenChargeExchange( HydrogenChargeExchangeCrossSection, 0.1, 1e6, Proton, NeutralHydrogen );
-	CrossSection electronImpactIonization( electronImpactIonizationCrossSection, 13.6, 1e6, Electron, NeutralHydrogen );
+	
 	double temperature;
 	if ( sigma.Particle.Name == "Electron" ){
 		temperature = plasma.ElectronTemperature * ReferenceTemperature; // Convert to Joules
@@ -38,10 +35,6 @@ double neutralsRateCoefficentHot( CrossSection const & sigma, MirrorPlasma const
 
 double neutralsRateCoefficentCold( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
-	// Cross Section objects for integration
-	CrossSection protonImpactIonization( protonImpactIonizationCrossSection, 200, 1e6, Proton, NeutralHydrogen );
-	CrossSection HydrogenChargeExchange( HydrogenChargeExchangeCrossSection, 0.1, 1e6, Proton, NeutralHydrogen );
-	CrossSection electronImpactIonization( electronImpactIonizationCrossSection, 13.6, 1e6, Electron, NeutralHydrogen );
 	// sigma in cm^2
 	// k=<σv> in m^3/s
 	// Assumes ions are Maxwellian and neutrals are stationary
@@ -311,13 +304,15 @@ double protonHydrogenExcitationN2CrossSection( double Ti )
  */
 void MirrorPlasma::ComputeSteadyStateNeutrals()
 {
-	// Cross Section objects for integration
-	CrossSection protonImpactIonization( protonImpactIonizationCrossSection, 200, 1e6, Proton, NeutralHydrogen );
-	CrossSection HydrogenChargeExchange( HydrogenChargeExchangeCrossSection, 0.1, 1e6, Proton, NeutralHydrogen );
-	CrossSection electronImpactIonization( electronImpactIonizationCrossSection, 13.6, 1e6, Electron, NeutralHydrogen );
+	// Do not recalculate if we're in fixed-neutral-density mode
+	if ( FixedNeutralDensity )
+		return;
+
 	// Calculate the Ionization Rate of cold neutrals from proton and electron impact:
 	double IonizationRateCoefficient = neutralsRateCoefficentCold( protonImpactIonization, *this ) + neutralsRateCoefficentCold( electronImpactIonization, *this );
+#ifdef DEBUG
 	std::cerr << "Rate Coeff was " << IonizationRateCoefficient * 1e6 << " cm^3/s " << std::endl;
+#endif
 
 	// Assume mix of neutrals is such that the particle densities are maintained so we just need to produce enough electrons from the source gas to balance the losses
 	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
@@ -329,3 +324,11 @@ void MirrorPlasma::ComputeSteadyStateNeutrals()
 	NeutralDensity = NeutralDensity / ReferenceDensity;
 	NeutralSource = ElectronLossRate;
 }
+
+/*
+double MirrorPlasma::CXLossRate()
+{
+	if ( !FixedNeutralDensity )
+		ComputeSteadyStateNeutrals();
+}
+*/
