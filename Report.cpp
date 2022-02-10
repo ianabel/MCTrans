@@ -154,6 +154,11 @@ void MirrorPlasma::PrintReport()
 	ComputeSteadyStateNeutrals();
 	out << "Neutral gas must be provided at a rate of " << NeutralSource * pVacuumConfig->PlasmaVolume() << " particles/s to refuel the plasma" << std::endl;
 	out << "This leads to a steady-state neutral density of " << NeutralDensity * ReferenceDensity << "/m^3" << std::endl;
+	double CXR = CXLossRate() * pVacuumConfig->PlasmaVolume();
+	out << "The level of charge-exchange losses due to the neutrals is " << CXR << " particles/s lost" << std::endl;
+	out << "\t This is equivalent to a heat loss rate of "; PrintWithUnit( out, CXR * IonTemperature * ReferenceTemperature, "W" );out << std::endl;
+	double KineticEnergyPerIon = 0.5 * ElectronTemperature * ReferenceTemperature * MachNumber * MachNumber;
+	out << "\t Momentum loss due to CX will require "; PrintWithUnit( out, CXR * KineticEnergyPerIon, "W" );out << " extra power" << std::endl;
 
 	out << std::endl;
 	double Resistance = ElectricPotential() / JRadial;
