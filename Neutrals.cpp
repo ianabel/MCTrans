@@ -25,8 +25,8 @@ double neutralsRateCoefficentHot( CrossSection const & sigma, MirrorPlasma const
 
 	auto integrand = [&]( double Energy ) {
 		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
-		double transformedIntegrand = Energy * ElectronCharge * sigmaM2 * ::exp( -Energy * ElectronCharge / temperature );
-		return transformedIntegrand * ElectronCharge; // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV
+		double Jacobian = ElectronCharge; // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV
+		return Energy * ElectronCharge * sigmaM2 * ::exp( -Energy * ElectronCharge / temperature ) * Jacobian;
 	};
 
 	constexpr double tolerance = 1e-6;
@@ -53,8 +53,8 @@ double neutralsRateCoefficentCold( CrossSection const & sigma, MirrorPlasma cons
 		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / sigma.ReducedMass );
 		double u = velocity / thermalSpeed;
 		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
-		double transformedIntegrand = u * u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) );
-		return transformedIntegrand * ElectronCharge / (sigma.ReducedMass * u * thermalSpeed * thermalSpeed); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from du to dE
+		double Jacobian = ElectronCharge / (sigma.ReducedMass * u * thermalSpeed * thermalSpeed); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from du to dE
+		return u * u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) ) * Jacobian;
 	};
 
 	constexpr double tolerance = 1e-6;
