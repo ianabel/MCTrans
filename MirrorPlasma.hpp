@@ -176,6 +176,8 @@ class MirrorPlasma {
 		double RadiationLosses() const;
 
 		double NeutralLosses() const;
+		double CXLossRate() const;
+
 		double ClassicalHeatLosses() const;
 		double ParallelHeatLosses() const;
 

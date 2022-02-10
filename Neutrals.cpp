@@ -9,7 +9,7 @@
 #include <string>
 #include <boost/math/quadrature/trapezoidal.hpp>
 
-double neutralsRateCoefficentHot( CrossSection const & sigma, MirrorPlasma const & plasma )
+double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
 	// E and T in eV, sigma in cm^2
 	// k=<σv> in m^3/s
@@ -33,7 +33,7 @@ double neutralsRateCoefficentHot( CrossSection const & sigma, MirrorPlasma const
 	return 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * temperature) * temperature ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
 }
 
-double neutralsRateCoefficentCold( CrossSection const & sigma, MirrorPlasma const & plasma )
+double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
 	// sigma in cm^2
 	// k=<σv> in m^3/s
@@ -309,26 +309,28 @@ void MirrorPlasma::ComputeSteadyStateNeutrals()
 		return;
 
 	// Calculate the Ionization Rate of cold neutrals from proton and electron impact:
-	double IonizationRateCoefficient = neutralsRateCoefficentCold( protonImpactIonization, *this ) + neutralsRateCoefficentCold( electronImpactIonization, *this );
-#ifdef DEBUG
-	std::cerr << "Rate Coeff was " << IonizationRateCoefficient * 1e6 << " cm^3/s " << std::endl;
-#endif
+	double IonizationRate = 
+		neutralsRateCoefficientCold( protonImpactIonization, *this ) * IonDensity * ReferenceDensity + 
+		neutralsRateCoefficientCold( electronImpactIonization, *this ) * ElectronDensity * ReferenceDensity;
 
 	// Assume mix of neutrals is such that the particle densities are maintained so we just need to produce enough electrons from the source gas to balance the losses
 	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
 	// Steady State requires
 	//		Losses = n_N * n_e * IonizationRateCoefficient * Volume
 	// so n_N = (Losses/Volume) / ( n_e * IonizationRateCoefficient )
-	NeutralDensity = ElectronLossRate / ( ElectronDensity * ReferenceDensity * IonizationRateCoefficient );
+	//		    = (Losses/Volume) / IonizationRate
+	NeutralDensity = ElectronLossRate / ( IonizationRate );
 	// Normalize neutral density
 	NeutralDensity = NeutralDensity / ReferenceDensity;
 	NeutralSource = ElectronLossRate;
 }
 
-/*
-double MirrorPlasma::CXLossRate()
+// Number of ions lost as neutrals per second per unit volume
+// requires computed neutral density
+double MirrorPlasma::CXLossRate() const
 {
-	if ( !FixedNeutralDensity )
-		ComputeSteadyStateNeutrals();
+
+	double CXRateCoefficient = neutralsRateCoefficientCold( HydrogenChargeExchange, *this );
+
+	return CXRateCoefficient * ( NeutralDensity * ReferenceDensity * IonDensity * ReferenceDensity );
 }
-*/

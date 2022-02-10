@@ -44,5 +44,5 @@ CrossSection protonImpactIonization( protonImpactIonizationCrossSection, 200, 1e
 CrossSection HydrogenChargeExchange( HydrogenChargeExchangeCrossSection, 0.1, 1e6, Proton, NeutralHydrogen );
 CrossSection electronImpactIonization( electronImpactIonizationCrossSection, 13.6, 1e6, Electron, NeutralHydrogen );
 
-double neutralsRateCoefficentHot( CrossSection const & , std::shared_ptr<const MirrorPlasma> );
-double neutralsRateCoefficentCold( CrossSection const &, std::shared_ptr<const MirrorPlasma> );
+double neutralsRateCoefficientHot( CrossSection const & , std::shared_ptr<const MirrorPlasma> );
+double neutralsRateCoefficientCold( CrossSection const &, std::shared_ptr<const MirrorPlasma> );
