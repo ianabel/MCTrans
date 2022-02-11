@@ -108,6 +108,13 @@ void MirrorPlasma::PrintReport()
 	else
 		out << "No radiation losses were included." << std::endl;
 
+	if ( pVacuumConfig->IncludeCXLosses ) {
+		out << "Heat loss due to charge exchange with neutrals is ";
+		PrintWithUnit( out, CXHeatLosses()*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
+	} else {
+		out << "Losses due to charge exchange were not included" << std::endl;
+	}
+
 	out << std::endl;
 		
 	out << "Total potential drop is ";
@@ -120,8 +127,13 @@ void MirrorPlasma::PrintReport()
 	PrintWithUnit( out, ElectricPotential() * JRadial, "W" );
 	out << std::endl;
 	double omega = v/Rmid;
-	out << "\t Power Loss from viscous torque "; PrintWithUnit( out, ViscousTorque()*omega*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
-	out << "\t Power Loss from parallel loss  "; PrintWithUnit( out, ParallelAngularMomentumLossRate()*omega*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
+	out << "\t Power Loss from viscous torque  "; PrintWithUnit( out, ViscousTorque()*omega*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
+	out << "\t Power Loss from parallel loss   "; PrintWithUnit( out, ParallelAngularMomentumLossRate()*omega*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
+	if (  pVacuumConfig->IncludeCXLosses ) {
+		out << "\t Power Loss from charge exchange "; PrintWithUnit( out, CXMomentumLosses()*omega*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
+	} else {
+		out << "\t Power Loss from charge exchange was not included. " << std::endl;
+	}
 	out << std::endl;
 
 	double KineticStoredEnergy = KineticEnergy();
@@ -140,7 +152,7 @@ void MirrorPlasma::PrintReport()
 	out << "\tConfinement time from perpendicular losses is "; PrintWithUnit( out, PerpConfinementTime, "s" ); out << std::endl;
 	out << std::endl;
 
-	double ParallelParticleConfinementTime = ( IonDensity * ReferenceDensity ) /(  ParallelIonParticleLoss() + ClassicalIonParticleLosses() );
+	double ParallelParticleConfinementTime = ( IonDensity * ReferenceDensity ) /(  ParallelIonParticleLoss() + ClassicalIonParticleLosses() + CXLossRate() );
 	out << "Particle (Ion) Confinement Time ~= "; PrintWithUnit( out, ParallelParticleConfinementTime, "s" ); out << std::endl;
 	out << std::endl;
 
@@ -154,11 +166,14 @@ void MirrorPlasma::PrintReport()
 	ComputeSteadyStateNeutrals();
 	out << "Neutral gas must be provided at a rate of " << NeutralSource * pVacuumConfig->PlasmaVolume() << " particles/s to refuel the plasma" << std::endl;
 	out << "This leads to a steady-state neutral density of " << NeutralDensity * ReferenceDensity << "/m^3" << std::endl;
-	double CXR = CXLossRate() * pVacuumConfig->PlasmaVolume();
-	out << "The level of charge-exchange losses due to the neutrals is " << CXR << " particles/s lost" << std::endl;
-	out << "\t This is equivalent to a heat loss rate of "; PrintWithUnit( out, CXR * IonTemperature * ReferenceTemperature, "W" );out << std::endl;
-	double KineticEnergyPerIon = 0.5 * ElectronTemperature * ReferenceTemperature * MachNumber * MachNumber;
-	out << "\t Momentum loss due to CX will require "; PrintWithUnit( out, CXR * KineticEnergyPerIon, "W" );out << " extra power" << std::endl;
+	if ( pVacuumConfig->IncludeCXLosses ) {
+		double CXR = CXLossRate() * pVacuumConfig->PlasmaVolume();
+		out << "The level of charge-exchange losses due to the neutrals is " << CXR << " particles/s lost" << std::endl;
+		out << "\t This is equivalent to a heat loss rate of "; PrintWithUnit( out, CXR * IonTemperature * ReferenceTemperature, "W" );out << std::endl;
+	} else {
+		out << "Steady-state charge exchange losses were not included." << std::endl;
+	}
+
 
 	out << std::endl;
 	double Resistance = ElectricPotential() / JRadial;

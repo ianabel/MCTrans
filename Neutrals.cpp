@@ -7,7 +7,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <boost/math/quadrature/trapezoidal.hpp>
+#include <algorithm>
+#include <boost/math/quadrature/gauss_kronrod.hpp>
 
 double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
@@ -23,14 +24,16 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 		temperature = plasma.IonTemperature * ReferenceTemperature; // Convert to Joules
 	}
 
+	double Jacobian = ElectronCharge; // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV
 	auto integrand = [&]( double Energy ) {
 		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
-		double Jacobian = ElectronCharge; // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV
 		return Energy * ElectronCharge * sigmaM2 * ::exp( -Energy * ElectronCharge / temperature ) * Jacobian;
 	};
 
-	constexpr double tolerance = 1e-6;
-	return 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * temperature) * temperature ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
+	constexpr double tolerance = 1e-4;
+	constexpr unsigned MaxDepth = 5;
+	return 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * temperature) * temperature ) 
+	         * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 }
 
 double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma const & plasma )
@@ -49,17 +52,19 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 	double thermalSpeed = ::sqrt( 2.0 * temperature / sigma.Particle.Mass );
 	double thermalMachNumber = plasma.MachNumber * ::sqrt( ::abs( sigma.Particle.Charge ) * plasma.ElectronTemperature * ReferenceTemperature / ( 2 * temperature ) );
 
+	double Jacobian = ElectronCharge / (sigma.ReducedMass * thermalSpeed * thermalSpeed); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from du to dE (less one power of u, which cancels with one in the integrand
 	auto integrand = [&]( double Energy ) {
 		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / sigma.ReducedMass );
 		double u = velocity / thermalSpeed;
 		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
-		double Jacobian = ElectronCharge / (sigma.ReducedMass * u * thermalSpeed * thermalSpeed); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from du to dE
-		return u * u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) ) * Jacobian;
+		return u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) ) * Jacobian;
 	};
 
-	constexpr double tolerance = 1e-6;
+	constexpr double tolerance = 1e-4;
+	constexpr unsigned MaxDepth = 5;
 	// std::cerr << boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy ) << std::endl;
-	return thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
+	return thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) ) 
+	        * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 }
 
 /*
@@ -129,16 +134,16 @@ double evaluateJanevDFunction( double beta )
 double electronImpactIonizationCrossSection( double CoMEnergy )
 {
 	// Minimum energy of cross section in eV
-	const double ionizationEnergy = 13.6;
-	const double minimumEnergySigma = ionizationEnergy;
+	constexpr double ionizationEnergy = 13.6;
+	constexpr double minimumEnergySigma = ionizationEnergy;
 
 	// Contribution from ground state
 	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
 	// Equation 1.2.1
 	// e + H(1s) --> e + H+ + e
 	// Accuracy is 10% or better
-	double fittingParamA = 0.18450;
-	std::vector<double> fittingParamB = { -0.032226, -0.034539, 1.4003, -2.8115, 2.2986 };
+	constexpr double fittingParamA = 0.18450;
+	constexpr std::array<double,5> fittingParamB{ -0.032226, -0.034539, 1.4003, -2.8115, 2.2986 };
 
 	double sigma;
 	if ( CoMEnergy < minimumEnergySigma ) {
@@ -146,8 +151,9 @@ double electronImpactIonizationCrossSection( double CoMEnergy )
 	}
 	else {
 		double sum = 0.0;
+		double x = 1.0 - ionizationEnergy / CoMEnergy;
 		for ( size_t n = 0; n < fittingParamB.size(); n++ ) {
-	      sum += fittingParamB.at( n ) * ::pow( 1 - ionizationEnergy / CoMEnergy, n );
+	      sum += fittingParamB.at( n ) * ::pow( x, n );
 	   }
 		sigma = 1.0e-13 / ( ionizationEnergy * CoMEnergy ) * ( fittingParamA * ::log( CoMEnergy / ionizationEnergy ) + sum );
 	}
@@ -167,14 +173,14 @@ double protonImpactIonizationCrossSection( double Energy )
 	// Equation 2.2.1
 	// H+ + H(1s) --> H+ + H+ + e
 	// Accuracy is 30% or better
-	const double A1 = 12.899;
-	const double A2 = 61.897;
-	const double A3 = 9.2731e3;
-	const double A4 = 4.9749e-4;
-	const double A5 = 3.9890e-2;
-	const double A6 = -1.5900;
-	const double A7 = 3.1834;
-	const double A8 = -3.7154;
+	constexpr double A1 = 12.899;
+	constexpr double A2 = 61.897;
+	constexpr double A3 = 9.2731e3;
+	constexpr double A4 = 4.9749e-4;
+	constexpr double A5 = 3.9890e-2;
+	constexpr double A6 = -1.5900;
+	constexpr double A7 = 3.1834;
+	constexpr double A8 = -3.7154;
 
 	double sigma;
 	if ( CoMEnergy < minimumEnergySigma ) {
@@ -329,6 +335,8 @@ void MirrorPlasma::ComputeSteadyStateNeutrals()
 // requires computed neutral density
 double MirrorPlasma::CXLossRate() const
 {
+	if ( !pVacuumConfig->IncludeCXLosses )
+		return 0.0;
 
 	double CXRateCoefficient = neutralsRateCoefficientCold( HydrogenChargeExchange, *this );
 

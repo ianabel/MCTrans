@@ -41,6 +41,12 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 		else
 			AmbipolarPhi = true;
 
+		if ( algConfig.count( "IncludeChargeExchangeLosses" ) == 1 )
+			IncludeCXLosses = algConfig.at( "IncludeChargeExchangeLosses" ).as_boolean();
+		else
+			IncludeCXLosses = false;
+
+
 		if ( algConfig.count( "InitialTemp" ) == 1 )
 		{
 			InitialTemp = algConfig.at( "InitialTemp" ).as_floating();
@@ -79,6 +85,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 		InitialTemp = 0.1;
 		InitialMach = 4.0;
 		AmbipolarPhi = true;
+		IncludeCXLosses = false;
 		Collisional = false;
 		OutputFile  = "";
 		NetcdfOutputFile = "";
@@ -632,9 +639,15 @@ double MirrorPlasma::IonToElectronHeatTransfer() const
 	return EnergyDensity / CollisionalTemperatureEquilibrationTime();
 }
 
+double MirrorPlasma::CXHeatLosses() const
+{
+	double EnergyPerIon = IonTemperature * ReferenceTemperature;
+	return CXLossRate() * EnergyPerIon;
+}
+
 double MirrorPlasma::IonHeatLosses() const
 {
-	return ClassicalIonHeatLoss() + ParallelIonHeatLoss();
+	return ClassicalIonHeatLoss() + ParallelIonHeatLoss() + CXHeatLosses();
 }
 
 double MirrorPlasma::ElectronHeatLosses() const
@@ -645,7 +658,6 @@ double MirrorPlasma::ElectronHeatLosses() const
 double MirrorPlasma::IonHeating() const
 {
 	double Heating = ViscousHeating();
-	//std::cout << "i-Heating comprises " << Heating << " of viscous and " << -IonToElectronHeatTransfer() << " transfer" << std::endl;
 
 	return Heating - IonToElectronHeatTransfer();
 }
@@ -669,10 +681,21 @@ void MirrorPlasma::SetMachFromVoltage()
 	MachNumber = pVacuumConfig->ImposedVoltage / ( pVacuumConfig->PlasmaColumnWidth * pVacuumConfig->CentralCellFieldStrength * SoundSpeed() );
 }
 
+double MirrorPlasma::AngularMomentumPerParticle() const
+{
+	return pVacuumConfig->IonSpecies.Mass * ProtonMass * SoundSpeed() * MachNumber * pVacuumConfig->PlasmaCentralRadius();
+}
+
 double MirrorPlasma::ParallelAngularMomentumLossRate() const
 {
 	double IonLoss = ParallelIonParticleLoss();
-	return IonLoss * pVacuumConfig->IonSpecies.Mass * ProtonMass * SoundSpeed() * MachNumber * pVacuumConfig->PlasmaCentralRadius();
+	return IonLoss * AngularMomentumPerParticle(); 
+}
+
+double MirrorPlasma::CXMomentumLosses() const
+{
+	double IonLoss = CXLossRate();
+	return IonLoss * AngularMomentumPerParticle();
 }
 
 // Momentum Equation is
@@ -686,6 +709,7 @@ double MirrorPlasma::RadialCurrent() const
 {
 	double Torque = -ViscousTorque();
 	double ParallelLosses = -ParallelAngularMomentumLossRate();
+	double CXLosses = -CXMomentumLosses();
 	// Inertial term = m_i n_i R^2 d omega / dt ~= m_i n_i R^2 d  / dt ( E/ ( R*B) )
 	//					~= m_i n_i (R/B) * d/dt ( V / a )
 	double Inertia;
@@ -697,7 +721,7 @@ double MirrorPlasma::RadialCurrent() const
 
 	// R J_R = (<Torque> + <ParallelLosses> + <Inertia>)/B_z
 	// I_R = 2*Pi*R*L*J_R
-	double I_radial = 2.0 * M_PI * pVacuumConfig->PlasmaLength * ( Torque + ParallelLosses + Inertia ) / pVacuumConfig->CentralCellFieldStrength;
+	double I_radial = 2.0 * M_PI * pVacuumConfig->PlasmaLength * ( Torque + ParallelLosses + Inertia + CXLosses ) / pVacuumConfig->CentralCellFieldStrength;
 	return I_radial;
 }
 

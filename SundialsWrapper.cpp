@@ -69,6 +69,7 @@ int ARKStep_TemperatureSolve( realtype t, N_Vector u, N_Vector uDot, void* voidP
 		return 3;
 	}
 	plasmaPtr->SetMachFromVoltage();
+	plasmaPtr->ComputeSteadyStateNeutrals();
 #if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
 	std::cerr << "t = " << t << " ; T_i = " << plasmaPtr->IonTemperature << " ; T_e = " << plasmaPtr->ElectronTemperature << " MachNumber " << plasmaPtr->MachNumber << std::endl;
 #endif
@@ -96,6 +97,7 @@ int ARKStep_TemperatureSolve( realtype t, N_Vector u, N_Vector uDot, void* voidP
 	plasmaPtr->IonTemperature = TiOld;
 	plasmaPtr->ElectronTemperature = TeOld;
 	plasmaPtr->SetMachFromVoltage();
+	plasmaPtr->ComputeSteadyStateNeutrals();
 
 	return ARK_SUCCESS;
 }
@@ -142,6 +144,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	plasma.ElectronTemperature = InitialTemperature;
 	plasma.IonTemperature = InitialTemperature;
 	plasma.SetMachFromVoltage();
+	plasma.ComputeSteadyStateNeutrals();
 
 	plasma.InitialiseNetCDF();
 
@@ -187,6 +190,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 		plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 		plasma.IonTemperature = ION_TEMPERATURE( initialCondition );
 		plasma.SetMachFromVoltage();
+		plasma.ComputeSteadyStateNeutrals();
 		plasma.WriteTimeslice( t );
 #if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
 	std::cerr << "After evolving to " << tRet << " T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
@@ -206,6 +210,12 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	plasma.IonTemperature      =      ION_TEMPERATURE( initialCondition );
 	plasma.SetTime( EndTime );
 
+#ifdef DEBUG
+	long nSteps = 0,nfeEvals = 0,nfiEvals = 0;
+	ArkodeErrorWrapper( ARKStepGetNumSteps( arkMem, &nSteps ), "ARKGetNumSteps" );
+	ArkodeErrorWrapper( ARKStepGetNumRhsEvals( arkMem, &nfeEvals, &nfiEvals ), "ARKGetNumRhsEvals" );
+	std::cerr << "SUNDIALS Timestepping took " << nSteps << " internal timesteps resulting in " << nfiEvals << " implicit function evaluations" << std::endl;
+#endif 
 	// Teardown 
 	{
 		SUNLinSolFree( LS );

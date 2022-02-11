@@ -42,6 +42,8 @@ class MirrorPlasma {
 				double PerpFudgeFactor;
 				bool AmbipolarPhi;
 
+				bool IncludeCXLosses;
+
 				bool AlphaHeating;
 				bool ReportNuclearDiagnostics;
 				bool ReportThrust;
@@ -175,8 +177,9 @@ class MirrorPlasma {
 		double CyclotronLosses() const;
 		double RadiationLosses() const;
 
-		double NeutralLosses() const;
 		double CXLossRate() const;
+		double CXHeatLosses() const;
+		double CXMomentumLosses() const;
 
 		double ClassicalHeatLosses() const;
 		double ParallelHeatLosses() const;
@@ -191,6 +194,8 @@ class MirrorPlasma {
 		double ParallelIonPastukhovLossRate( double Phi ) const;
 		double ParallelIonParticleLoss() const;
 		double ParallelIonHeatLoss() const;
+
+		double AngularMomentumPerParticle() const;
 
 		double ParallelKineticEnergyLoss() const;
 
