@@ -30,12 +30,14 @@ Angular Velocity at the plasma centre (R = 0.25 m) is 6.02e+06 /s
 Viscous Heating is 9.8 kW
 Bremsstrahlung losses are 30.2 W
 Cyclotron emission losses are 587 µW
+Losses due to charge exchange were not included
 
 Total potential drop is 90.3 kV
 Radial Current Drawn from Power Supply 254 mA
 Power Required (at the plasma) to support rotation 22.9 kW
-	 Power Loss from viscous torque 9.8 kW
-	 Power Loss from parallel loss  13.1 kW
+	 Power Loss from viscous torque  9.8 kW
+	 Power Loss from parallel loss   13.1 kW
+	 Power Loss from charge exchange was not included. 
 
 Total Stored Energy is 4.47 kJ
  of which 3.57 kJ is kinetic energy in the rotation
@@ -52,7 +54,8 @@ Ion-Electron Temperature Equilibration Time is 41.8 ms
 Plasma must be provided at a rate of 3.64e+18 electrons /s to maintain steady-state
 
 Neutral gas must be provided at a rate of 3.64e+18 particles/s to refuel the plasma
-This leads to a steady-state neutral density of 1.91e+14/m^3
+This leads to a steady-state neutral density of 4.8e+14/m^3
+Steady-state charge exchange losses were not included.
 
 Electrical Properties of the Plasma:
 	Resistance  = 356 kΩ
