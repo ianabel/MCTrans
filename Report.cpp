@@ -148,12 +148,14 @@ void MirrorPlasma::PrintReport()
 	
 	double ParallelConfinementTime = ( 1.5  * ElectronDensity * ElectronTemperature + 1.5 * IonDensity * IonTemperature ) * (  ReferenceDensity * ReferenceTemperature )/( ParallelElectronHeatLoss() + ParallelIonHeatLoss() );
 	double PerpConfinementTime = ( 1.5  * IonDensity * IonTemperature * ReferenceDensity * ReferenceTemperature )/ClassicalIonHeatLoss();
-	out << "\tConfinement time from parallel losses is "; PrintWithUnit( out, ParallelConfinementTime, "s" ); out << std::endl;
-	out << "\tConfinement time from perpendicular losses is "; PrintWithUnit( out, PerpConfinementTime, "s" ); out << std::endl;
+	double CXConfinementTime = IonDensity*ReferenceDensity / CXLossRate();
+	out << "\tConfinement time from parallel losses is\t"; PrintWithUnit( out, ParallelConfinementTime, "s" ); out << std::endl;
+	out << "\tConfinement time from perpendicular losses is\t"; PrintWithUnit( out, PerpConfinementTime, "s" ); out << std::endl;
+	out << "\tConfinement time from charge-exchange losses is\t"; PrintWithUnit( out, CXConfinementTime, "s" ); out << std::endl;
 	out << std::endl;
 
-	double ParallelParticleConfinementTime = ( IonDensity * ReferenceDensity ) /(  ParallelIonParticleLoss() + ClassicalIonParticleLosses() + CXLossRate() );
-	out << "Particle (Ion) Confinement Time ~= "; PrintWithUnit( out, ParallelParticleConfinementTime, "s" ); out << std::endl;
+	double ParticleConfinementTime = ( IonDensity * ReferenceDensity ) /(  ParallelIonParticleLoss() + ClassicalIonParticleLosses() + CXLossRate() );
+	out << "Particle (Ion) Confinement Time ~= "; PrintWithUnit( out, ParticleConfinementTime, "s" ); out << std::endl;
 	out << std::endl;
 
 	out << "Ion-Electron Temperature Equilibration Time is "; PrintWithUnit( out, CollisionalTemperatureEquilibrationTime(),"s" ); out << std::endl;
@@ -163,9 +165,13 @@ void MirrorPlasma::PrintReport()
 	out << "Plasma must be provided at a rate of " << ElectronLossRate*pVacuumConfig->PlasmaVolume() << " electrons /s to maintain steady-state" << std::endl;
 
 	out << std::endl;
-	ComputeSteadyStateNeutrals();
-	out << "Neutral gas must be provided at a rate of " << NeutralSource * pVacuumConfig->PlasmaVolume() << " particles/s to refuel the plasma" << std::endl;
-	out << "This leads to a steady-state neutral density of " << NeutralDensity * ReferenceDensity << "/m^3" << std::endl;
+	if ( FixedNeutralDensity ) {
+		out << "A fixed neutral density of " << NeutralDensity * ReferenceDensity << " /m^3 has been assumed." << std::endl;
+	} else {
+		ComputeSteadyStateNeutrals();
+		out << "Neutral gas must be provided at a rate of " << NeutralSource * pVacuumConfig->PlasmaVolume() << " particles/s to refuel the plasma" << std::endl;
+		out << "This leads to a steady-state neutral density of " << NeutralDensity * ReferenceDensity << "/m^3" << std::endl;
+	}
 	if ( pVacuumConfig->IncludeCXLosses ) {
 		double CXR = CXLossRate() * pVacuumConfig->PlasmaVolume();
 		out << "The level of charge-exchange losses due to the neutrals is " << CXR << " particles/s lost" << std::endl;
