@@ -44,8 +44,9 @@ Total Stored Energy is 4.47 kJ
       and 906 J is thermal energy of the plasma
 Energy Confinement Time is 92.4 ms
 Of which
-	Confinement time from parallel losses is 129 ms
-	Confinement time from perpendicular losses is 164 ms
+	Confinement time from parallel losses is	129 ms
+	Confinement time from perpendicular losses is	164 ms
+	Confinement time from charge-exchange losses is	inf s
 
 Particle (Ion) Confinement Time ~= 518 ms
 
