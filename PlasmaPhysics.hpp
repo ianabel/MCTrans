@@ -10,6 +10,8 @@ constexpr double PermeabilityOfFreeSpace = 1.25663706212e-6; // post-2018 not ex
 constexpr double ElectronCharge = 1.60217662e-19;
 constexpr double ProtonMass = 1.6726219e-27;
 constexpr double PlanckConstant = 4.135667696e-15; // eV s^-1
+constexpr double BohrRadius = 5.29177e-11; // m
+constexpr double FineStructureConstant = 7.2973525694e-3;
 
 constexpr double SpeedOfLight = 2.99792458e8;
 
