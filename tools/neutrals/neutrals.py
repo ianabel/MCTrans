@@ -64,20 +64,23 @@ class Neutrals:
         self.electronImpactIonizationCrossSection = self.electronImpactIonizationCrossSection(energy)
         self.protonImpactIonizationCrossSection = self.protonImpactIonizationCrossSection(energy)
         self.chargeExchangeCrossSection = self.chargeExchangeCrossSection(energy)
+        self.radiativeRecombinationCrossSection = self.radiativeRecombinationCrossSection(energy)
 
-        self.add_CrossSection([self.electronImpactIonizationCrossSection, self.protonImpactIonizationCrossSection, self.chargeExchangeCrossSection])
+        self.add_CrossSection([self.electronImpactIonizationCrossSection, self.protonImpactIonizationCrossSection, self.chargeExchangeCrossSection, self.radiativeRecombinationCrossSection])
 
     def computeRateCoefficients(self):
         self.electronImpactIonizationRateCoefficientCold = self.rateCoefficientCold(self.electronImpactIonizationCrossSection)
         self.protonImpactIonizationRateCoefficientCold = self.rateCoefficientCold(self.protonImpactIonizationCrossSection)
         self.chargeExchangeRateCoefficientCold = self.rateCoefficientCold(self.chargeExchangeCrossSection)
+        self.radiativeRecombinationRateCoefficientCold = self.rateCoefficientCold(self.radiativeRecombinationCrossSection)
 
         self.electronImpactIonizationRateCoefficientHot = self.rateCoefficientHot(self.electronImpactIonizationCrossSection)
         self.protonImpactIonizationRateCoefficientHot = self.rateCoefficientHot(self.protonImpactIonizationCrossSection)
         self.chargeExchangeRateCoefficientHot = self.rateCoefficientHot(self.chargeExchangeCrossSection)
+        self.radiativeRecombinationRateCoefficientHot = self.rateCoefficientHot(self.radiativeRecombinationCrossSection)
 
-        self.add_RateCoefficient([self.electronImpactIonizationRateCoefficientCold, self.protonImpactIonizationRateCoefficientCold, self.chargeExchangeRateCoefficientCold], 'cold')
-        self.add_RateCoefficient([self.electronImpactIonizationRateCoefficientHot, self.protonImpactIonizationRateCoefficientHot, self.chargeExchangeRateCoefficientHot], 'hot')
+        self.add_RateCoefficient([self.electronImpactIonizationRateCoefficientCold, self.protonImpactIonizationRateCoefficientCold, self.chargeExchangeRateCoefficientCold, self.radiativeRecombinationRateCoefficientCold], 'cold')
+        self.add_RateCoefficient([self.electronImpactIonizationRateCoefficientHot, self.protonImpactIonizationRateCoefficientHot, self.chargeExchangeRateCoefficientHot, self.radiativeRecombinationRateCoefficientHot], 'hot')
 
     def electronImpactIonizationCrossSection(self, energy):
         # Contribution from ground state
@@ -142,7 +145,6 @@ class Neutrals:
             	sigma[i] = 1e-16 * A1 * (np.exp(-A2 / E) * np.log(1 + A3 * E) / E + A4 * np.exp(-A5 * E) / (np.power(E, A6) + A7 * np.power(E, A8)))
 
         return CrossSection(sigma, energy, particle, target, reaction)
-
 
     def chargeExchangeCrossSection(self, energy):
         # Contribution from ground -> ground state

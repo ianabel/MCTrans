@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -15,7 +16,7 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 	// E and T in eV, sigma in cm^2
 	// k=<σv> in m^3/s
 	// Assumes a Maxwellian distribution, COM energy (as opposed to incident)
-	
+
 	double temperature;
 	if ( sigma.Particle.Name == "Electron" ){
 		temperature = plasma.ElectronTemperature * ReferenceTemperature; // Convert to Joules
@@ -32,7 +33,7 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 
 	constexpr double tolerance = 1e-5;
 	constexpr unsigned MaxDepth = 10;
-	return 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * temperature) * temperature ) 
+	return 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * temperature) * temperature )
 	         * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 }
 
@@ -60,6 +61,7 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 		return u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) ) * Jacobian;
 	};
 
+<<<<<<< HEAD
 	constexpr double tolerance = 1e-5;
 	constexpr unsigned MaxDepth = 10;
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
@@ -67,6 +69,12 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 		boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance ) << std::endl;
 #endif
 	return thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) ) 
+=======
+	constexpr double tolerance = 1e-4;
+	constexpr unsigned MaxDepth = 5;
+	// std::cerr << boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy ) << std::endl;
+	return thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) )
+>>>>>>> github/main
 	        * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 }
 
@@ -239,6 +247,24 @@ double HydrogenChargeExchangeCrossSection( double CoMEnergy )
 	return sigma_1s + sigma_2p + sigma_2s;
 }
 
+// Energy in electron volts, returns cross section in cm^2
+double radiativeRecombinationCrossSection( double Energy )
+{
+	// From https://iopscience-iop-org.proxy-um.researchport.umd.edu/article/10.1088/1402-4896/ab060a
+	// Igor A Kotelnikov and Alexander I Milstein 2019 Phys. Scr. 94 055403
+	// Equation 9
+	// H+ + e --> H + hν
+
+	int Z = 1;
+	double IonizationEnergy = 13.59844; // eV
+	double J_Z = ::pow( Z, 2 ) * IonizationEnergy;
+	double eta = ::sqrt( J_Z / Energy );
+	double sigma = ::pow( 2, 8 ) * ::pow( M_PI * BohrRadius, 2 ) / 3 * ::pow( eta, 6 ) * ::exp( - 4 * eta * atan( 1 / eta ) ) / ( ( 1 - ::exp( -2 * M_PI * eta ) ) * ::pow( ::pow( eta, 2 ) + 1, 2 ) ) * ::pow( FineStructureConstant, 3 );
+
+	sigma *= 1e4; // convert to cm^2
+	return sigma;
+}
+
 double electronHydrogenExcitationN2CrossSection( double Te )
 {
 	// Minimum energy of cross section in eV
@@ -318,8 +344,8 @@ void MirrorPlasma::ComputeSteadyStateNeutrals()
 		return;
 
 	// Calculate the Ionization Rate of cold neutrals from proton and electron impact:
-	double IonizationRate = 
-		neutralsRateCoefficientCold( protonImpactIonization, *this ) * IonDensity * ReferenceDensity + 
+	double IonizationRate =
+		neutralsRateCoefficientCold( protonImpactIonization, *this ) * IonDensity * ReferenceDensity +
 		neutralsRateCoefficientCold( electronImpactIonization, *this ) * ElectronDensity * ReferenceDensity;
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )

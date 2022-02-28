@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import cumtrapz
 from neutrals import *
 
-temperature = np.array([819])#np.logspace(1, 5, 100) # eV
+temperature = np.logspace(1, 5, 100) # eV
 energy = np.logspace(np.log10(200), 6, 200) # eV
 density = 1e19 # m^-3
 plasmaVolume = 10 # m^3
@@ -35,7 +35,7 @@ plt.xlabel('T (eV)')
 plt.ylabel('$<\sigma v>$ (cm$^3$/s)')
 plt.legend()
 plt.grid()
-plt.ylim([1e-14, 1e-6])
+# plt.ylim([1e-14, 1e-6])
 plt.savefig('HotRateCoefficients.png', dpi=150)
 
 plt.figure(3)
@@ -44,5 +44,5 @@ plt.xlabel('T (eV)')
 plt.ylabel('$<\sigma v>$ (cm$^3$/s)')
 plt.legend()
 plt.grid()
-plt.ylim([1e-14, 1e-6])
+# plt.ylim([1e-14, 1e-6])
 plt.savefig('ColdRateCoefficients.png', dpi=150)
