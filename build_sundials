@@ -21,5 +21,3 @@ echo " SUNDIALS_DIR=$SUNDIALS_ROOT"
 echo "in Makefile.local"
 echo
 echo
-
-

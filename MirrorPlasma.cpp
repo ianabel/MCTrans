@@ -5,6 +5,7 @@
 #include <boost/math/tools/roots.hpp>
 #include <functional>
 #include "TransitionFunction.hpp"
+#include "BatchRunner.hpp"
 
 
 MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value const& plasmaConfig )
@@ -209,6 +210,124 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 		ReportNuclearDiagnostics = mirrorConfig.at( "ReportNuclearDiagnostics" ).as_boolean();
 }
 
+MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(double CFS, double MR, double AGD, double PCW, double ImpV, double PL, double WR, double AuxH, std::string FuelName, bool rThrust, bool AlpHeating, bool RNuclearDiagnostics)
+	: CentralCellFieldStrength(CFS), MirrorRatio(MR), AxialGapDistance(AGD), PlasmaColumnWidth(PCW), ImposedVoltage(ImpV), PlasmaLength(PL), WallRadius(WR), AuxiliaryHeating(AuxH), ReportThrust(rThrust), AlphaHeating(AlpHeating), ReportNuclearDiagnostics(RNuclearDiagnostics)
+{
+	// To Do: Allow batch builds to set algorithm parameters
+	ParallelFudgeFactor = 1.0;
+	PerpFudgeFactor = 1.0;
+	InitialTemp = 0.1;
+	InitialMach = 4.0;
+	AmbipolarPhi = true;
+	Collisional = false;
+	OutputFile  = "";
+	NetcdfOutputFile = "";
+
+	if ( FuelName == "Hydrogen" ) {
+		IonSpecies.Mass   = 1.0;
+		IonSpecies.Charge = 1.0;
+		IonSpecies.Name   = "Hydrogen";
+		AlphaHeating = false;
+		ReportNuclearDiagnostics = false;
+	} else if ( FuelName == "Deuterium" ) {
+		IonSpecies.Mass   = 2.0;
+		IonSpecies.Charge = 1.0;
+		IonSpecies.Name   = "Deuterium";
+		AlphaHeating = false;
+		ReportNuclearDiagnostics = true;
+	} else if ( FuelName == "DT Fuel" ) {
+		IonSpecies.Mass   = 2.5;
+		IonSpecies.Charge = 1.0;
+		IonSpecies.Name   = "Deuterium/Tritium Fuel";
+		AlphaHeating = true;
+		ReportNuclearDiagnostics = true;
+	} else {
+		std::string ErrorMessage = "Fuel is not a recognized plasma species";
+		throw std::invalid_argument( ErrorMessage );
+	}
+}
+
+MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(const std::map<std::string, double>& parameterMap, std::string FuelName, 
+	bool rThrust, tribool AHeating, tribool rDiagnostics, bool ambiPolPhi, bool collisions, std::string asciiOut, std::string netCdfOut)
+{
+	if( parameterMap.find("CentralCellField") != parameterMap.end())
+		CentralCellFieldStrength = parameterMap.at("CentralCellField");
+
+	if( parameterMap.find("MirrorRatio") != parameterMap.end())
+		MirrorRatio = parameterMap.at("MirrorRatio");
+	else if( parameterMap.find("ThroatField") != parameterMap.end())
+		MirrorRatio = parameterMap.at("ThroatField")/CentralCellFieldStrength;
+
+	if( parameterMap.find("PlasmaRadiusMin") != parameterMap.end())
+		AxialGapDistance = parameterMap.at("PlasmaRadiusMin");
+	else if( parameterMap.find("AxialGapDistance") != parameterMap.end())
+		AxialGapDistance = parameterMap.at("AxialGapDistance");
+
+	if( parameterMap.find("PlasmaColumnWidth") != parameterMap.end())
+		PlasmaColumnWidth = parameterMap.at("PlasmaColumnWidth");
+	else if(parameterMap.find("PlasmaRadiusMax") != parameterMap.end())
+		PlasmaColumnWidth = parameterMap.at("PlasmaRadiusMax") - AxialGapDistance;
+
+	if( parameterMap.find("Voltage") != parameterMap.end())
+		ImposedVoltage = parameterMap.at("Voltage");
+
+	if( parameterMap.find("WallRadius") != parameterMap.end())
+		WallRadius = parameterMap.at("WallRadius");
+
+	if( parameterMap.find("PlasmaLength") != parameterMap.end())
+		PlasmaLength = parameterMap.at("PlasmaLength");
+
+	if( parameterMap.find("AuxiliaryHeating") != parameterMap.end())
+		AuxiliaryHeating = parameterMap.at("AuxiliaryHeating");
+
+	if( parameterMap.find("ParallelFudgeFactor") != parameterMap.end())
+		ParallelFudgeFactor = parameterMap.at("ParallelFudgeFactor");
+
+	if( parameterMap.find("PerpFudgeFactor") != parameterMap.end())
+		PerpFudgeFactor = parameterMap.at("PerpFudgeFactor");
+
+	if( parameterMap.find("InitialTemp") != parameterMap.end())
+		InitialTemp = parameterMap.at("InitialTemp");
+
+	if( parameterMap.find("InitialMach") != parameterMap.end())
+		InitialMach = parameterMap.at("InitialMach");
+
+	AmbipolarPhi = ambiPolPhi;
+	Collisional = collisions;
+	OutputFile  = asciiOut;
+	NetcdfOutputFile = netCdfOut;
+
+	if ( FuelName == "Hydrogen" ) {
+		IonSpecies.Mass   = 1.0;
+		IonSpecies.Charge = 1.0;
+		IonSpecies.Name   = "Hydrogen";
+		AlphaHeating = false;
+		ReportNuclearDiagnostics = false;
+	} else if ( FuelName == "Deuterium" ) {
+		IonSpecies.Mass   = 2.0;
+		IonSpecies.Charge = 1.0;
+		IonSpecies.Name   = "Deuterium";
+		AlphaHeating = false;
+		ReportNuclearDiagnostics = true;
+	} else if ( FuelName == "DT Fuel" ) {
+		IonSpecies.Mass   = 2.5;
+		IonSpecies.Charge = 1.0;
+		IonSpecies.Name   = "Deuterium/Tritium Fuel";
+		AlphaHeating = true;
+		ReportNuclearDiagnostics = true;
+	} else {
+		std::string ErrorMessage = "Fuel is not a recognized plasma species";
+		throw std::invalid_argument( ErrorMessage );
+	}
+
+	//If specified in the config file these values override the defaults from the fuel
+	if(AHeating == tribool::tru) AlphaHeating = true;
+	else if(AHeating == tribool::fal) AlphaHeating = false;
+
+	if(rDiagnostics == tribool::tru) ReportNuclearDiagnostics = true;
+	else if(rDiagnostics == tribool::fal) ReportNuclearDiagnostics = false;
+}
+
 MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 	: pVacuumConfig( std::make_shared<VacuumMirrorConfiguration>( plasmaConfig ) )
 {
@@ -266,7 +385,69 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 		isTimeDependent = false;
 		time = -1;
 	}
+}
 
+MirrorPlasma::MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig, double ZeffNew, double TiTe, double eRho, double eT)
+	: pVacuumConfig(pVacuumConfig), Zeff(ZeffNew), ElectronDensity(eRho), ElectronTemperature(eT)
+{
+	IonTemperature = ElectronTemperature * TiTe;
+	IonDensity = ElectronDensity / pVacuumConfig->IonSpecies.Charge; 
+	isTimeDependent = false;
+	time = -1.0;
+}
+
+MirrorPlasma::MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig, std::map<std::string,double> parameterMap, std::string vTrace)
+	: pVacuumConfig(pVacuumConfig)
+{
+	if( parameterMap.find("Zeff") != parameterMap.end())
+		Zeff = parameterMap.at("Zeff");
+	else Zeff = 1.0;
+
+	if( parameterMap.find("ElectronDensity") != parameterMap.end())
+		ElectronDensity = parameterMap.at("ElectronDensity");
+
+	IonDensity = ElectronDensity / pVacuumConfig->IonSpecies.Charge; 
+
+	double TiTe = 0.0;
+	if( parameterMap.find("IonToElectronTemperatureRatio") != parameterMap.end())
+		TiTe = parameterMap.at("IonToElectronTemperatureRatio");
+
+
+	if( parameterMap.find("ElectronTemperature") != parameterMap.end())
+	{
+		ElectronTemperature = parameterMap.at("ElectronTemperature");
+		IonTemperature = ElectronTemperature < 0.0 ? -1.0 : ElectronTemperature * TiTe;
+	}
+	//Note if(...) only false if theres a bug. Batch runner will populate the value as -1.0 is its not found in the config file
+	else
+	{
+		ElectronTemperature = -1.0;
+		IonTemperature = -1.0;
+	}
+
+	//Note: current excecution has NeutralSource always initially set to 0. If this changes work will have to be done in BatchRunner
+	if( parameterMap.find("NeutralDensity") != parameterMap.end())
+	{
+		NeutralDensity = parameterMap.at("NeutralDensity");
+		NeutralSource = 0.0;
+	}
+	else
+	{
+		NeutralDensity = 0.0;
+		NeutralSource = 0.0;
+	}
+
+	if(!vTrace.empty())
+	{
+		ReadVoltageFile( vTrace );
+		isTimeDependent = true;
+		SetTime( 0 );
+	}
+	else
+	{
+		isTimeDependent = false;
+		time = -1;
+	}
 }
 
 // From NRL Formulary p34
