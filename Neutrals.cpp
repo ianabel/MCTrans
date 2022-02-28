@@ -61,7 +61,6 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 		return u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) ) * Jacobian;
 	};
 
-<<<<<<< HEAD
 	constexpr double tolerance = 1e-5;
 	constexpr unsigned MaxDepth = 10;
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
@@ -69,12 +68,6 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 		boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance ) << std::endl;
 #endif
 	return thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) ) 
-=======
-	constexpr double tolerance = 1e-4;
-	constexpr unsigned MaxDepth = 5;
-	// std::cerr << boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy ) << std::endl;
-	return thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) )
->>>>>>> github/main
 	        * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 }
 
