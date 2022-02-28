@@ -151,7 +151,9 @@ void MirrorPlasma::PrintReport()
 	double CXConfinementTime = IonDensity*ReferenceDensity / CXLossRate();
 	out << "\tConfinement time from parallel losses is\t"; PrintWithUnit( out, ParallelConfinementTime, "s" ); out << std::endl;
 	out << "\tConfinement time from perpendicular losses is\t"; PrintWithUnit( out, PerpConfinementTime, "s" ); out << std::endl;
-	out << "\tConfinement time from charge-exchange losses is\t"; PrintWithUnit( out, CXConfinementTime, "s" ); out << std::endl;
+	if ( pVacuumConfig->IncludeCXLosses ) {
+		out << "\tConfinement time from charge-exchange losses is\t"; PrintWithUnit( out, CXConfinementTime, "s" ); out << std::endl;
+	}
 	out << std::endl;
 
 	double ParticleConfinementTime = ( IonDensity * ReferenceDensity ) /(  ParallelIonParticleLoss() + ClassicalIonParticleLosses() + CXLossRate() );

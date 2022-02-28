@@ -30,8 +30,8 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 		return Energy * ElectronCharge * sigmaM2 * ::exp( -Energy * ElectronCharge / temperature ) * Jacobian;
 	};
 
-	constexpr double tolerance = 1e-4;
-	constexpr unsigned MaxDepth = 5;
+	constexpr double tolerance = 1e-5;
+	constexpr unsigned MaxDepth = 10;
 	return 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * temperature) * temperature ) 
 	         * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 }
@@ -60,9 +60,12 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 		return u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) ) * Jacobian;
 	};
 
-	constexpr double tolerance = 1e-4;
-	constexpr unsigned MaxDepth = 5;
-	// std::cerr << boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy ) << std::endl;
+	constexpr double tolerance = 1e-5;
+	constexpr unsigned MaxDepth = 10;
+#if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
+	std::cerr << "Integration of sigma from " << sigma.MinEnergy << " to " << sigma.MaxEnergy << " gave " <<
+		boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance ) << std::endl;
+#endif
 	return thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) ) 
 	        * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 }
@@ -319,6 +322,10 @@ void MirrorPlasma::ComputeSteadyStateNeutrals()
 		neutralsRateCoefficientCold( protonImpactIonization, *this ) * IonDensity * ReferenceDensity + 
 		neutralsRateCoefficientCold( electronImpactIonization, *this ) * ElectronDensity * ReferenceDensity;
 
+#if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
+	std::cerr << "Current Ionization Rate is " << IonizationRate << std::endl;
+#endif
+
 	// Assume mix of neutrals is such that the particle densities are maintained so we just need to produce enough electrons from the source gas to balance the losses
 	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
 	// Steady State requires
@@ -339,6 +346,10 @@ double MirrorPlasma::CXLossRate() const
 		return 0.0;
 
 	double CXRateCoefficient = neutralsRateCoefficientCold( HydrogenChargeExchange, *this );
+
+#if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
+	std::cerr << "Current CX Loss Rate is " << CXRateCoefficient * ( NeutralDensity * ReferenceDensity * IonDensity * ReferenceDensity ) << " particles/s"<<std::endl;
+#endif
 
 	return CXRateCoefficient * ( NeutralDensity * ReferenceDensity * IonDensity * ReferenceDensity );
 }

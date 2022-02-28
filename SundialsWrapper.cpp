@@ -49,10 +49,18 @@ int ARKStep_TemperatureSolve( realtype t, N_Vector u, N_Vector uDot, void* voidP
 	double TiOld = plasmaPtr->IonTemperature;
 	double TeOld = plasmaPtr->ElectronTemperature;
 
-	if ( ION_TEMPERATURE( u ) < 0.0 )
+	if ( ION_TEMPERATURE( u ) < 0.0 ) {
+#if defined( DEBUG )
+		std::cerr << "Error in SUNDIALS solve, due to negative ion temperature" << std::endl;
+#endif
 		return 1;
-	if ( ELECTRON_TEMPERATURE( u ) < 0.0 )
+	}
+	if ( ELECTRON_TEMPERATURE( u ) < 0.0 ) {
+#if defined( DEBUG )
+		std::cerr << "Error in SUNDIALS solve, due to negative electron temperature" << std::endl;
+#endif
 		return 2;
+	}
 
 	plasmaPtr->IonTemperature = ION_TEMPERATURE( u );
 	plasmaPtr->ElectronTemperature = ELECTRON_TEMPERATURE( u );
@@ -70,7 +78,7 @@ int ARKStep_TemperatureSolve( realtype t, N_Vector u, N_Vector uDot, void* voidP
 	}
 	plasmaPtr->SetMachFromVoltage();
 	plasmaPtr->ComputeSteadyStateNeutrals();
-#if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
+#if defined( DEBUG ) && defined( SUNDIALS_DEBUG ) && defined( INTERNAL_RK_DEBUG )
 	std::cerr << "t = " << t << " ; T_i = " << plasmaPtr->IonTemperature << " ; T_e = " << plasmaPtr->ElectronTemperature << " MachNumber " << plasmaPtr->MachNumber << std::endl;
 #endif
 
@@ -81,7 +89,7 @@ int ARKStep_TemperatureSolve( realtype t, N_Vector u, N_Vector uDot, void* voidP
 		double ElectronHeating  = plasmaPtr->ElectronHeating();
 		double ElectronHeatLoss = plasmaPtr->ElectronHeatLosses();
 
-#if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
+#if defined( DEBUG ) && defined( SUNDIALS_DEBUG ) && defined( INTERNAL_RK_DEBUG )
 		std::cerr << " Ion Heating      = " << IonHeating      << " ; Ion Heat Loss       = " << IonHeatLoss      << std::endl;
 		std::cerr << " Electron Heating = " << ElectronHeating << " ; Electron Heat Loss  = " << ElectronHeatLoss << std::endl;
 #endif
@@ -89,6 +97,7 @@ int ARKStep_TemperatureSolve( realtype t, N_Vector u, N_Vector uDot, void* voidP
 		ION_HEAT_BALANCE( uDot )      = ( IonHeating - IonHeatLoss );
 		ELECTRON_HEAT_BALANCE( uDot ) = ( ElectronHeating - ElectronHeatLoss );
 //		PARTICLE_BALANCE( uDot ) = ParticleBalance; 
+
 
 	} catch ( std::exception& e ) {
 		return -1;
@@ -165,9 +174,12 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	
 	
 
-	double abstol = 1e-6;
-	double reltol = 1e-5;
+	double abstol = plasma.pVacuumConfig->SundialsAbsTol;
+	double reltol = plasma.pVacuumConfig->SundialsRelTol;
 
+#ifdef DEBUG
+	std::cerr << "Using SundialsAbsTol = " << abstol << " and SundialsRelTol = " << reltol << std::endl;
+#endif
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
 	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, DEFAULT_DIRK_5, -1 ), "ARKStepSetTableNum" );
 	
@@ -187,6 +199,14 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	for ( t = OutputDeltaT; t < EndTime; t += OutputDeltaT )
 	{
 		errorFlag = ARKStepEvolve( arkMem, t, initialCondition, &tRet, ARK_NORMAL );
+		switch ( errorFlag ) {
+			case ARK_SUCCESS:
+				break;
+			default:
+				throw std::runtime_error( "ARKStep failed with error " + std::to_string( errorFlag ) );
+			break;
+		}
+
 		plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 		plasma.IonTemperature = ION_TEMPERATURE( initialCondition );
 		plasma.SetMachFromVoltage();
@@ -195,20 +215,29 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 #if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
 	std::cerr << "After evolving to " << tRet << " T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
 #endif
-		switch ( errorFlag ) {
-			case ARK_SUCCESS:
-				break;
-			default:
-				throw std::runtime_error( "ARKStep failed with error " + std::to_string( errorFlag ) );
-				break;
-		}	
+
+		double RelativeIonRate = ::fabs( ( plasma.IonHeating() - plasma.IonHeatLosses() )/( plasma.IonDensity * plasma.IonTemperature * ReferenceTemperature * ReferenceDensity ) );
+		double RelativeElectronRate =::fabs( ( plasma.ElectronHeating() - plasma.ElectronHeatLosses() )/( plasma.ElectronDensity * plasma.ElectronTemperature * ReferenceTemperature * ReferenceDensity ) );
+#if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
+		std::cerr << " Relative Rate of Change in Ion Energy Density " << RelativeIonRate * 100 << " %/s" << std::endl;
+		std::cerr << " Relative Rate of Change in Electron Energy Density " << RelativeElectronRate * 100 << " %/s" << std::endl;
+#endif
+		if ( RelativeIonRate < plasma.pVacuumConfig->RateThreshold &&
+		     RelativeElectronRate < plasma.pVacuumConfig->RateThreshold )
+		{
+#if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
+	std::cerr << "Steady state reached at time " << t << " with T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
+#endif
+			break;
+		}
+
 	}
 
 	// We've solved and found the answer. Update the plasma object
 
 	plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 	plasma.IonTemperature      =      ION_TEMPERATURE( initialCondition );
-	plasma.SetTime( EndTime );
+	// plasma.SetTime( EndTime );
 
 #ifdef DEBUG
 	long nSteps = 0,nfeEvals = 0,nfiEvals = 0;
@@ -256,8 +285,8 @@ void MCTransConfig::doFixedTeSolve( MirrorPlasma& plasma ) const
 	
 	
 
-	double abstol = 1e-6;
-	double reltol = 1e-5;
+	double abstol = plasma.pVacuumConfig->SundialsAbsTol;
+	double reltol = plasma.pVacuumConfig->SundialsRelTol;
 
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
 	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, DEFAULT_DIRK_5, -1 ), "ARKStepSetTableNum" );

@@ -55,6 +55,8 @@ class MirrorPlasma {
 				std::string OutputFile;
 				std::string NetcdfOutputFile;
 
+				double SundialsAbsTol,SundialsRelTol;
+				double RateThreshold;
 
 				double PlasmaVolume() const {
 					return M_PI * ( PlasmaColumnWidth + 2 * AxialGapDistance ) * PlasmaColumnWidth * PlasmaLength;
@@ -157,6 +159,8 @@ class MirrorPlasma {
 		double ParallelMomentumLossRate() const;
 		double initialTemperature() const { return pVacuumConfig->InitialTemp; };
 		double initialMach() const { return pVacuumConfig->InitialMach; };
+
+		bool isSteady;
 	private:
 		NetCDFIO nc_output;
 
@@ -236,6 +240,7 @@ class MirrorPlasma {
 		void ReadVoltageFile( std::string const& );
 		double time;
 		bool isTimeDependent;
+
 	public:
 		double AlphaHeating() const;
 		double PromptAlphaLossFraction() const;

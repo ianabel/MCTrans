@@ -46,6 +46,44 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 		else
 			IncludeCXLosses = false;
 
+		if ( algConfig.count( "RateThreshold" ) == 1 )
+		{
+			RateThreshold = algConfig.at( "RateThreshold" ).as_floating();
+#ifdef DEBUG
+			std::cerr << "Threshold rate of change for asserting steady state (units of s^-1) set to" << RateThreshold << std::endl;
+#endif
+		} else {
+			RateThreshold = 1e-4;
+#ifdef DEBUG
+			std::cerr << "Default criterion for steady state -- relative rate of change less than " << RateThreshold << " /s" << std::endl;
+#endif
+		}
+
+		if ( algConfig.count( "SundialsAbsTol" ) == 1 )
+		{
+			SundialsAbsTol = algConfig.at( "SundialsAbsTol" ).as_floating();
+#ifdef DEBUG
+			std::cerr << "Absolute tolerance for SUNDIALS Arkode Solve set to " << SundialsAbsTol << std::endl;
+#endif
+		} else {
+			SundialsAbsTol = 1e-9;
+#ifdef DEBUG
+			std::cerr << "Absolute tolerance for SUNDIALS Arkode Solve set to the default of " << SundialsAbsTol << std::endl;
+#endif
+		}
+		
+		if ( algConfig.count( "SundialsRelTol" ) == 1 )
+		{
+			SundialsRelTol = algConfig.at( "SundialsRelTol" ).as_floating();
+#ifdef DEBUG
+			std::cerr << "Relative tolerance for SUNDIALS Arkode Solve set to " << SundialsRelTol << std::endl;
+#endif
+		} else {
+			SundialsRelTol = 1e-7;
+#ifdef DEBUG
+			std::cerr << "Relative tolerance for SUNDIALS Arkode Solve set to the default of " << SundialsRelTol << std::endl;
+#endif
+		}
 
 		if ( algConfig.count( "InitialTemp" ) == 1 )
 		{
@@ -89,6 +127,8 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 		Collisional = false;
 		OutputFile  = "";
 		NetcdfOutputFile = "";
+		SundialsAbsTol = 1e-7;
+		SundialsRelTol = 1e-7;
 	}
 
 	const auto mirrorConfig = toml::find<toml::table>( plasmaConfig, "configuration" );
