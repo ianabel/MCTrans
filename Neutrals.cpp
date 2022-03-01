@@ -33,8 +33,15 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 
 	constexpr double tolerance = 1e-5;
 	constexpr unsigned MaxDepth = 10;
-	return 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * temperature) * temperature )
-	         * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
+	double HotRateCoeff = 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * temperature) * temperature )
+	         * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
+
+#if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
+	std::cerr << "Computing a cold rate coefficient at T = " << plasma.ElectronTemperature/1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
+#endif
+
+	return HotRateCoeff;
+
 }
 
 double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma const & plasma )
@@ -63,12 +70,14 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 
 	constexpr double tolerance = 1e-5;
 	constexpr unsigned MaxDepth = 10;
+	double ColdRateCoeff = thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) ) 
+	        * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
+	
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
-	std::cerr << "Integration of sigma from " << sigma.MinEnergy << " to " << sigma.MaxEnergy << " gave " <<
-		boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance ) << std::endl;
+	std::cerr << "Computing a cold rate coefficient at T = " << plasma.ElectronTemperature/1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
 #endif
-	return thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) ) 
-	        * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
+
+	return ColdRateCoeff;
 }
 
 /*
