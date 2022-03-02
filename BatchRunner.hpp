@@ -11,68 +11,66 @@
 
 class BatchRunner {
 public:
-    BatchRunner(std::string const& batchFile);
-    void runBatchSolve();
+	BatchRunner(std::string const& batchFile);
+	void runBatchSolve();
 private:
-    //solving function. Builds the mirrorplasma object, excecutes a solve and prints the report
-    void SolveIndividualMirrorPlasma(std::map<std::string, double> parameterMap);
+	//solving function. Builds the mirrorplasma object, excecutes a solve and prints the report
+	void SolveIndividualMirrorPlasma(std::map<std::string, double> parameterMap);
 
-    //Catchall function which takes parameters from the toml object and populates the parameter vectors
-    void readParameterFromFile(toml::value batch, std::string configName, std::vector<double>& parameterVector, bool mandatory = true, double defaultValue = 0.0, bool strictlyPositive = false);
-    
-    //calculates the necessary increment in a parameter at each step
-    const double step(std::vector<double> array);
+	//Catchall function which takes parameters from the toml object and populates the parameter vectors
+	void readParameterFromFile(toml::value batch, std::string configName, std::vector<double>& parameterVector, bool mandatory = true, double defaultValue = 0.0, bool strictlyPositive = false);
+	
+	//calculates the necessary increment in a parameter at each step
+	const double step(std::vector<double> array);
 
-    //recursive function which takes creates a map of each mirror plasma case and stores all the maps in a vector
-    void cartesianProduct(std::vector<std::map<std::string, double>>& final, std::map<std::string, double>& current, std::vector<std::pair<std::vector<double>*,std::string>>::const_iterator currentInput, std::vector<std::pair<std::vector<double>*,std::string>>::const_iterator end);
-    std::string FuelName;
-    bool reportThrust;
+	//recursive function which takes creates a map of each mirror plasma case and stores all the maps in a vector
+	void cartesianProduct(std::vector<std::map<std::string, double>>& final, std::map<std::string, double>& current, std::vector<std::pair<std::vector<double>*,std::string>>::const_iterator currentInput, std::vector<std::pair<std::vector<double>*,std::string>>::const_iterator end);
+	std::string FuelName;
+	bool reportThrust;
 
-    //Debugging functions
-    int totalCases();
-    template<typename K, typename V>
-    void print_maps(std::vector<std::map<K, V>> const &vec);
-    
-    std::vector<std::pair<std::vector<double>*,std::string>> ptrsAndNamesToVectors;
+	template<typename K, typename V>
+	void print_maps(std::vector<std::map<K, V>> const &vec);
+	
+	std::vector<std::pair<std::vector<double>*,std::string>> ptrsAndNamesToVectors;
 
-    //VacuumConfig parameters
-    std::vector<double> CentralCellFieldStrengthVals;
-    std::vector<double> MagFieldThroatVals;
-    std::vector<double> MirrorRatioVals;
+	//VacuumConfig parameters
+	std::vector<double> CentralCellFieldStrengthVals;
+	std::vector<double> MagFieldThroatVals;
+	std::vector<double> MirrorRatioVals;
 	std::vector<double> PlasmaMaxRadiusVals;
-    std::vector<double> AxialGapDistanceVals;
-    std::vector<double> PlasmaColumnWidthVals;
-    std::vector<double> ImposedVoltageVals;
-    std::vector<double> PlasmaLengthVals;
-    std::vector<double> WallRadiusVals;
-    std::vector<double> AuxiliaryHeatingVals;
-    std::vector<double> NeutralDensityVals;
+	std::vector<double> AxialGapDistanceVals;
+	std::vector<double> PlasmaColumnWidthVals;
+	std::vector<double> ImposedVoltageVals;
+	std::vector<double> PlasmaLengthVals;
+	std::vector<double> WallRadiusVals;
+	std::vector<double> AuxiliaryHeatingVals;
+	std::vector<double> NeutralDensityVals;
 
-    tribool AlphaHeating = unspecified;
-    tribool ReportNuclearDiagnostics = unspecified;
-    bool ReportThrust;
+	tribool AlphaHeating = unspecified;
+	tribool ReportNuclearDiagnostics = unspecified;
+	bool ReportThrust;
 
-    //MirrorPlasma parameters
-    std::vector<double> ZeffVals;
-    std::vector<double> ElectronDensityVals,ElectronTemperatureVals;
-    std::vector<double> TiTeVals;
+	//MirrorPlasma parameters
+	std::vector<double> ZeffVals;
+	std::vector<double> ElectronDensityVals,ElectronTemperatureVals;
+	std::vector<double> TiTeVals;
 
-    //Algorithm parameters
-    std::vector<double> ParallelFudgeFactorVals;
-    std::vector<double> PerpFudgeFactorVals;
-    std::vector<double> InitialTempVals;
-    std::vector<double> InitialMachVals;
+	//Algorithm parameters
+	std::vector<double> ParallelFudgeFactorVals;
+	std::vector<double> PerpFudgeFactorVals;
+	std::vector<double> InitialTempVals;
+	std::vector<double> InitialMachVals;
 
-    bool AmbipolarPhi = true;
+	bool AmbipolarPhi = true;
 	bool Collisional = false;
 	std::string OutputFile  = "";
 	std::string NetcdfOutputFile = "";
 
-    //Time dependent parameters
-    std::string VoltageTrace;
+	//Time dependent parameters
+	std::string VoltageTrace;
 
 
-    //Data specifiers
-    bool useMirrorRatio = true;
-    bool usePlasmaRadiusMaxMin = false;
+	//Data specifiers
+	bool useMirrorRatio = true;
+	bool usePlasmaRadiusMaxMin = false;
 };
