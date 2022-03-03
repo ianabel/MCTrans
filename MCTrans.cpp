@@ -24,22 +24,20 @@ int main( int argc, char** argv )
 		return 1;
 	}
 
-	if(fname.substr(fname.find_last_of(".") + 1) == "batch") {
-		BatchRunner batch(fname);
-		batch.runBatchSolve();
-		return 0;
-	}
+	BatchRunner runner(fname);
+	runner.runBatchSolve();
+	return 0;
 
-	MCTransConfig config( fname );
+	//MCTransConfig config( fname );
 
 #if defined(DEBUG) && defined(FPEXCEPT)
 	std::cerr << "Floating Point Exceptions Enabled" << std::endl;
 	::feenableexcept( FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW );
 #endif
 
-	std::shared_ptr<MirrorPlasma> result = config.Solve();
+	//std::shared_ptr<MirrorPlasma> result = config.Solve();
 
-	result->PrintReport();
+	//result->PrintReport();
 
 	return 0;
 }

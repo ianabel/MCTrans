@@ -21,21 +21,34 @@ void PrintWithUnit( std::ostream& out, double value, std::string const& unit )
 	return;
 }
 
-
-void MirrorPlasma::PrintReport()
+void MirrorPlasma::PrintReport(std::map<std::string, double>* parameterMap, int currentRun, int totalRuns)
 {
-
 	std::ostream *p_out;
 	if ( pVacuumConfig->OutputFile == "" )
 		p_out = &std::cout;
-	else
+	else if(totalRuns == 1)
 	{
 		p_out = new std::fstream( pVacuumConfig->OutputFile, std::ios_base::out | std::ios_base::trunc );
+	}
+	else
+	{
+		std::string outputFileName = pVacuumConfig->OutputFile.insert( std::min(pVacuumConfig->OutputFile.find_last_of("."), pVacuumConfig->OutputFile.size()) , "_" + std::to_string(currentRun + 1));
+		p_out = new std::fstream( outputFileName, std::ios_base::out | std::ios_base::trunc );
 	}
 
 	std::ostream &out = *p_out;
 
 	out.precision( 3 );
+
+	if( totalRuns > 1 && parameterMap)
+	{
+		out << "Batch run " << currentRun+1 << " of " << totalRuns << std::endl;
+		out << std::endl;
+		out << "Input parameters: " << std::endl;
+		for (auto const &pair: *parameterMap) 
+			out << pair.first << ": " << pair.second << std::endl;
+		out << std::endl;
+	}
 
 	out << "The plasma is made up of electrons, " << pVacuumConfig->IonSpecies.Name; 
 	if ( Zeff > 0.0 )

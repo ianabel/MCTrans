@@ -86,7 +86,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	const auto mirrorConfig = toml::find<toml::table>( plasmaConfig, "configuration" );
 
 	if ( mirrorConfig.count( "IonSpecies" ) != 1 )
-		throw std::invalid_argument( "Fuel must be specified once in the [configuration] block" );
+		throw std::invalid_argument( "[error] Fuel must be specified once in the [configuration] block" );
 
 	std::string FuelName = mirrorConfig.at( "IonSpecies" ).as_string();
 
@@ -109,7 +109,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 		AlphaHeating = true;
 		ReportNuclearDiagnostics = true;
 	} else {
-		std::string ErrorMessage = "Fuel is not a recognized plasma species";
+		std::string ErrorMessage = "[error] Fuel is not a recognized plasma species";
 		throw std::invalid_argument( ErrorMessage );
 	}
 
@@ -190,7 +190,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	else if ( mirrorConfig.count( "Voltage" ) == 0 )
 		ImposedVoltage = 0.0;
 	else
-		throw std::invalid_argument( "Imposed voltage specified more than once!" );
+		throw std::invalid_argument( "[error] Imposed voltage specified more than once!" );
 
 	WallRadius = mirrorConfig.at( "WallRadius" ).as_floating();
 
@@ -208,43 +208,6 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	// This overrides the default for the chosen fuel
 	if ( mirrorConfig.count( "ReportNuclearDiagnostics" ) == 1 )
 		ReportNuclearDiagnostics = mirrorConfig.at( "ReportNuclearDiagnostics" ).as_boolean();
-}
-
-MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(double CFS, double MR, double AGD, double PCW, double ImpV, double PL, double WR, double AuxH, std::string FuelName, bool rThrust, bool AlpHeating, bool RNuclearDiagnostics)
-	: CentralCellFieldStrength(CFS), MirrorRatio(MR), AxialGapDistance(AGD), PlasmaColumnWidth(PCW), ImposedVoltage(ImpV), PlasmaLength(PL), WallRadius(WR), AuxiliaryHeating(AuxH), ReportThrust(rThrust), AlphaHeating(AlpHeating), ReportNuclearDiagnostics(RNuclearDiagnostics)
-{
-	// To Do: Allow batch builds to set algorithm parameters
-	ParallelFudgeFactor = 1.0;
-	PerpFudgeFactor = 1.0;
-	InitialTemp = 0.1;
-	InitialMach = 4.0;
-	AmbipolarPhi = true;
-	Collisional = false;
-	OutputFile  = "";
-	NetcdfOutputFile = "";
-
-	if ( FuelName == "Hydrogen" ) {
-		IonSpecies.Mass   = 1.0;
-		IonSpecies.Charge = 1.0;
-		IonSpecies.Name   = "Hydrogen";
-		AlphaHeating = false;
-		ReportNuclearDiagnostics = false;
-	} else if ( FuelName == "Deuterium" ) {
-		IonSpecies.Mass   = 2.0;
-		IonSpecies.Charge = 1.0;
-		IonSpecies.Name   = "Deuterium";
-		AlphaHeating = false;
-		ReportNuclearDiagnostics = true;
-	} else if ( FuelName == "DT Fuel" ) {
-		IonSpecies.Mass   = 2.5;
-		IonSpecies.Charge = 1.0;
-		IonSpecies.Name   = "Deuterium/Tritium Fuel";
-		AlphaHeating = true;
-		ReportNuclearDiagnostics = true;
-	} else {
-		std::string ErrorMessage = "Fuel is not a recognized plasma species";
-		throw std::invalid_argument( ErrorMessage );
-	}
 }
 
 MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(const std::map<std::string, double>& parameterMap, std::string FuelName, 
@@ -316,7 +279,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(const std::ma
 		AlphaHeating = true;
 		ReportNuclearDiagnostics = true;
 	} else {
-		std::string ErrorMessage = "Fuel is not a recognized plasma species";
+		std::string ErrorMessage = "[error] Fuel is not a recognized plasma species";
 		throw std::invalid_argument( ErrorMessage );
 	}
 
@@ -336,23 +299,23 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 	double TiTe = toml::find_or<double>( mirrorConfig, "IonToElectronTemperatureRatio", 0.0 );
 	if ( TiTe < 0.0 )
 	{
-		throw std::invalid_argument( "Ion to Electron temperature ratio must be a positive number" );
+		throw std::invalid_argument( "[error] Ion to Electron temperature ratio must be a positive number" );
 	}
 
 	// Default to pure plasma
 	Zeff = toml::find_or<double>( mirrorConfig, "Zeff", 1.0 );
 	if ( Zeff <= 0.0 ) {
-		throw std::invalid_argument( "Effective charge (Z_eff) must be positive!" );
+		throw std::invalid_argument( "[error] Effective charge (Z_eff) must be positive!" );
 	}
 
 	try {
 		ElectronDensity = toml::find<double>( mirrorConfig, "ElectronDensity" );
 	} catch ( std::out_of_range &e ) {
-		throw std::invalid_argument( "You must specify the electron density (ElectronDensity) in the [configuration] block" );
+		throw std::invalid_argument( "[error] You must specify the electron density (ElectronDensity) in the [configuration] block" );
 	}
 
 	if ( ElectronDensity <= 0.0 ) {
-		throw std::invalid_argument( "Electron density must be positive!" );
+		throw std::invalid_argument( "[error] Electron density must be positive!" );
 	}
 
 	IonDensity = ElectronDensity / pVacuumConfig->IonSpecies.Charge;
@@ -366,7 +329,7 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 		ElectronTemperature = -1.0;
 		IonTemperature = -1.0;
 	} else {
-		throw std::invalid_argument( "Electron Temperature specified more than once!" );
+		throw std::invalid_argument( "[error] Electron Temperature specified more than once!" );
 	}
 
 	if ( mirrorConfig.count( "NeutralDensity" ) == 1 ) {
@@ -385,15 +348,6 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 		isTimeDependent = false;
 		time = -1;
 	}
-}
-
-MirrorPlasma::MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig, double ZeffNew, double TiTe, double eRho, double eT)
-	: pVacuumConfig(pVacuumConfig), Zeff(ZeffNew), ElectronDensity(eRho), ElectronTemperature(eT)
-{
-	IonTemperature = ElectronTemperature * TiTe;
-	IonDensity = ElectronDensity / pVacuumConfig->IonSpecies.Charge; 
-	isTimeDependent = false;
-	time = -1.0;
 }
 
 MirrorPlasma::MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig, std::map<std::string,double> parameterMap, std::string vTrace)
@@ -418,7 +372,7 @@ MirrorPlasma::MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumC
 		ElectronTemperature = parameterMap.at("ElectronTemperature");
 		IonTemperature = ElectronTemperature < 0.0 ? -1.0 : ElectronTemperature * TiTe;
 	}
-	//Note if(...) only false if theres a bug. Batch runner will populate the value as -1.0 is its not found in the config file
+	//Note if(...) only false if theres a bug. Batch runner will populate the value as -1.0 if its not found in the config file
 	else
 	{
 		ElectronTemperature = -1.0;

@@ -5,6 +5,11 @@
 #include "MirrorPlasma.hpp"
 #include "Config.hpp"
 
+//Type names used in the recursive cartesian product
+using vecMap = std::vector<std::map<std::string, double>>;
+using vecPairVS = std::vector<std::pair<std::vector<double>*,std::string>>;
+using mapSD = std::map<std::string, double>;
+
 BatchRunner::BatchRunner(std::string const& batchFile)
 {
 	const auto batchConfig = toml::parse( batchFile );
@@ -37,13 +42,32 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 			NetcdfOutputFile = "";
 		}
 		Collisional = false;
+#ifdef DEBUG
+		if(( algConfig.count( "InitialTemp" ) == 1 ))
+			std::cerr << "Initial Temperature for Temperature Solve set from config file to " << InitialTempVals.size() << " value(s) between " << InitialTempVals[0] << " and " << InitialTempVals.back() << std::endl;
+		else
+			std::cerr << "Initial Temperature for Temperature Solve set to the default of " << InitialTempVals[0] << std::endl;
+
+		if( algConfig.count( "InitialMach" ) == 1 )
+			std::cerr << "Initial Mach Number for fixed-temperature solve set from config file to " << InitialMachVals.size() << " value(s) between " << InitialMachVals[0] << " and " << InitialMachVals.back() << std::endl;
+		else 
+			std::cerr << "Initial Mach Number for fixed-temperature solve set to the default of " << InitialMachVals[0] << std::endl;
+#endif
 	}
 	else
 	{
+#ifdef DEBUG
+		std::cerr << "No [algorithm] section, using default values for internal knobs." << std::endl;
+#endif
 		ParallelFudgeFactorVals.push_back(1.0);
 		PerpFudgeFactorVals.push_back(1.0);
 		InitialTempVals.push_back(0.1);
 		InitialMachVals.push_back(4.0);
+		ptrsAndNamesToVectors.push_back(std::make_pair(&ParallelFudgeFactorVals, "ParallelFudgeFactor"));
+		ptrsAndNamesToVectors.push_back(std::make_pair(&PerpFudgeFactorVals, "PerpFudgeFactor"));
+		ptrsAndNamesToVectors.push_back(std::make_pair(&InitialTempVals, "InitialTemp"));
+		ptrsAndNamesToVectors.push_back(std::make_pair(&InitialMachVals, "InitialMach"));
+
 		AmbipolarPhi = true;
 		Collisional = false;
 		OutputFile  = "";
@@ -53,7 +77,7 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	const auto batch = toml::find<toml::value>( batchConfig, "configuration" );
 	//Fuel name
 	if ( batch.count( "IonSpecies" ) != 1 )
-		throw std::invalid_argument( "Fuel must be specified once in the [configuration] block" );
+		throw std::invalid_argument( "[error] Fuel must be specified once in the [configuration] block" );
 	FuelName = batch.at( "IonSpecies" ).as_string();
 
 	//Report Thrust
@@ -69,7 +93,6 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	if ( batch.count( "MirrorRatio" ) == 1 ) 
 	{
 		readParameterFromFile(batch, "MirrorRatio", MirrorRatioVals, false);
-		useMirrorRatio = true;
 		if ( batch.count( "ThroatField" ) == 1 ) {
 			throw std::invalid_argument( toml::format_error( "[error] Cannot specify botth Miror Ratio and Throat Field",batch.at( "MirrorRatio" )," mirror ratio defined here", batch.at( "ThroatField" ), " Throat field here" ) );
 		}
@@ -78,7 +101,6 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	else if ( batch.count( "ThroatField" ) == 1 ) 
 	{
 		readParameterFromFile(batch, "ThroatField", MagFieldThroatVals, false);
-		useMirrorRatio = false;
 		if ( batch.count( "MirrorRatio" ) == 1 ) {
 			throw std::invalid_argument( toml::format_error( "[error] Cannot specify botth Miror Ratio and Throat Field",batch.at( "MirrorRatio" )," mirror ratio defined here", batch.at( "ThroatField" ), " Throat field here" ) );
 		}
@@ -96,7 +118,6 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		
 		readParameterFromFile(batch, "PlasmaMinRadius", AxialGapDistanceVals, false);
 		readParameterFromFile(batch, "PlasmaMaxRadius", PlasmaMaxRadiusVals, false);
-		usePlasmaRadiusMaxMin = true;
 
 		if ( batch.count( "AxialGapDistance" ) == 1 ) {
 			throw std::invalid_argument( toml::format_error( "[error] When PlasmaRadiusMin / Max are specified you cannot set AxialGapDistance",batch.at( "PlasmaRadiusMin" )," minimum radius set here", batch.at( "AxialGapDistance" ), " AxialGapDistance found here" ) );
@@ -114,7 +135,6 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		
 		readParameterFromFile(batch, "AxialGapDistance", AxialGapDistanceVals, false);
 		readParameterFromFile(batch,"PlasmaColumnWidth", PlasmaColumnWidthVals, false);
-		usePlasmaRadiusMaxMin = false;
 
 		if ( batch.count( "PlasmaMinRadius" ) == 1 ) {
 			throw std::invalid_argument( toml::format_error( "[error] When AxialGapDistance and PlasmaColumnWidth are specified you cannot set PlasmaMinRadius",batch.at( "PlasmaRadiusMin" )," minimum radius set here", batch.at( "AxialGapDistance" ), " AxialGapDistance found here" ) );
@@ -176,7 +196,7 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	} else VoltageTrace = "";
 }
 
-void BatchRunner::cartesianProduct(std::vector<std::map<std::string, double>>& vectorOfMaps, std::map<std::string, double>& currentMap, std::vector<std::pair<std::vector<double>*,std::string>>::const_iterator currentI, std::vector<std::pair<std::vector<double>*,std::string>>::const_iterator end)
+void BatchRunner::cartesianProduct(vecMap& vectorOfMaps, mapSD& currentMap, vecPairVS::const_iterator currentI, vecPairVS::const_iterator end)
 {
 	if(currentI == end)
 	{
@@ -200,19 +220,22 @@ void BatchRunner::runBatchSolve()
 	std::map<std::string, double> currentMap;
 	cartesianProduct(vectorOfMaps, currentMap, ptrsAndNamesToVectors.begin(), ptrsAndNamesToVectors.end());
 
-	//print_maps(vectorOfMaps);
+	totalRuns = vectorOfMaps.size();
+	if(totalRuns > 1 && OutputFile == "")
+		throw std::invalid_argument("[error] Output file name is needed when running a batch solve");
 
-	for(auto caseMap : vectorOfMaps)
+	for(int n = 0; n < totalRuns; n++)
 	{
-		SolveIndividualMirrorPlasma(caseMap);
+		SolveIndividualMirrorPlasma(vectorOfMaps[n], n);
 	}
-
-	std::cout << "Total cases run:" << vectorOfMaps.size() << std::endl;
+#ifdef DEBUG
+	std::cerr << "Total cases run:" << vectorOfMaps.size() << std::endl;
+#endif
 }
 
 const double BatchRunner::step(std::vector<double> array)
 {
-	if(array.size() != 3 || array[1] < array[0]) throw std::invalid_argument( "Input must be configured [min, max, step size]" );
+	if(array.size() != 3 || array[1] < array[0]) throw std::invalid_argument( "[error] Input must be configured [min, max, step size]" );
 	if(array[2] <= 0.0) return array[1] - array[0] + 1.0; // negative step implies only accpeting the first value of the matix
 	else return array[2];
 }
@@ -230,27 +253,28 @@ void BatchRunner::readParameterFromFile(toml::value batch, std::string configNam
 		}
 		else if(parameterData.is_floating()) parameterVector.push_back(parameterData.as_floating());
 		else if(parameterData.is_integer()) parameterVector.push_back(static_cast<double>(parameterData.as_floating()));
-		else throw std::invalid_argument("Non-compatible data given in configuration file");
+		else throw std::invalid_argument("[error] Non-compatible data given in configuration file");
 
 		if(strictlyPositive && *std::min_element( parameterVector.begin(), parameterVector.end() ) < 0.0 )
-		throw std::invalid_argument( configName + "cannot be negative" );
+		throw std::invalid_argument( "[error] " + configName + " cannot be negative" );
 
 	}
 	else if(!mandatory && batch.count( configName ) == 0) parameterVector.push_back(defaultValue);
-	else if( batch.count( configName ) > 1 ) throw( configName + "cannot be specified more than once");
-	else throw( configName + "unspecified or specified incorrectly");
+	else if( batch.count( configName ) > 1 ) throw std::invalid_argument("[error] " + configName + " cannot be specified more than once");
+	else throw std::invalid_argument( "[error] " + configName + " unspecified or specified incorrectly");
 
 	ptrsAndNamesToVectors.push_back(std::make_pair(&parameterVector,configName));
 }
 
-void BatchRunner::SolveIndividualMirrorPlasma(std::map<std::string, double> parameterMap)
+void BatchRunner::SolveIndividualMirrorPlasma(std::map<std::string, double> parameterMap, int currentRun)
 {
 	std::shared_ptr< MirrorPlasma::VacuumMirrorConfiguration > pVacuumConfig = std::make_shared<MirrorPlasma::VacuumMirrorConfiguration>( parameterMap,FuelName,reportThrust,AlphaHeating,ReportNuclearDiagnostics, AmbipolarPhi, Collisional, OutputFile, NetcdfOutputFile );
 	std::shared_ptr< MirrorPlasma > pReferencePlasmaState = std::make_shared<MirrorPlasma>(pVacuumConfig, parameterMap, VoltageTrace);
 	MCTransConfig config(pReferencePlasmaState);
 
 	std::shared_ptr<MirrorPlasma> result = config.Solve();
-	result->PrintReport();
+
+	result->PrintReport(&parameterMap, currentRun, totalRuns);
 }
 
 template<typename K, typename V>

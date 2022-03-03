@@ -19,7 +19,6 @@ class MirrorPlasma {
 		class VacuumMirrorConfiguration {
 			public:
 				VacuumMirrorConfiguration( toml::value const& );
-				VacuumMirrorConfiguration(double CFS, double MR, double AGD, double PCW, double ImpV, double PL, double WR, double AuxH, std::string FuelName, bool reportThrust, bool AlphaHeating, bool ReportNuclearDiagnostics);
 				VacuumMirrorConfiguration(const std::map<std::string, double>& parameterMap, std::string FuelName, bool reportThrust, tribool AlphaHeating, tribool ReportNuclearDiagnostics, bool ambiPolPhi, bool collisions, std::string asciiOut, std::string netCdfOut);
 				/*
 				VacuumMirrorConfiguration( const& VacuumMirrorConfiguration other ) :
@@ -95,7 +94,6 @@ class MirrorPlasma {
 
 		MirrorPlasma( toml::value const& configSection );
 
-		MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig, double ZeffNew, double TiTe, double eRho, double eT);
 		MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig, std::map<std::string,double> parameterMap, std::string vTrace);
 
 		double FuellingRate;
@@ -144,7 +142,7 @@ class MirrorPlasma {
 		double KineticEnergy() const;
 		double ThermalEnergy() const;
 
-		void PrintReport();
+		void PrintReport(std::map<std::string, double>* parameterMap = nullptr, int currentRun = 1, int totalRun = 1);
 
 		void InitialiseNetCDF();
 		void WriteTimeslice( double T );
