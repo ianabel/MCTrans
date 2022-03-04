@@ -18,10 +18,10 @@ You will need to download this codebase and compile it in order to run MCTrans++
 
 To compile and use MCTrans++ you will need a system with the following
 
- - A C++17 compliant C++ compiler.
+ - A C++20 compliant C++ compiler.
  - The Boost C++ Template Library
  - The TOML11 library
- - The SUNDIALS library
+ - The SUNDIALS library, Version 5.7.0 or 5.8.0 -- **SUNDIALS v6.0.0 is unsupported at this time, please use v5.8.0 until this bug is fixed**
  - NETCDF C and NETCDF C++ 4.3 or newer (depends upon netcdf C interface 4.6.0 or newer)
 
 Precise dependencies have not been exhaustively tested. Running on Windows requires the installation of [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install) (WSL) and installing the following programs on an administrator bash shell. MacOS requies [python3](https://www.python.org/downloads/) and of [miniconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/macos.html).
@@ -94,6 +94,7 @@ General issues include the fact that the steady-state equations may have multipl
 Specific known issues are listed here.
 
  - Debug builds currently fail on OSX due to the use of `feenableexcept()`.
+ - Sundials Versions before 5.6.0 are unsupported, as is Sundials v6.0.0
 
 ## Contributing
 
@@ -108,6 +109,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 * **Ian Abel** - *C++ Version* - [Ian Abel at UMD](https://ireap.umd.edu/faculty/abel)
 * **Adil Hassam** - *Original MCTrans Code*
 * **Nick Schwartz**
+* **Myles Kelly**
 
 For full copyright attribution, see the [COPYRIGHT](COPYRIGHT) file.
 For a summary of contributors, see the [contributors](http://github.com/ianabel/MCTrans/contributors) page.

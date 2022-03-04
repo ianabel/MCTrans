@@ -46,6 +46,8 @@ class MirrorPlasma {
 				double PerpFudgeFactor;
 				bool AmbipolarPhi;
 
+				bool IncludeCXLosses;
+
 				bool AlphaHeating;
 				bool ReportNuclearDiagnostics;
 				bool ReportThrust;
@@ -57,6 +59,8 @@ class MirrorPlasma {
 				std::string OutputFile;
 				std::string NetcdfOutputFile;
 
+				double SundialsAbsTol,SundialsRelTol;
+				double RateThreshold;
 
 				double PlasmaVolume() const {
 					return M_PI * ( PlasmaColumnWidth + 2 * AxialGapDistance ) * PlasmaColumnWidth * PlasmaLength;
@@ -101,6 +105,8 @@ class MirrorPlasma {
 		double ElectronDensity,ElectronTemperature;
 		double NeutralDensity,NeutralSource;
 		double Zeff;
+
+		bool FixedNeutralDensity;
 
 		double MachNumber; // Sonic Mach number defined with c_s^2 = Z T_e/m_i
 
@@ -159,6 +165,8 @@ class MirrorPlasma {
 		double ParallelMomentumLossRate() const;
 		double initialTemperature() const { return pVacuumConfig->InitialTemp; };
 		double initialMach() const { return pVacuumConfig->InitialMach; };
+
+		bool isSteady;
 	private:
 		NetCDFIO nc_output;
 
@@ -176,7 +184,13 @@ class MirrorPlasma {
 		double IonToElectronHeatTransfer() const;
 
 		double BremsstrahlungLosses() const;
-		double NeutralLosses() const;
+		double CyclotronLosses() const;
+		double RadiationLosses() const;
+
+		double CXLossRate() const;
+		double CXHeatLosses() const;
+		double CXMomentumLosses() const;
+
 		double ClassicalHeatLosses() const;
 		double ParallelHeatLosses() const;
 
@@ -190,6 +204,8 @@ class MirrorPlasma {
 		double ParallelIonPastukhovLossRate( double Phi ) const;
 		double ParallelIonParticleLoss() const;
 		double ParallelIonHeatLoss() const;
+
+		double AngularMomentumPerParticle() const;
 
 		double ParallelKineticEnergyLoss() const;
 
@@ -230,6 +246,7 @@ class MirrorPlasma {
 		void ReadVoltageFile( std::string const& );
 		double time;
 		bool isTimeDependent;
+
 	public:
 		double AlphaHeating() const;
 		double PromptAlphaLossFraction() const;

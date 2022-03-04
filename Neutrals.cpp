@@ -1,31 +1,89 @@
 
 #include "MirrorPlasma.hpp"
-
 #include "PlasmaPhysics.hpp"
+#include "AtomicPhysics.hpp"
 
 #include <cmath>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <boost/math/quadrature/gauss_kronrod.hpp>
 
-#include <boost/math/quadrature/trapezoidal.hpp>
+double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma const & plasma )
+{
+	// E and T in eV, sigma in cm^2
+	// k=<σv> in m^3/s
+	// Assumes a Maxwellian distribution, COM energy (as opposed to incident)
 
-// Reference Cross-section for Charge-Exchange neutral cross-section
-// in cm^2
-constexpr double BaseCXCrossSection = 1e-15;
-constexpr double BaseIonizationCrossSection = 1e-10;
+	double temperature;
+	if ( sigma.Particle.Name == "Electron" ){
+		temperature = plasma.ElectronTemperature * ReferenceTemperature; // Convert to Joules
+	}
+	else{
+		temperature = plasma.IonTemperature * ReferenceTemperature; // Convert to Joules
+	}
 
+	double Jacobian = ElectronCharge; // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV
+	auto integrand = [&]( double Energy ) {
+		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
+		return Energy * ElectronCharge * sigmaM2 * ::exp( -Energy * ElectronCharge / temperature ) * Jacobian;
+	};
+
+	constexpr double tolerance = 1e-5;
+	constexpr unsigned MaxDepth = 10;
+	double HotRateCoeff = 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * temperature) * temperature )
+	         * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
+
+#if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
+	std::cerr << "Computing a cold rate coefficient at T = " << plasma.ElectronTemperature/1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
+#endif
+
+	return HotRateCoeff;
+
+}
+
+double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma const & plasma )
+{
+	// sigma in cm^2
+	// k=<σv> in m^3/s
+	// Assumes ions are Maxwellian and neutrals are stationary
+	double temperature;
+	if ( sigma.Particle.Name == "Electron" ){
+		temperature = plasma.ElectronTemperature * ReferenceTemperature; // Convert to Joules
+	}
+	else{
+		temperature = plasma.IonTemperature * ReferenceTemperature; // Convert to Joules
+	}
+
+	double thermalSpeed = ::sqrt( 2.0 * temperature / sigma.Particle.Mass );
+	double thermalMachNumber = plasma.MachNumber * ::sqrt( ::abs( sigma.Particle.Charge ) * plasma.ElectronTemperature * ReferenceTemperature / ( 2 * temperature ) );
+
+	double Jacobian = ElectronCharge / (sigma.ReducedMass * thermalSpeed * thermalSpeed); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from du to dE (less one power of u, which cancels with one in the integrand
+	auto integrand = [&]( double Energy ) {
+		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / sigma.ReducedMass );
+		double u = velocity / thermalSpeed;
+		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
+		return u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) ) * Jacobian;
+	};
+
+	constexpr double tolerance = 1e-5;
+	constexpr unsigned MaxDepth = 10;
+	double ColdRateCoeff = thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) ) 
+	        * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
+	
+#if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
+	std::cerr << "Computing a cold rate coefficient at T = " << plasma.ElectronTemperature/1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
+#endif
+
+	return ColdRateCoeff;
+}
+
+/*
 double meanFreePath( double density, double crossSection )
 {
 	return 1.0 / ( density * crossSection );
-}
-
-double hydrogenIonizationFraction( double ElectronDensity, double ElectronTemperature)
-{
-	// Analytical solution from the equilibrium solution to Saha equation
-	// derivation here: http://www.astro.wisc.edu/~townsend/resource/teaching/astro-310-F09/hydrogen-ionization.pdf
-	constexpr double hydrogenIonizationPotential = 13.6; // in units of eV
-	return ::pow( 2.0 * M_PI * ElectronMass * ElectronTemperature / ::pow( PlanckConstant, 2.0 ), 1.5 ) * ::exp( -hydrogenIonizationPotential / ElectronTemperature ) / ElectronDensity;
 }
 
 bool isShortMeanFreePathRegime( double meanFreePath, double characteristicLength, double minRatio = 10.0 )
@@ -37,21 +95,16 @@ bool isCoronalEquilibrium( double excitationRate, double deexcitationRate, doubl
 {
 	return ( deexcitationRate / excitationRate ) >= minRatio;
 }
+*/
 
-// Density should be neutral density
-double CXRate( double density, double sigmaV )
+double reactionRate( double density_1, double density_2, double rateCoefficient, std::shared_ptr<MirrorPlasma> pMirrorPlasma )
 {
-	return density * sigmaV;
+	return density_1 * density_2 * rateCoefficient * pMirrorPlasma->pVacuumConfig->PlasmaVolume();
 }
-
-// Fits for sigma are given starting on pg 234 in Janev, 1987
-// <cite>
-// Energy in electron Volts
-
-constexpr unsigned int N_JANEV_COEFFS = 9;
 
 double EvaluateJanevCrossSectionFit ( std::vector<double> PolynomialCoefficients, double Energy )
 {
+	constexpr unsigned int N_JANEV_COEFFS = 9;
 	if ( PolynomialCoefficients.size() != N_JANEV_COEFFS )
 		throw std::invalid_argument( "Janev uses fixed order fits, there are not " + std::to_string( N_JANEV_COEFFS ) + " numbers. Something is wrong." );
 	double sum = 0.0;
@@ -62,105 +115,7 @@ double EvaluateJanevCrossSectionFit ( std::vector<double> PolynomialCoefficients
 	return sigma;
 }
 
-class CrossSection {
-	public:
-		CrossSection( std::function<double( double )> sigma, double E_min, double E_max, double mu, double mr )
-		{
-			sigmaImplementation = sigma;
-			MinEnergy = E_min;
-			MaxEnergy = E_max;
-			ReducedMass = mu;
-			RelativeMass = mr;
-		};
-
-		// Masses in units of the proton mass
-		double ReducedMass,RelativeMass;
-		// in units of electron volts (not keV!)
-		double MinEnergy,MaxEnergy;
-
-		// Return the cross section in cm^2 -- not barns, not m^2
-		double operator()( double CentreOfMassEnergy ) const
-		{
-			return sigmaImplementation( CentreOfMassEnergy );
-		}
-
-	private:
-		std::function<double( double )> sigmaImplementation;
-};
-
-double IonNeutralCrossSection( double Ti )
-{
-	// Need to implement cross section dependent on the FuelName
-
-	// Minimum energy of cross section in eV
-	const double minimumEnergySigma_1s = 0.1;
-	const double minimumEnergySigma_2p = 19.0;
-	const double minimumEnergySigma_2s = 0.1;
-
-	// Janev 1987 3.1.9
-	// p + H(1s) --> H(2p) + p
-	std::vector<double> aSigma_2p = {-2.197571949935e+01, -4.742502251260e+01, 3.628013140596e+01, -1.423003075866e+01, 3.273090240144e+00, -4.557928912260e-01, 3.773588347458e-02, -1.707904867106e-03, 3.251203344615e-05};
-	// Janev 1987 3.1.10
-	// p + H(1s) --> H(2s) + p
-	std::vector<double> aSigma_2s = {-1.327325087764e+04, 1.317576614520e+04, -5.683932157858e+03, 1.386309780149e+03, -2.089794561307e+02, 1.992976245274e+01, -1.173800576157e+00, 3.902422810767e-02, -5.606240339932e-04};
-
-	// Contribution from ground -> ground state
-	// Janev 1987 3.1.8
-	// p + H(1s) --> H(1s) + p
-	double sigma_1s;
-	if ( Ti < minimumEnergySigma_2p ) {
-		sigma_1s = 0;
-	} else {
-		sigma_1s = 0.6937e-14 * ::pow( 1 - 0.155 * ::log10( Ti ), 2 ) / (1 + 0.1112e-14 * ::pow( Ti, 3.3 ));
-	}
-
-	// Contribution from ground -> 2p orbital
-	double sigma_2p;
-	if ( Ti < minimumEnergySigma_2p ) {
-		sigma_2p = 0;
-	} else {
-		sigma_2p = EvaluateJanevCrossSectionFit( aSigma_2p, Ti );
-	}
-
-	// Contribution from ground -> 2s orbital
-	double sigma_2s;
-	if ( Ti < minimumEnergySigma_2s ) {
-		sigma_2s = 0;
-	} else {
-		sigma_2s = EvaluateJanevCrossSectionFit( aSigma_2s, Ti );
-	}
-
-	return sigma_1s + sigma_2p + sigma_2s;
-}
-
-double electronHydrogenIonizationCrossSection( double Te )
-{
-	// Minimum energy of cross section in eV
-	const double ionizationEnergy = 13.6;
-	const double minimumEnergySigma = ionizationEnergy;
-
-	// Contribution from ground state
-	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
-	// Equation 1.2.1
-	// e + H(1s) --> e + H+ + e
-	// Accuracy is 10% or better
-	double fittingParamA = 0.18450;
-	std::vector<double> fittingParamB = { -0.032226, -0.034539, 1.4003, -2.8115, 2.2986 };
-
-	double sigma;
-	if ( Te < minimumEnergySigma ) {
-		sigma = 0;
-	}
-	else {
-		double sum = 0.0;
-		for ( size_t n = 0; n < fittingParamB.size(); n++ ) {
-	      sum += fittingParamB.at( n ) * ::pow( 1 - ionizationEnergy / Te, n );
-	   }
-		sigma = 1.0e-13 / ( ionizationEnergy * Te ) * ( fittingParamA * ::log( Te / ionizationEnergy ) + sum );
-	}
-	return sigma;
-}
-
+/*
 double evaluateJanevDFunction( double beta )
 {
 	// Function from Janev 1987 Appendix C
@@ -187,60 +142,128 @@ double evaluateJanevDFunction( double beta )
 	}
 	return DFunctionVal;
 }
+*/
 
-double protonHydrogenIonizationCrossSection1( double Ti )
+double electronImpactIonizationCrossSection( double CoMEnergy )
 {
 	// Minimum energy of cross section in eV
-	const double minimumEnergySigma = 13.6;
+	constexpr double ionizationEnergy = 13.6;
+	constexpr double minimumEnergySigma = ionizationEnergy;
 
 	// Contribution from ground state
-	// Janev 1987 3.1.6
-	// p + H(1s) --> p + H+ + e
-	const double lambda_eff = 0.808;
-	const double lambda_01 = 0.7448;
-	const double omega_i = 0.5;
-	const double omega_01 = 0.375;
-	double v = 6.3246e-3 * ::sqrt( Ti );
-	double beta_i = lambda_eff * omega_i / ::pow( v, 2 );
-	double beta_01 = lambda_01 * omega_01 / ::pow( v, 2 );
+	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
+	// Equation 1.2.1
+	// e + H(1s) --> e + H+ + e
+	// Accuracy is 10% or better
+	constexpr double fittingParamA = 0.18450;
+	constexpr std::array<double,5> fittingParamB{ -0.032226, -0.034539, 1.4003, -2.8115, 2.2986 };
 
 	double sigma;
-	if ( Ti < minimumEnergySigma ) {
+	if ( CoMEnergy < minimumEnergySigma ) {
 		sigma = 0;
-	} else {
-		sigma = 1.76e-16 * ( lambda_eff * evaluateJanevDFunction( beta_i ) / omega_i  + lambda_01 * evaluateJanevDFunction( beta_01 ) / ( 8 * omega_01 ) );
+	}
+	else {
+		double sum = 0.0;
+		double x = 1.0 - ionizationEnergy / CoMEnergy;
+		for ( size_t n = 0; n < fittingParamB.size(); n++ ) {
+	      sum += fittingParamB.at( n ) * ::pow( x, n );
+	   }
+		sigma = 1.0e-13 / ( ionizationEnergy * CoMEnergy ) * ( fittingParamA * ::log( CoMEnergy / ionizationEnergy ) + sum );
 	}
 	return sigma;
 }
 
-double protonHydrogenIonizationCrossSection2( double Ti )
+// Energy in electron volts, returns cross section in cm^2
+double protonImpactIonizationCrossSection( double Energy )
 {
 	// Minimum energy of cross section in keV
 	const double minimumEnergySigma = 0.2;
-	double TiKEV = Ti / 1000;
+	// Convert to keV
+	double CoMEnergy = Energy / 1000;
 
 	// Contribution from ground state
 	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
 	// Equation 2.2.1
 	// H+ + H(1s) --> H+ + H+ + e
 	// Accuracy is 30% or better
-	const double A1 = 12.899;
-	const double A2 = 61.897;
-	const double A3 = 9.2731e3;
-	const double A4 = 4.9749e-4;
-	const double A5 = 3.9890e-2;
-	const double A6 = -1.5900;
-	const double A7 = 3.1834;
-	const double A8 = -3.7154;
+	constexpr double A1 = 12.899;
+	constexpr double A2 = 61.897;
+	constexpr double A3 = 9.2731e3;
+	constexpr double A4 = 4.9749e-4;
+	constexpr double A5 = 3.9890e-2;
+	constexpr double A6 = -1.5900;
+	constexpr double A7 = 3.1834;
+	constexpr double A8 = -3.7154;
 
 	double sigma;
-	if ( TiKEV < minimumEnergySigma ) {
+	if ( CoMEnergy < minimumEnergySigma ) {
 		sigma = 0;
 	}
 	else {
 		// Energy is in units of keV
-		sigma = 1e-16 * A1 * ( ::exp( -A2 / TiKEV ) * ::log( 1 + A3 * TiKEV ) / TiKEV + A4 * ::exp( -A5 * TiKEV ) / ( ::pow( TiKEV, A6 ) + A7 * ::pow( TiKEV, A8 ) ) );
+		sigma = 1e-16 * A1 * ( ::exp( -A2 / CoMEnergy ) * ::log( 1 + A3 * CoMEnergy ) / CoMEnergy + A4 * ::exp( -A5 * CoMEnergy ) / ( ::pow( CoMEnergy, A6 ) + A7 * ::pow( CoMEnergy, A8 ) ) );
 	}
+	return sigma;
+}
+
+double HydrogenChargeExchangeCrossSection( double CoMEnergy )
+{
+	// Minimum energy of cross section in eV
+	const double minimumEnergySigma_1s = 0.1;
+	const double minimumEnergySigma_2p = 19.0;
+	const double minimumEnergySigma_2s = 0.1;
+
+	// Contribution from ground -> ground state
+	// Janev 1987 3.1.8
+	// p + H(1s) --> H(1s) + p
+	double sigma_1s;
+	if ( CoMEnergy < minimumEnergySigma_2p ) {
+		sigma_1s = 0;
+	} else {
+		sigma_1s = 0.6937e-14 * ::pow( 1 - 0.155 * ::log10( CoMEnergy ), 2 ) / (1 + 0.1112e-14 * ::pow( CoMEnergy, 3.3 ));
+	}
+
+	// Janev 1987 3.1.9
+	// p + H(1s) --> H(2p) + p
+	std::vector<double> aSigma_2p = {-2.197571949935e+01, -4.742502251260e+01, 3.628013140596e+01, -1.423003075866e+01, 3.273090240144e+00, -4.557928912260e-01, 3.773588347458e-02, -1.707904867106e-03, 3.251203344615e-05};
+	// Janev 1987 3.1.10
+	// p + H(1s) --> H(2s) + p
+	std::vector<double> aSigma_2s = {-1.327325087764e+04, 1.317576614520e+04, -5.683932157858e+03, 1.386309780149e+03, -2.089794561307e+02, 1.992976245274e+01, -1.173800576157e+00, 3.902422810767e-02, -5.606240339932e-04};
+
+	// Contribution from ground -> 2p orbital
+	double sigma_2p;
+	if ( CoMEnergy < minimumEnergySigma_2p ) {
+		sigma_2p = 0;
+	} else {
+		sigma_2p = EvaluateJanevCrossSectionFit( aSigma_2p, CoMEnergy );
+	}
+
+	// Contribution from ground -> 2s orbital
+	double sigma_2s;
+	if ( CoMEnergy < minimumEnergySigma_2s ) {
+		sigma_2s = 0;
+	} else {
+		sigma_2s = EvaluateJanevCrossSectionFit( aSigma_2s, CoMEnergy );
+	}
+
+	return sigma_1s + sigma_2p + sigma_2s;
+}
+
+// Energy in electron volts, returns cross section in cm^2
+double radiativeRecombinationCrossSection( double Energy )
+{
+	// From https://iopscience-iop-org.proxy-um.researchport.umd.edu/article/10.1088/1402-4896/ab060a
+	// Igor A Kotelnikov and Alexander I Milstein 2019 Phys. Scr. 94 055403
+	// Equation 9
+	// H+ + e --> H + hν
+
+	int Z = 1;
+	double IonizationEnergy = 13.59844; // eV
+	double J_Z = ::pow( Z, 2 ) * IonizationEnergy;
+	double eta = ::sqrt( J_Z / Energy );
+	double sigma = ::pow( 2, 8 ) * ::pow( M_PI * BohrRadius, 2 ) / 3 * ::pow( eta, 6 ) * ::exp( - 4 * eta * atan( 1 / eta ) ) / ( ( 1 - ::exp( -2 * M_PI * eta ) ) * ::pow( ::pow( eta, 2 ) + 1, 2 ) ) * ::pow( FineStructureConstant, 3 );
+
+	sigma *= 1e4; // convert to cm^2
 	return sigma;
 }
 
@@ -312,78 +335,49 @@ double protonHydrogenExcitationN2CrossSection( double Ti )
 	return sigma;
 }
 
-double rateCoeff( double Ti, CrossSection const & sigma )
-{
-	// E and T in eV, sigma in cm^2
-	// k=<σv> in m^3/s
-	// mu, mr is in proton masses
-	// Assumes a Maxwellian distribution, COM energy (as opposed to incident)
-	Ti *= ElectronCharge; // Convert to Joules
-
-	auto integrand = [&]( double Energy ) {
-		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
-		return Energy * sigmaM2 * ::exp( -Energy / Ti );
-	};
-
-	constexpr double tolerance = 1e-6;
-	return ( 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * ProtonMass * Ti) * Ti ) ) * boost::math::quadrature::trapezoidal( integrand, sigma.MinEnergy, sigma.MaxEnergy, tolerance );
-}
-
-// Ionization Rate as a function of
-// electron density and electron temperature
-// returned in ADAS-like units of m^3/s (so multiply by
-// n_neutral * n_e * Volume to get rate)
-double IonizationRate( double Ne, double Te )
-{
-	return 1.0;
-}
-
-// CX Rate as a function of
-// ion density and ion temperature
-double CXCrossSection( double Ni, double Ti )
-{
-	double IonThermalSpeed = ::sqrt( 2.0 * Ti * ReferenceTemperature / ElectronMass );
-	return BaseCXCrossSection * 1e-4 * IonThermalSpeed;
-}
-
-double RecombinationRate( double Ne, double Te )
-{
-	return 0.0;
-}
-
+/*
+ * Use the above functions to set steady-state neutral density/source
+ *
+ */
 void MirrorPlasma::ComputeSteadyStateNeutrals()
 {
-	double CurrentIonizationRate = IonizationRate( ElectronDensity * ReferenceDensity, ElectronTemperature * ReferenceTemperature );
-	// Assume mix of neutrals is such that QN is maintained so we just need to produce enough electrons from the source gas
+	// Do not recalculate if we're in fixed-neutral-density mode
+	if ( FixedNeutralDensity )
+		return;
+
+	// Calculate the Ionization Rate of cold neutrals from proton and electron impact:
+	double IonizationRate =
+		neutralsRateCoefficientCold( protonImpactIonization, *this ) * IonDensity * ReferenceDensity +
+		neutralsRateCoefficientCold( electronImpactIonization, *this ) * ElectronDensity * ReferenceDensity;
+
+#if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
+	std::cerr << "Current Ionization Rate is " << IonizationRate << std::endl;
+#endif
+
+	// Assume mix of neutrals is such that the particle densities are maintained so we just need to produce enough electrons from the source gas to balance the losses
 	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
-	// Steady State requires Losses = n_N * n_e * IR
-	// so n_N = Losses / ( n_e * IR )
-	NeutralDensity = ElectronLossRate / ( ElectronDensity * ReferenceDensity * CurrentIonizationRate );
+	// Steady State requires
+	//		Losses = n_N * n_e * IonizationRateCoefficient * Volume
+	// so n_N = (Losses/Volume) / ( n_e * IonizationRateCoefficient )
+	//		    = (Losses/Volume) / IonizationRate
+	NeutralDensity = ElectronLossRate / ( IonizationRate );
 	// Normalize neutral density
 	NeutralDensity = NeutralDensity / ReferenceDensity;
 	NeutralSource = ElectronLossRate;
 }
 
-/*
- * To the neutrals the plasma is an onrushing torrent. Moving to the plasma rest fram, the neutrals are a high-energy beam ( width is
- * determined by the temperature of the neutral gas, which is low ).
- *
- * We can thus use beam stopping coefficients to try and work out the ionization rates..
- */
-
-
-// MFP of hydrogen atom in the plasma
-double NeutralCXMeanFreePath( double IonDensity, double IonTemperature )
+// Number of ions lost as neutrals per second per unit volume
+// requires computed neutral density
+double MirrorPlasma::CXLossRate() const
 {
-	// TODO
-	throw std::logic_error( "Unimplemented Function." );
-	return 0.0;
-}
+	if ( !pVacuumConfig->IncludeCXLosses )
+		return 0.0;
 
-// MFP of proton in neutral atomic hydrogen
-double IonCXMeanFreePath( double NeutralDensity, double IonTemperature )
-{
-	// TODO
-	throw std::logic_error( "Unimplemented Function." );
-	return 0.0;
+	double CXRateCoefficient = neutralsRateCoefficientCold( HydrogenChargeExchange, *this );
+
+#if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
+	std::cerr << "Current CX Loss Rate is " << CXRateCoefficient * ( NeutralDensity * ReferenceDensity * IonDensity * ReferenceDensity ) << " particles/s"<<std::endl;
+#endif
+
+	return CXRateCoefficient * ( NeutralDensity * ReferenceDensity * IonDensity * ReferenceDensity );
 }

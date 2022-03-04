@@ -10,6 +10,20 @@
 
 MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value const& plasmaConfig )
 {
+	if ( plasmaConfig.count( "AsciiOutputFile" ) == 1 )
+	{
+		OutputFile = plasmaConfig.at( "AsciiOutputFile" ).as_string();
+	} else {
+		OutputFile = "";
+	}
+
+	if ( plasmaConfig.count( "NetcdfOutput" ) == 1 )
+	{
+		NetcdfOutputFile = plasmaConfig.at( "NetcdfOutput" ).as_string();
+	} else {
+		NetcdfOutputFile = "";
+	}
+
 	if ( plasmaConfig.count( "algorithm" ) != 0 ) {
 		const auto algConfig = toml::find<toml::table>( plasmaConfig, "algorithm" );
 
@@ -27,6 +41,50 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 			AmbipolarPhi = algConfig.at( "UseAmbipolarPhi" ).as_boolean();
 		else
 			AmbipolarPhi = true;
+
+		if ( algConfig.count( "IncludeChargeExchangeLosses" ) == 1 )
+			IncludeCXLosses = algConfig.at( "IncludeChargeExchangeLosses" ).as_boolean();
+		else
+			IncludeCXLosses = false;
+
+		if ( algConfig.count( "RateThreshold" ) == 1 )
+		{
+			RateThreshold = algConfig.at( "RateThreshold" ).as_floating();
+#ifdef DEBUG
+			std::cerr << "Threshold rate of change for asserting steady state (units of s^-1) set to" << RateThreshold << std::endl;
+#endif
+		} else {
+			RateThreshold = 1e-4;
+#ifdef DEBUG
+			std::cerr << "Default criterion for steady state -- relative rate of change less than " << RateThreshold << " /s" << std::endl;
+#endif
+		}
+
+		if ( algConfig.count( "SundialsAbsTol" ) == 1 )
+		{
+			SundialsAbsTol = algConfig.at( "SundialsAbsTol" ).as_floating();
+#ifdef DEBUG
+			std::cerr << "Absolute tolerance for SUNDIALS Arkode Solve set to " << SundialsAbsTol << std::endl;
+#endif
+		} else {
+			SundialsAbsTol = 1e-9;
+#ifdef DEBUG
+			std::cerr << "Absolute tolerance for SUNDIALS Arkode Solve set to the default of " << SundialsAbsTol << std::endl;
+#endif
+		}
+		
+		if ( algConfig.count( "SundialsRelTol" ) == 1 )
+		{
+			SundialsRelTol = algConfig.at( "SundialsRelTol" ).as_floating();
+#ifdef DEBUG
+			std::cerr << "Relative tolerance for SUNDIALS Arkode Solve set to " << SundialsRelTol << std::endl;
+#endif
+		} else {
+			SundialsRelTol = 1e-7;
+#ifdef DEBUG
+			std::cerr << "Relative tolerance for SUNDIALS Arkode Solve set to the default of " << SundialsRelTol << std::endl;
+#endif
+		}
 
 		if ( algConfig.count( "InitialTemp" ) == 1 )
 		{
@@ -54,19 +112,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 #endif
 		}
 
-		if ( algConfig.count( "AsciiOutputFile" ) == 1 )
-		{
-			OutputFile = algConfig.at( "AsciiOutputFile" ).as_string();
-		} else {
-			OutputFile = "";
-		}
 
-		if ( algConfig.count( "NetcdfOutput" ) == 1 )
-		{
-			NetcdfOutputFile = algConfig.at( "NetcdfOutput" ).as_string();
-		} else {
-			NetcdfOutputFile = "";
-		}
 		Collisional = false;
 
 	} else {
@@ -78,9 +124,12 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 		InitialTemp = 0.1;
 		InitialMach = 4.0;
 		AmbipolarPhi = true;
+		IncludeCXLosses = false;
 		Collisional = false;
 		OutputFile  = "";
 		NetcdfOutputFile = "";
+		SundialsAbsTol = 1e-7;
+		SundialsRelTol = 1e-7;
 	}
 
 	const auto mirrorConfig = toml::find<toml::table>( plasmaConfig, "configuration" );
@@ -149,8 +198,8 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 			throw std::invalid_argument( toml::format_error( "[error] When PlasmaRadiusMin is specified you must also set PlasmaRadiusMax",mirrorConfig.at( "PlasmaRadiusMin" )," min radius set here" ) );
 		}
 		// set Plasma Radii directly
-		double PlasmaMinRadius = mirrorConfig.at( "PlasmaMinRadius" ).as_floating();
-		double PlasmaMaxRadius = mirrorConfig.at( "PlasmaMaxRadius" ).as_floating();
+		double PlasmaMinRadius = mirrorConfig.at( "PlasmaRadiusMin" ).as_floating();
+		double PlasmaMaxRadius = mirrorConfig.at( "PlasmaRadiusMax" ).as_floating();
 
 		AxialGapDistance = PlasmaMinRadius;
 		PlasmaColumnWidth = PlasmaMaxRadius - PlasmaMinRadius;
@@ -335,9 +384,11 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 	if ( mirrorConfig.count( "NeutralDensity" ) == 1 ) {
 		NeutralSource = 0;
 		NeutralDensity = mirrorConfig.at( "NeutralDensity" ).as_floating();
+		FixedNeutralDensity = true;
 	} else {
 		NeutralSource = 0;
 		NeutralDensity = 0;
+		FixedNeutralDensity = false;
 	}
 
 	if ( mirrorConfig.count( "VoltageTrace" ) == 1 ) {
@@ -629,13 +680,39 @@ double MirrorPlasma::ClassicalHeatLosses() const
 	return ClassicalIonHeatLoss() + ClassicalElectronHeatLoss();
 }
 
+double MirrorPlasma::RadiationLosses() const
+{
+	return BremsstrahlungLosses() + CyclotronLosses();
+}
+
 // Formula from the NRL formulary page 58 and the definition of Z_eff:
 // n_e Z_eff = Sum_i n_i Z_i^2 (sum over all species that aren't electrons)
 double MirrorPlasma::BremsstrahlungLosses() const
 {
 	// NRL formulary with reference values factored out
-	// Rteurn units are W/m^3
+	// Return units are W/m^3
 	return 169 * ::sqrt( 1000 * ElectronTemperature ) * Zeff * ElectronDensity * ElectronDensity;
+}
+
+// Formula (34) on page 58 of the NRL formulary is the vacuum emission
+// we use the modified loss rate given in Tamor (1988) including a transparency factor
+double MirrorPlasma::CyclotronLosses() const
+{
+	// NRL formulary with reference values factored out
+	// Return units are W/m^3
+	double B_central = pVacuumConfig->CentralCellFieldStrength; // in Tesla
+	double P_vacuum = 6.21 * 1000 * ElectronDensity * ElectronTemperature * B_central * B_central;
+
+	// Characteristic absorption length
+	// lambda_0 = (Electron Inertial Lenght) / ( Plasma Frequency / Cyclotron Frequency )  ; Eq (4) of Tamor
+	//				= (5.31 * 10^-4 / (n_e20)^1/2) / ( 3.21 * (n_e20)^1/2 / B ) ; From NRL Formulary, converted to our units (Tesla for B & 10^20 /m^3 for n_e)
+	double LambdaZero = ( 5.31e-4 / 3.21 ) * ( B_central / ElectronDensity );
+	double WallReflectivity = 0.95;
+	double OpticalThickness = ( pVacuumConfig->PlasmaColumnWidth / ( 1.0 - WallReflectivity ) ) / LambdaZero;
+	// This is the Phi introduced by Trubnikov and later approximated by Tamor 
+	double TransparencyFactor = ::pow( ElectronTemperature, 1.5 ) / ( 200.0 * ::sqrt( OpticalThickness ) );
+	// Moderate the vacuum emission by the transparency factor
+	return P_vacuum * TransparencyFactor;
 }
 
 double MirrorPlasma::Beta() const
@@ -737,20 +814,25 @@ double MirrorPlasma::IonToElectronHeatTransfer() const
 	return EnergyDensity / CollisionalTemperatureEquilibrationTime();
 }
 
+double MirrorPlasma::CXHeatLosses() const
+{
+	double EnergyPerIon = IonTemperature * ReferenceTemperature;
+	return CXLossRate() * EnergyPerIon;
+}
+
 double MirrorPlasma::IonHeatLosses() const
 {
-	return ClassicalIonHeatLoss() + ParallelIonHeatLoss();
+	return ClassicalIonHeatLoss() + ParallelIonHeatLoss() + CXHeatLosses();
 }
 
 double MirrorPlasma::ElectronHeatLosses() const
 {
-	return ParallelElectronHeatLoss() + BremsstrahlungLosses();
+	return ParallelElectronHeatLoss() + RadiationLosses();
 }
 
 double MirrorPlasma::IonHeating() const
 {
 	double Heating = ViscousHeating();
-	//std::cout << "i-Heating comprises " << Heating << " of viscous and " << -IonToElectronHeatTransfer() << " transfer" << std::endl;
 
 	return Heating - IonToElectronHeatTransfer();
 }
@@ -774,10 +856,21 @@ void MirrorPlasma::SetMachFromVoltage()
 	MachNumber = pVacuumConfig->ImposedVoltage / ( pVacuumConfig->PlasmaColumnWidth * pVacuumConfig->CentralCellFieldStrength * SoundSpeed() );
 }
 
+double MirrorPlasma::AngularMomentumPerParticle() const
+{
+	return pVacuumConfig->IonSpecies.Mass * ProtonMass * SoundSpeed() * MachNumber * pVacuumConfig->PlasmaCentralRadius();
+}
+
 double MirrorPlasma::ParallelAngularMomentumLossRate() const
 {
 	double IonLoss = ParallelIonParticleLoss();
-	return IonLoss * pVacuumConfig->IonSpecies.Mass * ProtonMass * SoundSpeed() * MachNumber * pVacuumConfig->PlasmaCentralRadius();
+	return IonLoss * AngularMomentumPerParticle(); 
+}
+
+double MirrorPlasma::CXMomentumLosses() const
+{
+	double IonLoss = CXLossRate();
+	return IonLoss * AngularMomentumPerParticle();
 }
 
 // Momentum Equation is
@@ -791,18 +884,19 @@ double MirrorPlasma::RadialCurrent() const
 {
 	double Torque = -ViscousTorque();
 	double ParallelLosses = -ParallelAngularMomentumLossRate();
+	double CXLosses = -CXMomentumLosses();
 	// Inertial term = m_i n_i R^2 d omega / dt ~= m_i n_i R^2 d  / dt ( E/ ( R*B) )
 	//					~= m_i n_i (R/B) * d/dt ( V / a )
 	double Inertia;
 	if ( isTimeDependent )
-		Inertia = pVacuumConfig->IonSpecies.Mass * ProtonMass * IonDensity * ( pVacuumConfig->PlasmaCentralRadius() / pVacuumConfig->CentralCellFieldStrength ) 
+		Inertia = pVacuumConfig->IonSpecies.Mass * ProtonMass * IonDensity * ( pVacuumConfig->PlasmaCentralRadius() / pVacuumConfig->CentralCellFieldStrength )
 		            * VoltageFunction->prime( time );
 	else
 		Inertia = 0.0;
 
 	// R J_R = (<Torque> + <ParallelLosses> + <Inertia>)/B_z
 	// I_R = 2*Pi*R*L*J_R
-	double I_radial = 2.0 * M_PI * pVacuumConfig->PlasmaLength * ( Torque + ParallelLosses + Inertia ) / pVacuumConfig->CentralCellFieldStrength;
+	double I_radial = 2.0 * M_PI * pVacuumConfig->PlasmaLength * ( Torque + ParallelLosses + Inertia + CXLosses ) / pVacuumConfig->CentralCellFieldStrength;
 	return I_radial;
 }
 

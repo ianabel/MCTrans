@@ -115,9 +115,19 @@ void MirrorPlasma::PrintReport(std::map<std::string, double>* parameterMap, int 
 	{
 		out << "Bremsstrahlung losses are ";
 		PrintWithUnit( out, BremsstrahlungLosses()*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
+		out << "Cyclotron emission losses are ";
+		PrintWithUnit( out, CyclotronLosses()*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
 	}
 	else
 		out << "No radiation losses were included." << std::endl;
+
+	if ( pVacuumConfig->IncludeCXLosses ) {
+		out << "Heat loss due to charge exchange with neutrals is ";
+		PrintWithUnit( out, CXHeatLosses()*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
+	} else {
+		out << "Losses due to charge exchange were not included" << std::endl;
+	}
+
 	out << std::endl;
 		
 	out << "Total potential drop is ";
@@ -130,8 +140,13 @@ void MirrorPlasma::PrintReport(std::map<std::string, double>* parameterMap, int 
 	PrintWithUnit( out, ElectricPotential() * JRadial, "W" );
 	out << std::endl;
 	double omega = v/Rmid;
-	out << "\t Power Loss from viscous torque "; PrintWithUnit( out, ViscousTorque()*omega*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
-	out << "\t Power Loss from parallel loss  "; PrintWithUnit( out, ParallelAngularMomentumLossRate()*omega*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
+	out << "\t Power Loss from viscous torque  "; PrintWithUnit( out, ViscousTorque()*omega*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
+	out << "\t Power Loss from parallel loss   "; PrintWithUnit( out, ParallelAngularMomentumLossRate()*omega*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
+	if (  pVacuumConfig->IncludeCXLosses ) {
+		out << "\t Power Loss from charge exchange "; PrintWithUnit( out, CXMomentumLosses()*omega*pVacuumConfig->PlasmaVolume(), "W" ); out << std::endl;
+	} else {
+		out << "\t Power Loss from charge exchange was not included. " << std::endl;
+	}
 	out << std::endl;
 
 	double KineticStoredEnergy = KineticEnergy();
@@ -146,25 +161,40 @@ void MirrorPlasma::PrintReport(std::map<std::string, double>* parameterMap, int 
 	
 	double ParallelConfinementTime = ( 1.5  * ElectronDensity * ElectronTemperature + 1.5 * IonDensity * IonTemperature ) * (  ReferenceDensity * ReferenceTemperature )/( ParallelElectronHeatLoss() + ParallelIonHeatLoss() );
 	double PerpConfinementTime = ( 1.5  * IonDensity * IonTemperature * ReferenceDensity * ReferenceTemperature )/ClassicalIonHeatLoss();
-	out << "\tConfinement time from parallel losses is "; PrintWithUnit( out, ParallelConfinementTime, "s" ); out << std::endl;
-	out << "\tConfinement time from perpendicular losses is "; PrintWithUnit( out, PerpConfinementTime, "s" ); out << std::endl;
+	double CXConfinementTime = IonDensity*ReferenceDensity / CXLossRate();
+	out << "\tConfinement time from parallel losses is\t"; PrintWithUnit( out, ParallelConfinementTime, "s" ); out << std::endl;
+	out << "\tConfinement time from perpendicular losses is\t"; PrintWithUnit( out, PerpConfinementTime, "s" ); out << std::endl;
+	if ( pVacuumConfig->IncludeCXLosses ) {
+		out << "\tConfinement time from charge-exchange losses is\t"; PrintWithUnit( out, CXConfinementTime, "s" ); out << std::endl;
+	}
 	out << std::endl;
 
-	double ParallelParticleConfinementTime = ( IonDensity * ReferenceDensity ) /(  ParallelIonParticleLoss() );
-	out << "Particle (Ion) Confinement Time ~= "; PrintWithUnit( out, ParallelParticleConfinementTime, "s" ); out << std::endl;
+	double ParticleConfinementTime = ( IonDensity * ReferenceDensity ) /(  ParallelIonParticleLoss() + ClassicalIonParticleLosses() + CXLossRate() );
+	out << "Particle (Ion) Confinement Time ~= "; PrintWithUnit( out, ParticleConfinementTime, "s" ); out << std::endl;
 	out << std::endl;
 
 	out << "Ion-Electron Temperature Equilibration Time is "; PrintWithUnit( out, CollisionalTemperatureEquilibrationTime(),"s" ); out << std::endl;
 
-	/*
-	out << std::endl;
-	out << "Neutral gas must be provided at a rate of " << NeutralSource * pVacuumConfig->PlasmaVolume() << " particles/s to refuel the plasma" << std::endl;
-	out << "This leads to a steady-state neutral density of " << NeutralDensity * ReferenceDensity << "/m^3" << std::endl;
-	*/
-
 	out << std::endl;
 	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
 	out << "Plasma must be provided at a rate of " << ElectronLossRate*pVacuumConfig->PlasmaVolume() << " electrons /s to maintain steady-state" << std::endl;
+
+	out << std::endl;
+	if ( FixedNeutralDensity ) {
+		out << "A fixed neutral density of " << NeutralDensity * ReferenceDensity << " /m^3 has been assumed." << std::endl;
+	} else {
+		ComputeSteadyStateNeutrals();
+		out << "Neutral gas must be provided at a rate of " << NeutralSource * pVacuumConfig->PlasmaVolume() << " particles/s to refuel the plasma" << std::endl;
+		out << "This leads to a steady-state neutral density of " << NeutralDensity * ReferenceDensity << "/m^3" << std::endl;
+	}
+	if ( pVacuumConfig->IncludeCXLosses ) {
+		double CXR = CXLossRate() * pVacuumConfig->PlasmaVolume();
+		out << "The level of charge-exchange losses due to the neutrals is " << CXR << " particles/s lost" << std::endl;
+		out << "\t This is equivalent to a heat loss rate of "; PrintWithUnit( out, CXR * IonTemperature * ReferenceTemperature, "W" );out << std::endl;
+	} else {
+		out << "Steady-state charge exchange losses were not included." << std::endl;
+	}
+
 
 	out << std::endl;
 	double Resistance = ElectricPotential() / JRadial;
@@ -204,6 +234,10 @@ void MirrorPlasma::PrintReport(std::map<std::string, double>* parameterMap, int 
 			out << " D/D Neutrons (2.45 MeV) per second: " << DDNeutronRate() << std::endl;
 			// out << " D/T Neutrons (14.1 MeV) from Fusion-Produced-Tritium: " << DDEnergeticNeutronRate() << std::endl;
 			out << std::endl;
+
+			out << " === Effective D/T Figures of Merit, assuming an identical plasma === " << std::endl;
+			double Yield = ( 14.1/3.52 + 1.0 ) * FusionAlphaPowerDensity()*pVacuumConfig->PlasmaVolume();
+			out << " Q_(Scientific DT equivalent) = " << Yield / ElectricPotential()*JRadial << std::endl;
 		} else if ( pVacuumConfig->IonSpecies.Name == "Deuterium/Tritium Fuel" ) {
 			out << " === Reactor Output Assuming D/T Reactor Fuel === " << std::endl;
 
@@ -213,6 +247,16 @@ void MirrorPlasma::PrintReport(std::map<std::string, double>* parameterMap, int 
 			out << "                    as Neutrons: " << FusionNeutronPower << " MW" << std::endl;
 			out << "Neutron Wall Loading is " << NeutronWallLoading() << " MW/m^2" << std::endl;
 			out << "Total Thermal Power Output is " << ThermalPowerOutput() << " MW" << std::endl;
+
+			out << " === Figures of Merit === " << std::endl;
+			double TotalOutputPower1 = FusionNeutronPower + FusionAlphaPower;
+			double TotalOutputPower2 = ThermalPowerOutput();
+			double TotalInputPower1 = ElectricPotential() * JRadial / 1e6; // Because the output is in MW
+			double RotationDriveEta = 0.75;
+			double TotalInputPower2 = ElectricPotential() * JRadial / ( RotationDriveEta * 1e6 ); // ditto
+
+			out << "\t Q_scientific (not including Tritium Breeding or efficiencies ) = " << TotalOutputPower1/TotalInputPower1 << std::endl;
+			out << "\t Q_engineering (including Tritium Breeding at TBR of 1.0 and assuming efficiency " << RotationDriveEta << " for electric drive of rotation ) = " << TotalOutputPower2/TotalInputPower2 << std::endl;
 
 		} else {
 			out << "No Nuclear Reaction Diagnostics for Ion species: " << pVacuumConfig->IonSpecies.Name << std::endl;

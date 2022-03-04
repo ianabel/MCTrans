@@ -1,7 +1,7 @@
 version: 2.1
 
 executors:
-  debian-buster:
+  debian-bullseye:
     docker:
       - image: buildpack-deps:bullseye
   ubuntu-focal:
@@ -17,7 +17,7 @@ jobs:
     steps:
       - checkout
       - run:
-          command: apt-get update && apt-get install --quiet --yes libboost-dev cmake libnetcdf-dev libnetcdf-c++4-dev
+          command: apt-get update && apt-get install --quiet --yes g++-10 libboost-dev cmake libnetcdf-dev libnetcdf-c++4-dev
       - run:
           command: git clone https://github.com/ToruNiina/toml11.git toml11/
       - run:
@@ -25,7 +25,7 @@ jobs:
       - run:
           command: cp Makefile.local.example Makefile.local
       - run:
-          command: make
+          command: CXX="g++-10" make
       - run:
           command: make test
   buildubuntu:
@@ -34,7 +34,7 @@ jobs:
     steps:
       - checkout
       - run:
-          command: apt-get update && apt-get install --quiet --yes libboost-dev cmake libnetcdf-dev libnetcdf-c++4-dev
+          command: apt-get update && apt-get install --quiet --yes g++-10 libboost-dev cmake libnetcdf-dev libnetcdf-c++4-dev
       - run:
           command: git clone https://github.com/ToruNiina/toml11.git toml11/
       - run:
@@ -42,7 +42,7 @@ jobs:
       - run:
           command: cp Makefile.local.example Makefile.local
       - run:
-          command: make
+          command: CXX="g++-10" make
       - run:
           command: make test
 workflows:

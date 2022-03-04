@@ -1,0 +1,134 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath}
+\usepackage[margin=1in]{geometry}
+
+\begin{document}
+
+\section{Cold Neutrals}
+
+The number of reactions per unit time per unit volume is given by 
+
+\begin{equation}
+	R_{12} (\mathbf{v_i},\ \mathbf{v_n}) = \frac{n_i n_n}{1 + \delta_{12}} v_r \sigma(v_r) f_i(\mathbf{v_i}) f_n(\mathbf{v_n}) \mathrm{d}^3 \mathbf{v_i} \mathrm{d}^3 \mathbf{v_n}
+\end{equation}
+
+Where $\delta_{ij} = 1$ only if $i = j$, and it 0 otherwise, is included to avoid double counting when considering intra-species reactions.
+
+We can plug in the Maxwellian for ions in the rotating plasma with a bulk fluid velocity of $\mathbf{v_f}$
+
+\begin{equation}
+	f_i(\mathbf{v_i}) = \left( \frac{m_i}{2 \pi T_i} \right)^{\frac{3}{2}} \exp \left( -\frac{m_i (\mathbf{v_i} - \mathbf{v_f})^2}{2 T_i} \right)  
+\end{equation}
+
+And the delta function for the cold neutrals
+
+\begin{equation}
+	f_n(\mathbf{v_n}) = \delta( \mathbf{v_n} )
+\end{equation}
+
+And we get 
+
+\begin{equation}
+	R_{12} (\mathbf{v_i},\ \mathbf{v_n}) = \Lambda v_r \sigma(v_r) \exp \left[ - \frac{m_i (\mathbf{v_i} - \mathbf{v_f})^2}{2 T_i} \right] \delta( \mathbf{v_n} ) \mathrm{d}^3 \mathbf{v_i} \mathrm{d}^3 \mathbf{v_n}
+\end{equation}
+
+Where
+
+\begin{equation}
+	\Lambda = \frac{n_i n_n}{1 + \delta_{12}} \left( \frac{m_i}{2 \pi T_i} \right)^{\frac{3}{2}} 
+\end{equation}
+
+We then make the assumption that $v_r \approx v_i$ and make a transformation into spherical coordinates where the Jacobian is $\mathrm{d}^3 \mathbf{v_i} = v_i^2 \sin \theta_i \mathrm{d} v_i \mathrm{d} \theta_i \mathrm{d} \phi_i$. We also align the z-axis of the transform with the fluid velocity:
+
+\begin{align*}
+	v_{ix} &= v_i \sin \theta_i \cos \phi_i, \quad &v_{fx} &= 0 \\
+	v_{iy} &= v_i \sin \theta_i \sin \phi_i, \quad &v_{fy} &= 0 \\
+	v_{iz} &= v_i \cos \theta_i, \quad &v_{fz} &= v_f
+\end{align*}
+
+So that the integrand now becomes
+
+\begin{equation}
+	R_{12} (v_i) = \Lambda v_i^3 \sigma(v_i) \sin \theta_i \exp \left[ -\frac{m_i (v_i^2 + v_f^2 - 2 v_i v_f \cos \theta_i)}{2 T_i} \right] \delta( \mathbf{v_n} ) \mathrm{d} v_i \mathrm{d} \theta_i \mathrm{d} \phi_i  \mathrm{d}^3 \mathbf{v_n}
+\end{equation}
+
+Only the delta function is a function of $\mathbf{v_n}$, so that integrates out to 1. We can then solve the integral up to $v_i$.
+
+\begin{align}
+	R_{12} &= \Lambda \exp \left( -\frac{m_i v_f^2}{2 T_i} \right)  \int_0^\infty \int_0^{\pi} \int_0^{2 \pi} v_i^3 \sigma(v_i) \sin \theta_i \exp \left[ -\frac{m_i (v_i^2 - 2 v_i v_f \cos \theta_i)}{2 T_i} \right] \mathrm{d} \phi_i \mathrm{d} \theta_i \mathrm{d} v_i \\
+	&= 2 \pi \Lambda \exp \left( -\frac{m_i v_f^2}{2 T_i} \right)  \int_0^\infty \int_0^{\pi} v_i^3 \sigma(v_i) \sin \theta_i \exp \left[ - \frac{m_i (v_i^2 - 2 v_i v_f \cos \theta_i)}{2 T_i} \right] \mathrm{d} \theta_i \mathrm{d} v_i \\
+	&= \frac{4 \pi \Lambda T_i}{m_i v_f} \exp \left( -\frac{m_i v_f^2}{2 T_i} \right)  \int_0^\infty v_i^2 \sigma(v_i) \sinh \left( \frac{m_i v_i v_f}{T_i} \right) \exp \left( -\frac{m_i v_i^2}{2 T_i} \right) \mathrm{d} v_i \\
+	&= \frac{2 n_i n_n}{v_f (1 + \delta_{12})} \left( \frac{m_i}{2 \pi T_i} \right)^{\frac{1}{2}} \exp \left( -\frac{m_i v_f^2}{2 T_i} \right)  \int_0^\infty v_i^2 \sigma(v_i) \sinh \left( \frac{m_i v_i v_f}{T_i} \right) \exp \left( -\frac{m_i v_i^2}{2 T_i} \right) \mathrm{d} v_i
+\end{align}
+
+We can then define everything in terms of the mach number normalized to the sound speed, $M = \frac{v_f}{v_s}$, where $v_s = \sqrt{\frac{Z T_e}{m_i}}$ and $Z$ is the ion charge state and $T_e$ the electron temperature. The thermal speed is $v_{th} = \sqrt{\frac{2 T_i}{m_i}}$, so we can say that the thermal Mach number is $M_{th} = M \sqrt{\frac{Z T_e}{2 T_i}}$. We can also simplify by expanding the $\sinh$ term.
+
+\begin{align}
+	R_{12} &= \frac{n_i n_n}{\sqrt{\pi} (1 + \delta_{12})} \frac{1}{v_f v_{th}} \exp \left( -\frac{v_f^2}{v_{th}^2} \right)  \int_0^\infty v_i^2 \sigma(v_i) \left[ \exp \left( \frac{2 v_i v_f}{v_{th}^2} \right) - \exp \left( -\frac{2 v_i v_f}{v_{th}^2} \right) \right] \exp \left( -\frac{v_i^2}{v_{th}^2} \right) \mathrm{d} v_i\\
+	&= \frac{n_i n_n}{M_{th} v_{th}^2 \sqrt{\pi} (1 + \delta_{12})} \int_0^\infty v_i^2 \sigma(v_i) \left\lbrace \exp \left[ -\left( M_{th} - \frac{v_i}{v_{th}} \right)^2 \right] - \exp \left[ -\left( M_{th} + \frac{v_i}{v_{th}} \right)^2 \right] \right\rbrace \mathrm{d} v_i
+\end{align}
+
+Then making the substitution that $u = \frac{v_i}{v_{th}}$ we're left with
+	
+\begin{equation}
+	R_{12} = \frac{n_i n_n v_{th}}{M_{th} \sqrt{\pi} (1 + \delta_{12})} \int_0^\infty u^2 \sigma(v_{th} u) \left\lbrace \exp \left[ -\left( M_{th} -  u \right)^2 \right] - \exp \left[ -\left( M_{th} + u \right)^2 \right] \right\rbrace \mathrm{d} u
+\end{equation}
+
+The same can be applied to electron impact cross sections, where $v_{th} = \sqrt{\frac{2 T_e}{m_e}}$ and $M_{th} = M \sqrt{\frac{Z}{2}}$
+
+\begin{equation}
+	R_{12} = \frac{n_e n_n v_{th}}{M_{th} \sqrt{\pi} (1 + \delta_{12})} \int_0^\infty u^2 \sigma(v_{th} u) \left\lbrace \exp \left[ -\left( M_{th} -  u \right)^2 \right] - \exp \left[ -\left( M_{th} + u \right)^2 \right] \right\rbrace \mathrm{d} u
+\end{equation}
+
+\section{Hot Neutrals}
+
+Now looking at the regime where a charge exchange has occurred, and the neutrals are `hot' and moving at the fluid velocity, $v_f$, with a thermal spread equal to that of the ions, $T_i$. In the rotating frame of reference, there is no fluid velocity offset in the Maxwellian. Therefore, we can look at what the rate reaction is for ion and electon impact. The distribution function for the hot neutrals is Maxwellian.
+
+\begin{equation}
+	f_n(\mathbf{v_n}) = \left( \frac{m_n}{2 \pi T_n} \right)^{\frac{3}{2}} \exp \left( -\frac{m_n v_n^2}{2 T_n} \right)  
+\end{equation}
+
+\subsection{Ion Impact}
+
+The distribution functions for the ions in the rotating reference frame is
+
+\begin{equation}
+	f_i(\mathbf{v_i}) = \left( \frac{m_i}{2 \pi T_i} \right)^{\frac{3}{2}} \exp \left( -\frac{m_i v_i^2}{2 T_i} \right)  
+\end{equation}
+
+Assuming that the thermal spread is equal for the neutral and ion, we have $T_i = T_n$. The rate coefficient for two Maxwellians in thermal equilibrium is
+
+\begin{equation}
+	R_{12} = 4 \pi \left( \frac{\mu}{2 \pi T_i} \right)^{3/2} \int_0^\infty \sigma(v_r) v_r^3 \exp{ \left( -\frac{\mu v_r^2}{2 T_i} \right) }
+\end{equation}
+
+Where $\mu = \frac{m_i m_n}{m_i + m_n}$ is the reduced mass, and $\mathbf{v_r} = |\mathbf{v_i} - \mathbf{v_n}|$ is the relative velocity. We can convert this expression to be in terms of center-of-mass energy, $\varepsilon = \frac{1}{2} \mu v_r^2$.
+
+\begin{equation}
+	R_{12} = \frac{4}{(2 \pi \mu)^{\frac{1}{2}} T_i^{\frac{3}{2}}} \int_0^\infty \varepsilon \sigma(\varepsilon) \exp{ \left( -\frac{\varepsilon}{T_i} \right) } \mathrm{d} \varepsilon
+\end{equation}
+
+\subsection{Electron Impact}
+
+In a collision between an electron hot neutral and a hot neutral, both are moving at the fluid velocity with a thermal spread of $T_e$ and $T_i$, respectively. However, the electrons have a significantly higher thermal velocity, so the distribution function for the neutrals is again a delta function. The rate coefficient is then
+
+\begin{equation}
+	R_{12} (\mathbf{v_e},\ \mathbf{v_n}) = \Lambda v_r \sigma(v_r) \exp \left[ - \frac{m_e v_e^2}{2 T_e} \right] \delta( \mathbf{v_n} ) \mathrm{d}^3 \mathbf{v_e} \mathrm{d}^3 \mathbf{v_n}
+\end{equation}
+
+Where $\Lambda$ is a prefactor
+
+\begin{equation}
+	\Lambda = n_e n_n \left( \frac{m_e}{2 \pi T_e} \right)^{\frac{3}{2}} 
+\end{equation}
+
+Because $m_e \ll m_i$, and $v_e \gg v_n$, we can assume that $v_r \approx v_e$. We can also change to the center-of-mass energy, $\varepsilon = \frac{1}{2} \mu v_r^2 \approx \frac{1}{2} m_e v_e^2$
+
+\begin{equation}
+	R_{12} = \frac{n_e n_n}{\sqrt{\pi m_e}} \left( \frac{2}{T_e} \right)^{\frac{3}{2}}  \int_0^\infty \varepsilon \sigma(\varepsilon) \exp{ \left( -\frac{\varepsilon}{T_e} \right) } \mathrm{d} \varepsilon
+\end{equation}
+
+
+
+\end{document}
