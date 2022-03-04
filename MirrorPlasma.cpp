@@ -260,7 +260,8 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 }
 
 MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(const std::map<std::string, double>& parameterMap, std::string FuelName, 
-	bool rThrust, tribool AHeating, tribool rDiagnostics, bool ambiPolPhi, bool collisions, std::string asciiOut, std::string netCdfOut)
+	bool rThrust, tribool AHeating, tribool rDiagnostics, bool ambiPolPhi, bool collisions, bool includeCXLosses, std::string asciiOut, std::string netCdfOut)
+	: AmbipolarPhi(ambiPolPhi), Collisional(collisions), IncludeCXLosses(includeCXLosses), OutputFile(asciiOut), NetcdfOutputFile(netCdfOut)
 {
 	if( parameterMap.find("CentralCellField") != parameterMap.end())
 		CentralCellFieldStrength = parameterMap.at("CentralCellField");
@@ -304,10 +305,14 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(const std::ma
 	if( parameterMap.find("InitialMach") != parameterMap.end())
 		InitialMach = parameterMap.at("InitialMach");
 
-	AmbipolarPhi = ambiPolPhi;
-	Collisional = collisions;
-	OutputFile  = asciiOut;
-	NetcdfOutputFile = netCdfOut;
+	if( parameterMap.find("SundialsAbsTol") != parameterMap.end())
+		SundialsAbsTol = parameterMap.at("SundialsAbsTol");
+
+	if( parameterMap.find("SundialsRelTol") != parameterMap.end())
+		SundialsRelTol = parameterMap.at("SundialsRelTol");
+
+	if( parameterMap.find("RateThreshold") != parameterMap.end())
+		RateThreshold = parameterMap.at("RateThreshold");
 
 	if ( FuelName == "Hydrogen" ) {
 		IonSpecies.Mass   = 1.0;

@@ -60,9 +60,13 @@ private:
 	std::vector<double> PerpFudgeFactorVals;
 	std::vector<double> InitialTempVals;
 	std::vector<double> InitialMachVals;
+	std::vector<double> RateThresholdVals;
+	std::vector<double> SundialAbsTolVals;
+	std::vector<double> SundialsRelTolVals;
 
 	bool AmbipolarPhi = true;
 	bool Collisional = false;
+	bool IncludeCXLosses = false;
 	std::string OutputFile  = "";
 	std::string NetcdfOutputFile = "";
 

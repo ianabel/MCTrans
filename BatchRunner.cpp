@@ -22,6 +22,9 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		readParameterFromFile(algConfig, "PerpFudgeFactor", PerpFudgeFactorVals, false, 1.0);
 		readParameterFromFile(algConfig, "InitialTemp", InitialTempVals, false, 0.1);
 		readParameterFromFile(algConfig, "InitialMach", InitialMachVals, false, 4.0);
+		readParameterFromFile(algConfig, "RateThreshold", RateThresholdVals, false, 1e-4);
+		readParameterFromFile(algConfig, "SundialsAbsTol", SundialAbsTolVals, false, 1e-9);
+		readParameterFromFile(algConfig, "SundialsRelTol", SundialsRelTolVals, false, 1e-7);
 		
 		if ( algConfig.count( "UseAmbipolarPhi" ) == 1 )
 			AmbipolarPhi = algConfig.at( "UseAmbipolarPhi" ).as_boolean();
@@ -41,6 +44,12 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		} else {
 			NetcdfOutputFile = "";
 		}
+
+		if ( algConfig.count( "IncludeChargeExchangeLosses" ) == 1 )
+			IncludeCXLosses = algConfig.at( "IncludeChargeExchangeLosses" ).as_boolean();
+		else
+			IncludeCXLosses = false;
+
 		Collisional = false;
 #ifdef DEBUG
 		if(( algConfig.count( "InitialTemp" ) == 1 ))
@@ -63,13 +72,20 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		PerpFudgeFactorVals.push_back(1.0);
 		InitialTempVals.push_back(0.1);
 		InitialMachVals.push_back(4.0);
+		SundialAbsTolVals.push_back(1e-7);
+		SundialsRelTolVals.push_back(1e-7);
+		RateThresholdVals.push_back(1e-4);
 		ptrsAndNamesToVectors.push_back(std::make_pair(&ParallelFudgeFactorVals, "ParallelFudgeFactor"));
 		ptrsAndNamesToVectors.push_back(std::make_pair(&PerpFudgeFactorVals, "PerpFudgeFactor"));
 		ptrsAndNamesToVectors.push_back(std::make_pair(&InitialTempVals, "InitialTemp"));
 		ptrsAndNamesToVectors.push_back(std::make_pair(&InitialMachVals, "InitialMach"));
+		ptrsAndNamesToVectors.push_back(std::make_pair(&SundialAbsTolVals, "SundialsAbsTol"));
+		ptrsAndNamesToVectors.push_back(std::make_pair(&SundialAbsTolVals, "SundialsRelTol"));
+		ptrsAndNamesToVectors.push_back(std::make_pair(&RateThresholdVals, "RateThreshold"));
 
 		AmbipolarPhi = true;
 		Collisional = false;
+		IncludeCXLosses = false;
 		OutputFile  = "";
 		NetcdfOutputFile = "";
 	}
@@ -268,7 +284,7 @@ void BatchRunner::readParameterFromFile(toml::value batch, std::string configNam
 
 void BatchRunner::SolveIndividualMirrorPlasma(std::map<std::string, double> parameterMap, int currentRun)
 {
-	std::shared_ptr< MirrorPlasma::VacuumMirrorConfiguration > pVacuumConfig = std::make_shared<MirrorPlasma::VacuumMirrorConfiguration>( parameterMap,FuelName,reportThrust,AlphaHeating,ReportNuclearDiagnostics, AmbipolarPhi, Collisional, OutputFile, NetcdfOutputFile );
+	std::shared_ptr< MirrorPlasma::VacuumMirrorConfiguration > pVacuumConfig = std::make_shared<MirrorPlasma::VacuumMirrorConfiguration>( parameterMap,FuelName,reportThrust,AlphaHeating,ReportNuclearDiagnostics, AmbipolarPhi, Collisional, IncludeCXLosses, OutputFile, NetcdfOutputFile );
 	std::shared_ptr< MirrorPlasma > pReferencePlasmaState = std::make_shared<MirrorPlasma>(pVacuumConfig, parameterMap, VoltageTrace);
 	MCTransConfig config(pReferencePlasmaState);
 
