@@ -261,7 +261,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 
 MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(const std::map<std::string, double>& parameterMap, std::string FuelName, 
 	bool rThrust, tribool AHeating, tribool rDiagnostics, bool ambiPolPhi, bool collisions, bool includeCXLosses, std::string asciiOut, std::string netCdfOut)
-	: AmbipolarPhi(ambiPolPhi), Collisional(collisions), IncludeCXLosses(includeCXLosses), OutputFile(asciiOut), NetcdfOutputFile(netCdfOut)
+	: AmbipolarPhi(ambiPolPhi), IncludeCXLosses(includeCXLosses), Collisional(collisions), OutputFile(asciiOut), NetcdfOutputFile(netCdfOut)
 {
 	if( parameterMap.find("CentralCellField") != parameterMap.end())
 		CentralCellFieldStrength = parameterMap.at("CentralCellField");
@@ -440,11 +440,16 @@ MirrorPlasma::MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumC
 	{
 		NeutralDensity = parameterMap.at("NeutralDensity");
 		NeutralSource = 0.0;
+		if ( NeutralDensity == 0.0 )
+			FixedNeutralDensity = false;
+		else
+			FixedNeutralDensity = true;
 	}
 	else
 	{
 		NeutralDensity = 0.0;
 		NeutralSource = 0.0;
+		FixedNeutralDensity = false;
 	}
 
 	if(!vTrace.empty())

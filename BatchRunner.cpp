@@ -204,7 +204,7 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	readParameterFromFile(batch, "ElectronTemperature", ElectronTemperatureVals, false, -1.0, false);
 
 	//Neutral Density
-	readParameterFromFile(batch, "NeutralDensity", NeutralDensityVals, false, 0.0, false);
+	readParameterFromFile(batch, "NeutralDensity", NeutralDensityVals, false, 0.0, true);
 
 	//Voltage Trace
 	if ( batch.count( "VoltageTrace" ) == 1 ) {
