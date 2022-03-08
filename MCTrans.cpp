@@ -7,6 +7,7 @@
 
 #include "Config.hpp"
 #include "MirrorPlasma.hpp"
+#include "BatchRunner.hpp"
 
 extern "C" {
 #include <fenv.h>
@@ -23,21 +24,25 @@ int main( int argc, char** argv )
 		return 1;
 	}
 
-	MCTransConfig config( fname );
+	BatchRunner runner(fname);
+	runner.runBatchSolve();
+	return 0;
+
+	//MCTransConfig config( fname );
 
 #if defined(DEBUG) && defined(FPEXCEPT)
 	std::cerr << "Floating Point Exceptions Enabled" << std::endl;
 	::feenableexcept( FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW );
 #endif
 
-	std::unique_ptr<MirrorPlasma> result = config.Solve();
+	//std::shared_ptr<MirrorPlasma> result = config.Solve();
 
-	result->PrintReport();
+	//result->PrintReport();
 
 	return 0;
 }
 
-std::unique_ptr<MirrorPlasma> MCTransConfig::Solve()
+std::shared_ptr<MirrorPlasma> MCTransConfig::Solve()
 {
 	switch ( Type ) {
 		case SolveType::SteadyStateMachSolve:
@@ -71,7 +76,8 @@ void MCTransConfig::doMachSolve( MirrorPlasma& plasma ) const
 	double InitialMach = plasma.initialMach(); // Usually M > 4 for these solutions
 	double Factor = 1.25;
 	bool rising = true; // Confinement gets uniformly better for increasing M, and Viscous heating increases with M
-	auto [ M_lower, M_upper ] = boost::math::tools::bracket_and_solve_root( PowerBalance, InitialMach, Factor, rising, tol, iters );
+	auto M_bounds = boost::math::tools::bracket_and_solve_root( PowerBalance, InitialMach, Factor, rising, tol, iters );
+	auto M_lower = M_bounds.first, M_upper = M_bounds.second;
 	plasma.MachNumber = ( M_lower + M_upper )/2.0;
 	plasma.ComputeSteadyStateNeutrals();
 }
