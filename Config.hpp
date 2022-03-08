@@ -7,6 +7,7 @@
 
 class MCTransConfig {
 	public:
+		/*
 		MCTransConfig( std::string const& configFile ) {
 			const toml::value config = toml::parse( configFile );
 
@@ -32,6 +33,8 @@ class MCTransConfig {
 				EndTime = 1.00; // 1s run time
 			}
 		};
+		*/
+
 		MCTransConfig(std::shared_ptr<MirrorPlasma> refPlasmaState)
 			: ReferencePlasmaState(refPlasmaState)
 		{

@@ -209,7 +209,7 @@ double protonImpactIonizationCrossSection( double Energy )
 double HydrogenChargeExchangeCrossSection( double CoMEnergy )
 {
 	// Minimum energy of cross section in eV
-	const double minimumEnergySigma_1s = 0.1;
+	// const double minimumEnergySigma_1s = 0.1;
 	const double minimumEnergySigma_2p = 19.0;
 	const double minimumEnergySigma_2s = 0.1;
 

@@ -18,7 +18,7 @@ class MirrorPlasma {
 	public:
 		class VacuumMirrorConfiguration {
 			public:
-				VacuumMirrorConfiguration( toml::value const& );
+				// VacuumMirrorConfiguration( toml::value const& );
 				VacuumMirrorConfiguration(const std::map<std::string, double>& parameterMap, std::string FuelName, bool reportThrust, tribool AlphaHeating, tribool ReportNuclearDiagnostics, bool ambiPolPhi, bool collisions, bool includeCXLosses, std::string asciiOut, std::string netCdfOut);
 				/*
 				VacuumMirrorConfiguration( const& VacuumMirrorConfiguration other ) :
@@ -96,7 +96,7 @@ class MirrorPlasma {
 
 		MirrorPlasma( MirrorPlasma const& ) = delete;
 
-		MirrorPlasma( toml::value const& configSection );
+		// MirrorPlasma( toml::value const& configSection );
 
 		MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig, std::map<std::string,double> parameterMap, std::string vTrace);
 

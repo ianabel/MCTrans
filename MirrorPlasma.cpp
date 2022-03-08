@@ -7,7 +7,7 @@
 #include "TransitionFunction.hpp"
 #include "BatchRunner.hpp"
 
-
+/* Replaced by Batch Runner
 MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value const& plasmaConfig )
 {
 	if ( plasmaConfig.count( "AsciiOutputFile" ) == 1 )
@@ -258,6 +258,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	if ( mirrorConfig.count( "ReportNuclearDiagnostics" ) == 1 )
 		ReportNuclearDiagnostics = mirrorConfig.at( "ReportNuclearDiagnostics" ).as_boolean();
 }
+*/
 
 MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(const std::map<std::string, double>& parameterMap, std::string FuelName, 
 	bool rThrust, tribool AHeating, tribool rDiagnostics, bool ambiPolPhi, bool collisions, bool includeCXLosses, std::string asciiOut, std::string netCdfOut)
@@ -345,6 +346,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(const std::ma
 	else if(rDiagnostics == tribool::fal) ReportNuclearDiagnostics = false;
 }
 
+/* Replaced by Batch Runner 
 MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 	: pVacuumConfig( std::make_shared<VacuumMirrorConfiguration>( plasmaConfig ) )
 {
@@ -405,6 +407,7 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 		time = -1;
 	}
 }
+*/
 
 MirrorPlasma::MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig, std::map<std::string,double> parameterMap, std::string vTrace)
 	: pVacuumConfig(pVacuumConfig)
