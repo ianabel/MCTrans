@@ -1,0 +1,75 @@
+The plasma is made up of electrons, Hydrogen and trace, radiating, impurities
+Electron Density is 1e+19 m^-3
+Ion Density is 1e+19 m^-3
+
+Electron Temperature is 991 eV
+Ion Temperature is 1.23 keV
+Radius of central cell (first wall) is 0.5 m
+	 Inner radius of the plasma is 0.15 m
+	 Outer radius of the plasma is 0.35 m
+Outer Radius of the plasma at the mirror throat is 0.111 m
+
+Axial Length of the plasma is 0.6 m
+Plasma Volume is 0.188 m^3
+
+Magnetic Field in the Central Cell is 0.3 T
+Magnetic Field at the Mirror Throat is 3 T
+
+Ion Larmor Radius in the central cell is 0.0119 m 
+Typical plasma scale lengths are ~ 0.1 m  = 8.38 rho_i
+
+No auxiliary heating was included in this calculation.
+
+
+Operating Mach number is 5.41
+Alfven Mach number is 0.805
+
+Velocity is 1.67e+06 m/s
+Angular Velocity at the plasma centre (R = 0.25 m) is 6.67e+06 /s
+
+Viscous Heating is 11 kW
+Bremsstrahlung losses are 30.1 W
+Cyclotron emission losses are 573 µW
+Heat loss due to charge exchange with neutrals is 4.93 kW
+
+Total potential drop is 100 kV
+Radial Current Drawn from Power Supply 1.33 A
+Power Required (at the plasma) to support rotation 133 kW
+	 Power Loss from viscous torque  11 kW
+	 Power Loss from parallel loss   5.56 kW
+	 Power Loss from charge exchange 116 kW
+
+Total Stored Energy is 5.39 kJ
+ of which 4.38 kJ is kinetic energy in the rotation
+      and 1.01 kJ is thermal energy of the plasma
+Energy Confinement Time is 91.4 ms
+Of which
+	Confinement time from parallel losses is	344 ms
+	Confinement time from perpendicular losses is	179 ms
+	Confinement time from charge-exchange losses is	75.5 ms
+
+Particle (Ion) Confinement Time ~= 71.5 ms
+
+Ion-Electron Temperature Equilibration Time is 41.2 ms
+
+Plasma must be provided at a rate of 1.37e+18 electrons /s to maintain steady-state
+
+Neutral gas must be provided at a rate of 1.37e+18 particles/s to refuel the plasma
+This leads to a steady-state neutral density of 6.9e+13/m^3
+The level of charge-exchange losses due to the neutrals is 2.5e+19 particles/s lost
+	 This is equivalent to a heat loss rate of 4.93 kW
+
+Electrical Properties of the Plasma:
+	Resistance  = 75.4 kΩ
+	Capacitance = 876 pF
+
+Dimensionless parameters:
+	 β  = 9.95%
+	 ν* = 0.000571 (ions) 
+	 ρ* = 0.119
+	 Omega_i tau_ii = 9.8e+04
+
+Fusion Triple Product 
+	 n T τ = 1.13e+18 keV s /m^3
+
+No Nuclear Reaction Diagnostics for Ion species: Hydrogen

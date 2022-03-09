@@ -1,8 +1,8 @@
 #pragma once
-//This class is used to read batch cases into the solver and run many cases. Each value can be assigned
-//a 3 value array [min, max, stepsize]. This class creates vectors containing all the values to be run for
-//each parameter. n^m mirrorPlasmas are created and each is run as a seperate case.
-//Note you can also specify a single value to be read and this just gets taken as a single input for that variable
+// This class is used to read batch cases into the solver and run many cases. Each value can be assigned
+// a 3 value array [min, max, stepsize]. This class creates vectors containing all the values to be run for
+// each parameter. n^m mirrorPlasmas are created and each is run as a seperate case.
+// Note you can also specify a single value to be read and this just gets taken as a single input for that variable
 #include <string>
 #include <vector>
 #include <toml.hpp>
@@ -14,16 +14,16 @@ public:
 	BatchRunner(std::string const& batchFile);
 	void runBatchSolve();
 private:
-	//solving function. Builds the mirrorplasma object, excecutes a solve and prints the report
+	// solving function. Builds the mirrorplasma object, excecutes a solve and prints the report
 	void SolveIndividualMirrorPlasma(std::map<std::string, double> parameterMap, int currentRun);
 
-	//Catchall function which takes parameters from the toml object and populates the parameter vectors
+	// Catchall function which takes parameters from the toml object and populates the parameter vectors
 	void readParameterFromFile(toml::value batch, std::string configName, std::vector<double>& parameterVector, bool mandatory = true, double defaultValue = 0.0, bool strictlyPositive = false);
 	
-	//calculates the necessary increment in a parameter at each step
+	// calculates the necessary increment in a parameter at each step
 	const double step(std::vector<double> array);
 
-	//recursive function which takes creates a map of each mirror plasma case and stores all the maps in a vector
+	// recursive function which takes creates a map of each mirror plasma case and stores all the maps in a vector
 	void cartesianProduct(std::vector<std::map<std::string, double>>& final, std::map<std::string, double>& current, std::vector<std::pair<std::vector<double>*,std::string>>::const_iterator currentInput, std::vector<std::pair<std::vector<double>*,std::string>>::const_iterator end);
 	std::string FuelName;
 	bool reportThrust;
@@ -33,7 +33,7 @@ private:
 	
 	std::vector<std::pair<std::vector<double>*,std::string>> ptrsAndNamesToVectors;
 
-	//VacuumConfig parameters
+	// VacuumConfig parameters
 	std::vector<double> CentralCellFieldStrengthVals;
 	std::vector<double> MagFieldThroatVals;
 	std::vector<double> MirrorRatioVals;
@@ -50,12 +50,12 @@ private:
 	tribool ReportNuclearDiagnostics = unspecified;
 	bool ReportThrust;
 
-	//MirrorPlasma parameters
+	// MirrorPlasma parameters
 	std::vector<double> ZeffVals;
 	std::vector<double> ElectronDensityVals,ElectronTemperatureVals;
 	std::vector<double> TiTeVals;
 
-	//Algorithm parameters
+	// Algorithm parameters
 	std::vector<double> ParallelFudgeFactorVals;
 	std::vector<double> PerpFudgeFactorVals;
 	std::vector<double> InitialTempVals;
@@ -70,7 +70,7 @@ private:
 	std::string OutputFile  = "";
 	std::string NetcdfOutputFile = "";
 
-	//Time dependent parameters
+	// Time dependent parameters
 	std::string VoltageTrace;
 
 	int totalRuns = 1;

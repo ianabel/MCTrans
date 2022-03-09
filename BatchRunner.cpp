@@ -5,7 +5,7 @@
 #include "MirrorPlasma.hpp"
 #include "Config.hpp"
 
-//Type names used in the recursive cartesian product
+// Type names used in the recursive cartesian product
 using vecMap = std::vector<std::map<std::string, double>>;
 using vecPairVS = std::vector<std::pair<std::vector<double>*,std::string>>;
 using mapSD = std::map<std::string, double>;
@@ -13,7 +13,7 @@ using mapSD = std::map<std::string, double>;
 BatchRunner::BatchRunner(std::string const& batchFile)
 {
 	const auto batchConfig = toml::parse( batchFile );
-	//Algorithm Parameters
+	// Algorithm Parameters
 	if(batchConfig.count( "algorithm" ) != 0)
 	{
 		const auto algConfig = toml::find<toml::table>( batchConfig, "algorithm" );
@@ -91,21 +91,21 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	}
 
 	const auto batch = toml::find<toml::value>( batchConfig, "configuration" );
-	//Fuel name
+	// Fuel name
 	if ( batch.count( "IonSpecies" ) != 1 )
 		throw std::invalid_argument( "[error] Fuel must be specified once in the [configuration] block" );
 	FuelName = batch.at( "IonSpecies" ).as_string();
 
-	//Report Thrust
+	// Report Thrust
 	if ( batch.count( "ReportThrust" ) == 1 )
 		ReportThrust = batch.at( "ReportThrust" ).as_boolean();
 	else
 		ReportThrust = false;
 
-	//Central Field Strength
+	// Central Field Strength
 	readParameterFromFile(batch, "CentralCellField", CentralCellFieldStrengthVals);
 	
-	//Mirror Ratio
+	// Mirror Ratio
 	if ( batch.count( "MirrorRatio" ) == 1 ) 
 	{
 		readParameterFromFile(batch, "MirrorRatio", MirrorRatioVals, false);
@@ -113,7 +113,7 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 			throw std::invalid_argument( toml::format_error( "[error] Cannot specify botth Miror Ratio and Throat Field",batch.at( "MirrorRatio" )," mirror ratio defined here", batch.at( "ThroatField" ), " Throat field here" ) );
 		}
 	}
-	//Magnetic Throat Field
+	// Magnetic Throat Field
 	else if ( batch.count( "ThroatField" ) == 1 ) 
 	{
 		readParameterFromFile(batch, "ThroatField", MagFieldThroatVals, false);
@@ -125,7 +125,7 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		throw std::invalid_argument( "[error] Must specify either MirrorRatio or ThroatField" );
 	}
 
-	//Plasma Radius Max and Min
+	// Plasma Radius Max and Min
 	if ( batch.count( "PlasmaRadiusMin" ) == 1  || batch.count( "PlasmaRadiusMax" ) == 1 ) {
 		if ( batch.count( "PlasmaRadiusMin" ) == 0 )
 			throw std::invalid_argument( toml::format_error( "[error] When PlasmaRadiusMax is specified you must also set PlasmaRadiusMin",batch.at( "PlasmaRadiusMax" )," max radius set here" ) );
@@ -142,7 +142,7 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		}
 	}
 
-	//Axial Gap Distance and Plasma Column Width
+	// Axial Gap Distance and Plasma Column Width
 	else if ( batch.count( "AxialGapDistance" ) == 1  || batch.count( "PlasmaColumnWidth" ) == 1 ) {
 		if ( batch.count( "AxialGapDistance" ) == 0 )
 			throw std::invalid_argument( toml::format_error( "[error] When PlasmaColumnWidth is specified you must also set AxialGapDistance",batch.at( "PlasmaColumnWidth" )," width set here" ) );
@@ -161,16 +161,16 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		throw std::invalid_argument( "[error] Must specify plasma annulus with either PlasmaRadiusMin / PlasmaRadiusMax or AxialGapDistance and PlasmaColumnWidth" );
 	}
 
-	//Imposed Voltage
+	// Imposed Voltage
 	readParameterFromFile(batch, "Voltage", ImposedVoltageVals, false, 0.0);
 
-	//Wall Radius
+	// Wall Radius
 	readParameterFromFile(batch, "WallRadius", WallRadiusVals, true);
 
-	//Plasma Length
+	// Plasma Length
 	readParameterFromFile(batch,"PlasmaLength", PlasmaLengthVals, true);
 
-	//Auxiliary Heating
+	// Auxiliary Heating
 	readParameterFromFile(batch, "AuxiliaryHeating", AuxiliaryHeatingVals, false, 0.0);
 
 	// This overrides the default for the chosen fuel if specified in file
@@ -191,22 +191,22 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	}
 	else ReportNuclearDiagnostics = unspecified;
 
-	//Ion to electron temperature ratio
+	// Ion to electron temperature ratio
 	readParameterFromFile(batch, "IonToElectronTemperatureRatio", TiTeVals, false, 0.0, true);
 
-	//Effective Charge (Zeff)
+	// Effective Charge (Zeff)
 	readParameterFromFile(batch, "Zeff", ZeffVals, false, 1.0, true);
 
-	//Electron Density
+	// Electron Density
 	readParameterFromFile(batch, "ElectronDensity", ElectronDensityVals, true, 0.0, true);
 	
-	//Electron Temperature
+	// Electron Temperature
 	readParameterFromFile(batch, "ElectronTemperature", ElectronTemperatureVals, false, -1.0, false);
 
-	//Neutral Density
+	// Neutral Density
 	readParameterFromFile(batch, "NeutralDensity", NeutralDensityVals, false, 0.0, true);
 
-	//Voltage Trace
+	// Voltage Trace
 	if ( batch.count( "VoltageTrace" ) == 1 ) {
 		VoltageTrace = batch.at( "VoltageTrace" ).as_string();
 	} else VoltageTrace = "";

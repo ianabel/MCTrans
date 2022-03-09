@@ -338,7 +338,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(const std::ma
 		throw std::invalid_argument( ErrorMessage );
 	}
 
-	//If specified in the config file these values override the defaults from the fuel
+	// If specified in the config file these values override the defaults from the fuel
 	if(AHeating == tribool::tru) AlphaHeating = true;
 	else if(AHeating == tribool::fal) AlphaHeating = false;
 
@@ -431,14 +431,14 @@ MirrorPlasma::MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumC
 		ElectronTemperature = parameterMap.at("ElectronTemperature");
 		IonTemperature = ElectronTemperature < 0.0 ? -1.0 : ElectronTemperature * TiTe;
 	}
-	//Note if(...) only false if theres a bug. Batch runner will populate the value as -1.0 if its not found in the config file
+	// Note if(...) only false if theres a bug. Batch runner will populate the value as -1.0 if its not found in the config file
 	else
 	{
 		ElectronTemperature = -1.0;
 		IonTemperature = -1.0;
 	}
 
-	//Note: current excecution has NeutralSource always initially set to 0. If this changes work will have to be done in BatchRunner
+	// Note: current excecution has NeutralSource always initially set to 0. If this changes work will have to be done in BatchRunner
 	if( parameterMap.find("NeutralDensity") != parameterMap.end())
 	{
 		NeutralDensity = parameterMap.at("NeutralDensity");
@@ -535,6 +535,11 @@ double MirrorPlasma::ParallelElectronPastukhovLossRate( double Chi_e ) const
 
 double MirrorPlasma::ParallelElectronParticleLoss() const
 {
+	if ( pVacuumConfig->Collisional ) {
+		// Particle loss at the sound speed from the mirror throat
+		double MirrorThroatDensity = IonDensity * ReferenceDensity * ::exp( CentrifugalPotential() );
+		return SoundSpeed() * MirrorThroatDensity;
+	}
 	double Chi_e = -AmbipolarPhi(); // Ignore small electron mass correction
 	return ParallelElectronPastukhovLossRate( Chi_e );
 }
@@ -543,7 +548,7 @@ double MirrorPlasma::ParallelElectronHeatLoss() const
 {
 	if ( pVacuumConfig->Collisional )
 	{
-		double kappa_parallel = ElectronDensity * ElectronTemperature * ReferenceDensity * ReferenceTemperature / ( ElectronMass * ElectronCollisionTime() );
+		double kappa_parallel = 3.16 * ElectronDensity * ElectronTemperature * ReferenceDensity * ReferenceTemperature / ( ElectronMass * ElectronCollisionTime() );
 		double L_parallel = pVacuumConfig->PlasmaLength;
 		return kappa_parallel * ElectronTemperature * ReferenceTemperature / ( L_parallel * L_parallel );
 	}
@@ -587,12 +592,26 @@ double MirrorPlasma::Chi_i() const
 
 double MirrorPlasma::ParallelIonParticleLoss() const
 {
+	if ( pVacuumConfig->Collisional ) {
+		// Particle loss at the sound speed from the mirror throat
+		double MirrorThroatDensity = IonDensity * ReferenceDensity * ::exp( CentrifugalPotential() );
+		return SoundSpeed() * MirrorThroatDensity;
+	}
+
 	// Electrostatic energy + centrifugal potential energy
 	return ParallelIonPastukhovLossRate( Chi_i() );
 }
 
 double MirrorPlasma::ParallelIonHeatLoss() const
 {
+	if ( pVacuumConfig->Collisional ) {
+		// Collisional parallel heat transport
+		double IonMass = pVacuumConfig->IonSpecies.Mass * ProtonMass;
+		double kappa_parallel = 3.9 * IonDensity * IonTemperature * ReferenceDensity * ReferenceTemperature / ( IonMass * IonCollisionTime() );
+		double L_parallel = pVacuumConfig->PlasmaLength;
+		return kappa_parallel * IonTemperature * ReferenceTemperature / ( L_parallel * L_parallel );
+	}
+
 	// Energy loss per particle is ~ Chi_i + T_i
 	return ParallelIonPastukhovLossRate( Chi_i() ) * ( IonTemperature * ReferenceTemperature ) * ( ::fabs( Chi_i() )  + 1.0 );
 }
