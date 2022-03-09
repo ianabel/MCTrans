@@ -14,7 +14,7 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 {
 	const auto batchConfig = toml::parse( batchFile );
 	// Algorithm Parameters
-	if(batchConfig.count( "algorithm" ) != 0)
+	if ( batchConfig.count( "algorithm" ) != 0 )
 	{
 		const auto algConfig = toml::find<toml::table>( batchConfig, "algorithm" );
 
@@ -52,12 +52,12 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 
 		Collisional = false;
 #ifdef DEBUG
-		if(( algConfig.count( "InitialTemp" ) == 1 ))
+		if ( ( algConfig.count( "InitialTemp" ) == 1 ) )
 			std::cerr << "Initial Temperature for Temperature Solve set from config file to " << InitialTempVals.size() << " value(s) between " << InitialTempVals[0] << " and " << InitialTempVals.back() << std::endl;
 		else
 			std::cerr << "Initial Temperature for Temperature Solve set to the default of " << InitialTempVals[0] << std::endl;
 
-		if( algConfig.count( "InitialMach" ) == 1 )
+		if ( algConfig.count( "InitialMach" ) == 1 )
 			std::cerr << "Initial Mach Number for fixed-temperature solve set from config file to " << InitialMachVals.size() << " value(s) between " << InitialMachVals[0] << " and " << InitialMachVals.back() << std::endl;
 		else 
 			std::cerr << "Initial Mach Number for fixed-temperature solve set to the default of " << InitialMachVals[0] << std::endl;
@@ -137,7 +137,7 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 
 		if ( batch.count( "AxialGapDistance" ) == 1 ) {
 			throw std::invalid_argument( toml::format_error( "[error] When PlasmaRadiusMin / Max are specified you cannot set AxialGapDistance",batch.at( "PlasmaRadiusMin" )," minimum radius set here", batch.at( "AxialGapDistance" ), " AxialGapDistance found here" ) );
-		} else if ( batch.count( "PlasmaColumnWidth") == 1 ) {
+		} else if ( batch.count( "PlasmaColumnWidth" ) == 1 ) {
 			throw std::invalid_argument( toml::format_error( "[error] When PlasmaRadiusMin / Max are specified you cannot set AxialGapDistance",batch.at( "PlasmaRadiusMin" )," minimum radius set here", batch.at( "AxialGapDistance" ), " AxialGapDistance found here" ) );
 		}
 	}
@@ -154,7 +154,7 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 
 		if ( batch.count( "PlasmaMinRadius" ) == 1 ) {
 			throw std::invalid_argument( toml::format_error( "[error] When AxialGapDistance and PlasmaColumnWidth are specified you cannot set PlasmaMinRadius",batch.at( "PlasmaRadiusMin" )," minimum radius set here", batch.at( "AxialGapDistance" ), " AxialGapDistance found here" ) );
-		} else if ( batch.count( "PlasmaMaxRadius") == 1 ) {
+		} else if ( batch.count( "PlasmaMaxRadius" ) == 1 ) {
 			throw std::invalid_argument( toml::format_error( "[error] When AxialGapDistance and PlasmaColumnWidth are specified you cannot set PlasmaMaxRadius",batch.at( "PlasmaRadiusMax" )," maximum radius set here", batch.at( "AxialGapDistance" ), " AxialGapDistance found here" ) );
 		}
 	} else {
@@ -177,7 +177,7 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	if ( batch.count( "IncludeAlphaHeating" ) == 1 )
 	{
 		bool aHeating = batch.at( "IncludeAlphaHeating" ).as_boolean();
-		if(aHeating) AlphaHeating = tru;
+		if ( aHeating ) AlphaHeating = tru;
 		else AlphaHeating = fal;
 	}
 	else AlphaHeating = unspecified;
@@ -186,7 +186,7 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	if ( batch.count( "ReportNuclearDiagnostics" ) == 1 )
 	{
 		bool nucDiagnostics = batch.at( "ReportNuclearDiagnostics" ).as_boolean();
-		if(nucDiagnostics) ReportNuclearDiagnostics = tru;
+		if ( nucDiagnostics ) ReportNuclearDiagnostics = tru;
 		else ReportNuclearDiagnostics = fal;
 	}
 	else ReportNuclearDiagnostics = unspecified;
@@ -214,7 +214,7 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 
 void BatchRunner::cartesianProduct(vecMap& vectorOfMaps, mapSD& currentMap, vecPairVS::const_iterator currentI, vecPairVS::const_iterator end)
 {
-	if(currentI == end)
+	if ( currentI == end )
 	{
 		vectorOfMaps.push_back(currentMap);
 		return;
@@ -222,7 +222,7 @@ void BatchRunner::cartesianProduct(vecMap& vectorOfMaps, mapSD& currentMap, vecP
 
 	const std::pair<std::vector<double>*,std::string>& infoPair = *currentI;
 
-	for(std::vector<double>::const_iterator it = infoPair.first->begin() ; it != infoPair.first->end(); ++it)
+	for ( std::vector<double>::const_iterator it = infoPair.first->begin() ; it != infoPair.first->end(); ++it )
 	{
 		currentMap.insert(std::pair<std::string, double>(infoPair.second,*it));
 		cartesianProduct(vectorOfMaps,currentMap,currentI+1,end);
@@ -237,10 +237,10 @@ void BatchRunner::runBatchSolve()
 	cartesianProduct(vectorOfMaps, currentMap, ptrsAndNamesToVectors.begin(), ptrsAndNamesToVectors.end());
 
 	totalRuns = vectorOfMaps.size();
-	if(totalRuns > 1 && OutputFile == "")
+	if ( totalRuns > 1 && OutputFile == "" )
 		throw std::invalid_argument("[error] Output file name is needed when running a batch solve");
 
-	for(int n = 0; n < totalRuns; n++)
+	for ( int n = 0; n < totalRuns; n++ )
 	{
 		SolveIndividualMirrorPlasma(vectorOfMaps[n], n);
 	}
@@ -251,32 +251,32 @@ void BatchRunner::runBatchSolve()
 
 const double BatchRunner::step(std::vector<double> array)
 {
-	if(array.size() != 3 || array[1] < array[0]) throw std::invalid_argument( "[error] Input must be configured [min, max, step size]" );
-	if(array[2] <= 0.0) return array[1] - array[0] + 1.0; // negative step implies only accpeting the first value of the matix
+	if ( array.size() != 3 || array[1] < array[0]) throw std::invalid_argument( "[error] Input must be configured [min, max, step size]" );
+	if ( array[2] <= 0.0 ) return array[1] - array[0] + 1.0; // negative step implies only accpeting the first value of the matix
 	else return array[2];
 }
 
 void BatchRunner::readParameterFromFile(toml::value batch, std::string configName, std::vector<double>& parameterVector, bool mandatory, double defaultValue, bool strictlyPositive )
 {
-	if( batch.count( configName ) == 1)
+	if ( batch.count( configName ) == 1 )
 	{
 		auto parameterData = toml::find(batch, configName );
-		if(parameterData.is_array())
+		if ( parameterData.is_array() )
 		{
 			auto parameterArray = toml::get<std::vector<double>>(parameterData);
-			for(auto val = parameterArray[0]; val <= parameterArray[1]; val += step(parameterArray)) 
+			for ( auto val = parameterArray[0]; val <= parameterArray[1]; val += step(parameterArray)) 
 				parameterVector.push_back(val);
 		}
-		else if(parameterData.is_floating()) parameterVector.push_back(parameterData.as_floating());
-		else if(parameterData.is_integer()) parameterVector.push_back(static_cast<double>(parameterData.as_floating()));
+		else if ( parameterData.is_floating() ) parameterVector.push_back(parameterData.as_floating());
+		else if ( parameterData.is_integer() ) parameterVector.push_back(static_cast<double>(parameterData.as_floating()));
 		else throw std::invalid_argument("[error] Non-compatible data given in configuration file");
 
-		if(strictlyPositive && *std::min_element( parameterVector.begin(), parameterVector.end() ) < 0.0 )
+		if ( strictlyPositive && *std::min_element( parameterVector.begin(), parameterVector.end() ) < 0.0 )
 		throw std::invalid_argument( "[error] " + configName + " cannot be negative" );
 
 	}
-	else if(!mandatory && batch.count( configName ) == 0) parameterVector.push_back(defaultValue);
-	else if( batch.count( configName ) > 1 ) throw std::invalid_argument("[error] " + configName + " cannot be specified more than once");
+	else if ( !mandatory && batch.count( configName ) == 0 ) parameterVector.push_back(defaultValue);
+	else if ( batch.count( configName ) > 1 ) throw std::invalid_argument("[error] " + configName + " cannot be specified more than once");
 	else throw std::invalid_argument( "[error] " + configName + " unspecified or specified incorrectly");
 
 	ptrsAndNamesToVectors.push_back(std::make_pair(&parameterVector,configName));
@@ -296,9 +296,9 @@ void BatchRunner::SolveIndividualMirrorPlasma(std::map<std::string, double> para
 template<typename K, typename V>
 void BatchRunner::print_maps(std::vector<std::map<K, V>> const &vec)
 {
-	for(auto const &m: vec)
+	for ( auto const &m: vec )
 	{
-		for (auto const &pair: m) 
+		for ( auto const &pair: m ) 
 			std::cout << "{" << pair.first << ": " << pair.second << "}\n";
 		std::cout << std::endl;
 	}
