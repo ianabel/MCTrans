@@ -536,8 +536,13 @@ double MirrorPlasma::ParallelElectronPastukhovLossRate( double Chi_e ) const
 double MirrorPlasma::ParallelElectronParticleLoss() const
 {
 	if ( pVacuumConfig->Collisional ) {
-		// Particle loss at the sound speed from the mirror throat
+		// Particle loss from the mirror throat
+		// given by the density at the throat and the sounds transit time
 		double MirrorThroatDensity = IonDensity * ReferenceDensity * ::exp( CentrifugalPotential() );
+#ifdef DEBUG
+		std::cout << "Electron parallel particle loss is " << SoundSpeed() * MirrorThroatDensity << "\t";
+		std::cout << "Collisionless parallel losse would have been " << ParallelElectronPastukhovLossRate( -AmbipolarPhi() );
+#endif
 		return SoundSpeed() * MirrorThroatDensity;
 	}
 	double Chi_e = -AmbipolarPhi(); // Ignore small electron mass correction
@@ -548,8 +553,13 @@ double MirrorPlasma::ParallelElectronHeatLoss() const
 {
 	if ( pVacuumConfig->Collisional )
 	{
-		double kappa_parallel = 3.16 * ElectronDensity * ElectronTemperature * ReferenceDensity * ReferenceTemperature / ( ElectronMass * ElectronCollisionTime() );
+		double kappa_parallel = 3.16 * ElectronDensity * ElectronTemperature * ReferenceDensity * ReferenceTemperature * ElectronCollisionTime() / ( ElectronMass  );
 		double L_parallel = pVacuumConfig->PlasmaLength;
+#ifdef DEBUG
+		std::cout << "Electron parallel heat flux is " << kappa_parallel * ElectronTemperature * ReferenceTemperature / ( L_parallel * L_parallel ) << std::endl;
+		std::cout << "Collisionless parallel heat flux would have been "
+		          << ParallelElectronPastukhovLossRate( -AmbipolarPhi() ) * ( ElectronTemperature * ReferenceTemperature ) * (  1.0 - AmbipolarPhi() );
+#endif
 		return kappa_parallel * ElectronTemperature * ReferenceTemperature / ( L_parallel * L_parallel );
 	}
 
@@ -607,7 +617,7 @@ double MirrorPlasma::ParallelIonHeatLoss() const
 	if ( pVacuumConfig->Collisional ) {
 		// Collisional parallel heat transport
 		double IonMass = pVacuumConfig->IonSpecies.Mass * ProtonMass;
-		double kappa_parallel = 3.9 * IonDensity * IonTemperature * ReferenceDensity * ReferenceTemperature / ( IonMass * IonCollisionTime() );
+		double kappa_parallel = 3.9 * IonDensity * IonTemperature * ReferenceDensity * ReferenceTemperature * IonCollisionTime() / ( IonMass );
 		double L_parallel = pVacuumConfig->PlasmaLength;
 		return kappa_parallel * IonTemperature * ReferenceTemperature / ( L_parallel * L_parallel );
 	}
@@ -639,6 +649,9 @@ double MirrorPlasma::ParallelCurrent( double Phi ) const
 double MirrorPlasma::AmbipolarPhi() const
 {
 	double AmbipolarPhi = CentrifugalPotential();
+
+	if ( pVacuumConfig->Collisional )
+		return AmbipolarPhi;
 
 	if ( pVacuumConfig->AmbipolarPhi ) {
 		// Add correction.

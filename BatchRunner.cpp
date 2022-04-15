@@ -50,7 +50,11 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		else
 			IncludeCXLosses = false;
 
-		Collisional = false;
+		if ( algConfig.count( "UseCollisionalFluxes" ) == 1 )
+			Collisional = algConfig.at( "UseCollisionalFluxes" ).as_boolean();
+		else
+			Collisional = false;
+
 #ifdef DEBUG
 		if ( ( algConfig.count( "InitialTemp" ) == 1 ) )
 			std::cerr << "Initial Temperature for Temperature Solve set from config file to " << InitialTempVals.size() << " value(s) between " << InitialTempVals[0] << " and " << InitialTempVals.back() << std::endl;
