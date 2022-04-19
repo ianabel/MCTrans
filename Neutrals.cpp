@@ -11,6 +11,17 @@
 #include <algorithm>
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 
+
+Species Electron{ .type = Species::Electron, .Charge = -1, .Mass = ElectronMass,  .Name = "Electron" };
+Species Proton{ .type = Species::Ion, .Charge = 1, .Mass = ProtonMass, .Name = "Proton"};
+Species Deuteron{ .type = Species::Ion, .Charge = 1, .Mass = 1.999*ProtonMass, .Name = "Deuteron" };
+Species NeutralHydrogen{ .type = Species::Neutral, .Charge = 0, .Mass = ProtonMass + ElectronMass, .Name = "Neutral Hydrogen"};
+
+// Cross Section objects for integration
+CrossSection protonImpactIonization( protonImpactIonizationCrossSection, 200, 1e6, Proton, NeutralHydrogen );
+CrossSection HydrogenChargeExchange( HydrogenChargeExchangeCrossSection, 0.1, 1e6, Proton, NeutralHydrogen );
+CrossSection electronImpactIonization( electronImpactIonizationCrossSection, 13.6, 1e6, Electron, NeutralHydrogen );
+
 double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
 	// E and T in eV, sigma in cm^2
@@ -37,7 +48,7 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 	         * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
-	std::cerr << "Computing a cold rate coefficient at T = " << plasma.ElectronTemperature/1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
+	std::cerr << "Computing a hot rate coefficient at T = " << plasma.ElectronTemperature/1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << HotRateCoeff  << std::endl;
 #endif
 
 	return HotRateCoeff;
@@ -74,7 +85,7 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 	        * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
-	std::cerr << "Computing a cold rate coefficient at T = " << plasma.ElectronTemperature/1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
+	std::cerr << "Computing a cold rate coefficient at T = " << plasma.ElectronTemperature*1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
 #endif
 
 	return ColdRateCoeff;

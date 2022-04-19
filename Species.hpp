@@ -16,10 +16,4 @@ typedef struct Species_t {
 	std::string Name; // For reporting
 } Species;
 
-extern Species Electron;
-extern Species Proton;
-extern Species Deuteron;
-extern Species NeutralHydrogen;
-
-
 #endif // Definition of species struct

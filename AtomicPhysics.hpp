@@ -1,6 +1,9 @@
+#ifndef ATOMICPHYSICS_HPP
+#define ATOMICPHYSICS_HPP
 
 #include "Species.hpp"
 #include <functional>
+
 
 class CrossSection {
 	public:
@@ -39,10 +42,6 @@ double protonImpactIonizationCrossSection( double );
 double HydrogenChargeExchangeCrossSection( double );
 double electronImpactIonizationCrossSection( double );
 
-// Cross Section objects for integration
-CrossSection protonImpactIonization( protonImpactIonizationCrossSection, 200, 1e6, Proton, NeutralHydrogen );
-CrossSection HydrogenChargeExchange( HydrogenChargeExchangeCrossSection, 0.1, 1e6, Proton, NeutralHydrogen );
-CrossSection electronImpactIonization( electronImpactIonizationCrossSection, 13.6, 1e6, Electron, NeutralHydrogen );
-
 double neutralsRateCoefficientHot( CrossSection const & , std::shared_ptr<const MirrorPlasma> );
 double neutralsRateCoefficientCold( CrossSection const &, std::shared_ptr<const MirrorPlasma> );
+#endif // ATOMICPHYSICS_HPP

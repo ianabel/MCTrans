@@ -209,6 +209,8 @@ void MirrorPlasma::PrintReport(std::map<std::string, double>* parameterMap, int 
 	out << "Dimensionless parameters:" << std::endl;
 	out << "\t β  = " << Beta() * 100 << "%" << std::endl;
 	out << "\t ν* = " << NuStar() << " (ions) " << std::endl; 
+	// if ( NuStar() > 1.0 )
+	//	out << "\t\t 
 	out << "\t ρ* = " << ( 2.0 * IonLarmorRadius() ) / pVacuumConfig->PlasmaColumnWidth << std::endl; 
 	out << "\t Omega_i tau_ii = " << IonCyclotronFrequency()*IonCollisionTime() << std::endl; 
 
