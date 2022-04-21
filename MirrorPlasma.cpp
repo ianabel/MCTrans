@@ -5,8 +5,9 @@
 #include <boost/math/tools/roots.hpp>
 #include <functional>
 #include "TransitionFunction.hpp"
+#include "BatchRunner.hpp"
 
-
+/* Replaced by Batch Runner
 MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value const& plasmaConfig )
 {
 	if ( plasmaConfig.count( "AsciiOutputFile" ) == 1 )
@@ -134,7 +135,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	const auto mirrorConfig = toml::find<toml::table>( plasmaConfig, "configuration" );
 
 	if ( mirrorConfig.count( "IonSpecies" ) != 1 )
-		throw std::invalid_argument( "Fuel must be specified once in the [configuration] block" );
+		throw std::invalid_argument( "[error] Fuel must be specified once in the [configuration] block" );
 
 	std::string FuelName = mirrorConfig.at( "IonSpecies" ).as_string();
 
@@ -157,7 +158,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 		AlphaHeating = true;
 		ReportNuclearDiagnostics = true;
 	} else {
-		std::string ErrorMessage = "Fuel is not a recognized plasma species";
+		std::string ErrorMessage = "[error] Fuel is not a recognized plasma species";
 		throw std::invalid_argument( ErrorMessage );
 	}
 
@@ -238,7 +239,7 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	else if ( mirrorConfig.count( "Voltage" ) == 0 )
 		ImposedVoltage = 0.0;
 	else
-		throw std::invalid_argument( "Imposed voltage specified more than once!" );
+		throw std::invalid_argument( "[error] Imposed voltage specified more than once!" );
 
 	WallRadius = mirrorConfig.at( "WallRadius" ).as_floating();
 
@@ -257,7 +258,95 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration( toml::value 
 	if ( mirrorConfig.count( "ReportNuclearDiagnostics" ) == 1 )
 		ReportNuclearDiagnostics = mirrorConfig.at( "ReportNuclearDiagnostics" ).as_boolean();
 }
+*/
 
+MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(const std::map<std::string, double>& parameterMap, std::string FuelName, 
+	bool rThrust, tribool AHeating, tribool rDiagnostics, bool ambiPolPhi, bool collisions, bool includeCXLosses, std::string asciiOut, std::string netCdfOut)
+	: AmbipolarPhi(ambiPolPhi), IncludeCXLosses(includeCXLosses), Collisional(collisions), OutputFile(asciiOut), NetcdfOutputFile(netCdfOut)
+{
+	if( parameterMap.find("CentralCellField") != parameterMap.end())
+		CentralCellFieldStrength = parameterMap.at("CentralCellField");
+
+	if( parameterMap.find("MirrorRatio") != parameterMap.end())
+		MirrorRatio = parameterMap.at("MirrorRatio");
+	else if( parameterMap.find("ThroatField") != parameterMap.end())
+		MirrorRatio = parameterMap.at("ThroatField")/CentralCellFieldStrength;
+
+	if( parameterMap.find("PlasmaRadiusMin") != parameterMap.end())
+		AxialGapDistance = parameterMap.at("PlasmaRadiusMin");
+	else if( parameterMap.find("AxialGapDistance") != parameterMap.end())
+		AxialGapDistance = parameterMap.at("AxialGapDistance");
+
+	if( parameterMap.find("PlasmaColumnWidth") != parameterMap.end())
+		PlasmaColumnWidth = parameterMap.at("PlasmaColumnWidth");
+	else if(parameterMap.find("PlasmaRadiusMax") != parameterMap.end())
+		PlasmaColumnWidth = parameterMap.at("PlasmaRadiusMax") - AxialGapDistance;
+
+	if( parameterMap.find("Voltage") != parameterMap.end())
+		ImposedVoltage = parameterMap.at("Voltage");
+
+	if( parameterMap.find("WallRadius") != parameterMap.end())
+		WallRadius = parameterMap.at("WallRadius");
+
+	if( parameterMap.find("PlasmaLength") != parameterMap.end())
+		PlasmaLength = parameterMap.at("PlasmaLength");
+
+	if( parameterMap.find("AuxiliaryHeating") != parameterMap.end())
+		AuxiliaryHeating = parameterMap.at("AuxiliaryHeating");
+
+	if( parameterMap.find("ParallelFudgeFactor") != parameterMap.end())
+		ParallelFudgeFactor = parameterMap.at("ParallelFudgeFactor");
+
+	if( parameterMap.find("PerpFudgeFactor") != parameterMap.end())
+		PerpFudgeFactor = parameterMap.at("PerpFudgeFactor");
+
+	if( parameterMap.find("InitialTemp") != parameterMap.end())
+		InitialTemp = parameterMap.at("InitialTemp");
+
+	if( parameterMap.find("InitialMach") != parameterMap.end())
+		InitialMach = parameterMap.at("InitialMach");
+
+	if( parameterMap.find("SundialsAbsTol") != parameterMap.end())
+		SundialsAbsTol = parameterMap.at("SundialsAbsTol");
+
+	if( parameterMap.find("SundialsRelTol") != parameterMap.end())
+		SundialsRelTol = parameterMap.at("SundialsRelTol");
+
+	if( parameterMap.find("RateThreshold") != parameterMap.end())
+		RateThreshold = parameterMap.at("RateThreshold");
+
+	if ( FuelName == "Hydrogen" ) {
+		IonSpecies.Mass   = 1.0;
+		IonSpecies.Charge = 1.0;
+		IonSpecies.Name   = "Hydrogen";
+		AlphaHeating = false;
+		ReportNuclearDiagnostics = false;
+	} else if ( FuelName == "Deuterium" ) {
+		IonSpecies.Mass   = 2.0;
+		IonSpecies.Charge = 1.0;
+		IonSpecies.Name   = "Deuterium";
+		AlphaHeating = false;
+		ReportNuclearDiagnostics = true;
+	} else if ( FuelName == "DT Fuel" ) {
+		IonSpecies.Mass   = 2.5;
+		IonSpecies.Charge = 1.0;
+		IonSpecies.Name   = "Deuterium/Tritium Fuel";
+		AlphaHeating = true;
+		ReportNuclearDiagnostics = true;
+	} else {
+		std::string ErrorMessage = "[error] Fuel is not a recognized plasma species";
+		throw std::invalid_argument( ErrorMessage );
+	}
+
+	// If specified in the config file these values override the defaults from the fuel
+	if(AHeating == tribool::tru) AlphaHeating = true;
+	else if(AHeating == tribool::fal) AlphaHeating = false;
+
+	if(rDiagnostics == tribool::tru) ReportNuclearDiagnostics = true;
+	else if(rDiagnostics == tribool::fal) ReportNuclearDiagnostics = false;
+}
+
+/* Replaced by Batch Runner 
 MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 	: pVacuumConfig( std::make_shared<VacuumMirrorConfiguration>( plasmaConfig ) )
 {
@@ -266,23 +355,23 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 	double TiTe = toml::find_or<double>( mirrorConfig, "IonToElectronTemperatureRatio", 0.0 );
 	if ( TiTe < 0.0 )
 	{
-		throw std::invalid_argument( "Ion to Electron temperature ratio must be a positive number" );
+		throw std::invalid_argument( "[error] Ion to Electron temperature ratio must be a positive number" );
 	}
 
 	// Default to pure plasma
 	Zeff = toml::find_or<double>( mirrorConfig, "Zeff", 1.0 );
 	if ( Zeff <= 0.0 ) {
-		throw std::invalid_argument( "Effective charge (Z_eff) must be positive!" );
+		throw std::invalid_argument( "[error] Effective charge (Z_eff) must be positive!" );
 	}
 
 	try {
 		ElectronDensity = toml::find<double>( mirrorConfig, "ElectronDensity" );
 	} catch ( std::out_of_range &e ) {
-		throw std::invalid_argument( "You must specify the electron density (ElectronDensity) in the [configuration] block" );
+		throw std::invalid_argument( "[error] You must specify the electron density (ElectronDensity) in the [configuration] block" );
 	}
 
 	if ( ElectronDensity <= 0.0 ) {
-		throw std::invalid_argument( "Electron density must be positive!" );
+		throw std::invalid_argument( "[error] Electron density must be positive!" );
 	}
 
 	IonDensity = ElectronDensity / pVacuumConfig->IonSpecies.Charge;
@@ -296,7 +385,7 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 		ElectronTemperature = -1.0;
 		IonTemperature = -1.0;
 	} else {
-		throw std::invalid_argument( "Electron Temperature specified more than once!" );
+		throw std::invalid_argument( "[error] Electron Temperature specified more than once!" );
 	}
 
 	if ( mirrorConfig.count( "NeutralDensity" ) == 1 ) {
@@ -317,7 +406,66 @@ MirrorPlasma::MirrorPlasma( toml::value const& plasmaConfig )
 		isTimeDependent = false;
 		time = -1;
 	}
+}
+*/
 
+MirrorPlasma::MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig, std::map<std::string,double> parameterMap, std::string vTrace)
+	: pVacuumConfig(pVacuumConfig)
+{
+	if( parameterMap.find("Zeff") != parameterMap.end())
+		Zeff = parameterMap.at("Zeff");
+	else Zeff = 1.0;
+
+	if( parameterMap.find("ElectronDensity") != parameterMap.end())
+		ElectronDensity = parameterMap.at("ElectronDensity");
+
+	IonDensity = ElectronDensity / pVacuumConfig->IonSpecies.Charge; 
+
+	double TiTe = 0.0;
+	if( parameterMap.find("IonToElectronTemperatureRatio") != parameterMap.end())
+		TiTe = parameterMap.at("IonToElectronTemperatureRatio");
+
+
+	if( parameterMap.find("ElectronTemperature") != parameterMap.end())
+	{
+		ElectronTemperature = parameterMap.at("ElectronTemperature");
+		IonTemperature = ElectronTemperature < 0.0 ? -1.0 : ElectronTemperature * TiTe;
+	}
+	// Note if(...) only false if theres a bug. Batch runner will populate the value as -1.0 if its not found in the config file
+	else
+	{
+		ElectronTemperature = -1.0;
+		IonTemperature = -1.0;
+	}
+
+	// Note: current excecution has NeutralSource always initially set to 0. If this changes work will have to be done in BatchRunner
+	if( parameterMap.find("NeutralDensity") != parameterMap.end())
+	{
+		NeutralDensity = parameterMap.at("NeutralDensity");
+		NeutralSource = 0.0;
+		if ( NeutralDensity == 0.0 )
+			FixedNeutralDensity = false;
+		else
+			FixedNeutralDensity = true;
+	}
+	else
+	{
+		NeutralDensity = 0.0;
+		NeutralSource = 0.0;
+		FixedNeutralDensity = false;
+	}
+
+	if(!vTrace.empty())
+	{
+		ReadVoltageFile( vTrace );
+		isTimeDependent = true;
+		SetTime( 0 );
+	}
+	else
+	{
+		isTimeDependent = false;
+		time = -1;
+	}
 }
 
 // From NRL Formulary p34
@@ -387,6 +535,16 @@ double MirrorPlasma::ParallelElectronPastukhovLossRate( double Chi_e ) const
 
 double MirrorPlasma::ParallelElectronParticleLoss() const
 {
+	if ( pVacuumConfig->Collisional ) {
+		// Particle loss from the mirror throat
+		// given by the density at the throat and the sounds transit time
+		double MirrorThroatDensity = IonDensity * ReferenceDensity * ::exp( CentrifugalPotential() );
+#ifdef DEBUG
+		std::cout << "Electron parallel particle loss is " << SoundSpeed() * MirrorThroatDensity << "\t";
+		std::cout << "Collisionless parallel losse would have been " << ParallelElectronPastukhovLossRate( -AmbipolarPhi() );
+#endif
+		return SoundSpeed() * MirrorThroatDensity;
+	}
 	double Chi_e = -AmbipolarPhi(); // Ignore small electron mass correction
 	return ParallelElectronPastukhovLossRate( Chi_e );
 }
@@ -395,8 +553,13 @@ double MirrorPlasma::ParallelElectronHeatLoss() const
 {
 	if ( pVacuumConfig->Collisional )
 	{
-		double kappa_parallel = ElectronDensity * ElectronTemperature * ReferenceDensity * ReferenceTemperature / ( ElectronMass * ElectronCollisionTime() );
+		double kappa_parallel = 3.16 * ElectronDensity * ElectronTemperature * ReferenceDensity * ReferenceTemperature * ElectronCollisionTime() / ( ElectronMass  );
 		double L_parallel = pVacuumConfig->PlasmaLength;
+#ifdef DEBUG
+		std::cout << "Electron parallel heat flux is " << kappa_parallel * ElectronTemperature * ReferenceTemperature / ( L_parallel * L_parallel ) << std::endl;
+		std::cout << "Collisionless parallel heat flux would have been "
+		          << ParallelElectronPastukhovLossRate( -AmbipolarPhi() ) * ( ElectronTemperature * ReferenceTemperature ) * (  1.0 - AmbipolarPhi() );
+#endif
 		return kappa_parallel * ElectronTemperature * ReferenceTemperature / ( L_parallel * L_parallel );
 	}
 
@@ -439,12 +602,26 @@ double MirrorPlasma::Chi_i() const
 
 double MirrorPlasma::ParallelIonParticleLoss() const
 {
+	if ( pVacuumConfig->Collisional ) {
+		// Particle loss at the sound speed from the mirror throat
+		double MirrorThroatDensity = IonDensity * ReferenceDensity * ::exp( CentrifugalPotential() );
+		return SoundSpeed() * MirrorThroatDensity;
+	}
+
 	// Electrostatic energy + centrifugal potential energy
 	return ParallelIonPastukhovLossRate( Chi_i() );
 }
 
 double MirrorPlasma::ParallelIonHeatLoss() const
 {
+	if ( pVacuumConfig->Collisional ) {
+		// Collisional parallel heat transport
+		double IonMass = pVacuumConfig->IonSpecies.Mass * ProtonMass;
+		double kappa_parallel = 3.9 * IonDensity * IonTemperature * ReferenceDensity * ReferenceTemperature * IonCollisionTime() / ( IonMass );
+		double L_parallel = pVacuumConfig->PlasmaLength;
+		return kappa_parallel * IonTemperature * ReferenceTemperature / ( L_parallel * L_parallel );
+	}
+
 	// Energy loss per particle is ~ Chi_i + T_i
 	return ParallelIonPastukhovLossRate( Chi_i() ) * ( IonTemperature * ReferenceTemperature ) * ( ::fabs( Chi_i() )  + 1.0 );
 }
@@ -472,6 +649,9 @@ double MirrorPlasma::ParallelCurrent( double Phi ) const
 double MirrorPlasma::AmbipolarPhi() const
 {
 	double AmbipolarPhi = CentrifugalPotential();
+
+	if ( pVacuumConfig->Collisional )
+		return AmbipolarPhi;
 
 	if ( pVacuumConfig->AmbipolarPhi ) {
 		// Add correction.

@@ -10,12 +10,16 @@
 
 #include <memory>
 #include <cmath>
+#include <map>
+
+enum tribool{ tru, fal, unspecified};
 
 class MirrorPlasma {
 	public:
 		class VacuumMirrorConfiguration {
 			public:
-				VacuumMirrorConfiguration( toml::value const& );
+				// VacuumMirrorConfiguration( toml::value const& );
+				VacuumMirrorConfiguration(const std::map<std::string, double>& parameterMap, std::string FuelName, bool reportThrust, tribool AlphaHeating, tribool ReportNuclearDiagnostics, bool ambiPolPhi, bool collisions, bool includeCXLosses, std::string asciiOut, std::string netCdfOut);
 				/*
 				VacuumMirrorConfiguration( const& VacuumMirrorConfiguration other ) :
 					IonSpecies( other.IonSpecies )
@@ -92,7 +96,9 @@ class MirrorPlasma {
 
 		MirrorPlasma( MirrorPlasma const& ) = delete;
 
-		MirrorPlasma( toml::value const& configSection );
+		// MirrorPlasma( toml::value const& configSection );
+
+		MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig, std::map<std::string,double> parameterMap, std::string vTrace);
 
 		double FuellingRate;
 		double IonDensity,IonTemperature;
@@ -142,7 +148,7 @@ class MirrorPlasma {
 		double KineticEnergy() const;
 		double ThermalEnergy() const;
 
-		void PrintReport();
+		void PrintReport(std::map<std::string, double>* parameterMap = nullptr, int currentRun = 1, int totalRun = 1);
 
 		void InitialiseNetCDF();
 		void WriteTimeslice( double T );

@@ -11,6 +11,17 @@
 #include <algorithm>
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 
+
+Species Electron{ .type = Species::Electron, .Charge = -1, .Mass = ElectronMass,  .Name = "Electron" };
+Species Proton{ .type = Species::Ion, .Charge = 1, .Mass = ProtonMass, .Name = "Proton"};
+Species Deuteron{ .type = Species::Ion, .Charge = 1, .Mass = 1.999*ProtonMass, .Name = "Deuteron" };
+Species NeutralHydrogen{ .type = Species::Neutral, .Charge = 0, .Mass = ProtonMass + ElectronMass, .Name = "Neutral Hydrogen"};
+
+// Cross Section objects for integration
+CrossSection protonImpactIonization( protonImpactIonizationCrossSection, 200, 1e6, Proton, NeutralHydrogen );
+CrossSection HydrogenChargeExchange( HydrogenChargeExchangeCrossSection, 0.1, 1e6, Proton, NeutralHydrogen );
+CrossSection electronImpactIonization( electronImpactIonizationCrossSection, 13.6, 1e6, Electron, NeutralHydrogen );
+
 double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
 	// E and T in eV, sigma in cm^2
@@ -37,7 +48,7 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 	         * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
-	std::cerr << "Computing a cold rate coefficient at T = " << plasma.ElectronTemperature/1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
+	std::cerr << "Computing a hot rate coefficient at T = " << plasma.ElectronTemperature/1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << HotRateCoeff  << std::endl;
 #endif
 
 	return HotRateCoeff;
@@ -70,11 +81,11 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 
 	constexpr double tolerance = 1e-5;
 	constexpr unsigned MaxDepth = 10;
-	double ColdRateCoeff = thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) ) 
+	double ColdRateCoeff = thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) )
 	        * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
-	
+
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
-	std::cerr << "Computing a cold rate coefficient at T = " << plasma.ElectronTemperature/1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
+	std::cerr << "Computing a cold rate coefficient at T = " << plasma.ElectronTemperature*1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
 #endif
 
 	return ColdRateCoeff;
@@ -209,7 +220,7 @@ double protonImpactIonizationCrossSection( double Energy )
 double HydrogenChargeExchangeCrossSection( double CoMEnergy )
 {
 	// Minimum energy of cross section in eV
-	const double minimumEnergySigma_1s = 0.1;
+	// const double minimumEnergySigma_1s = 0.1;
 	const double minimumEnergySigma_2p = 19.0;
 	const double minimumEnergySigma_2s = 0.1;
 
@@ -267,73 +278,73 @@ double radiativeRecombinationCrossSection( double Energy )
 	return sigma;
 }
 
-double electronHydrogenExcitationN2CrossSection( double Te )
-{
-	// Minimum energy of cross section in eV
-	const double excitationEnergy = 10.2;
-	const double cutoffEnergy1 = 11.56;
-	const double cutoffEnergy2 = 12.23;
-
-	// Contribution from ground state
-	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
-	// Equation 1.1.3
-	// e + H(1s) --> e + H*(n=2)
-	// Accuracy is 10% or better
-	std::vector<double> fittingParamA = { 1.4182, -20.877, 49.735, -46.249, 17.442, 4.4979 };
-
-	double sigma;
-	if ( Te < excitationEnergy ) {
-		sigma = 0;
-	}
-	else if ( Te < cutoffEnergy1 ) {
-		sigma = 1e-16 * ( 0.255 + 0.1865 * ( Te - excitationEnergy ) );
-	}
-	else if ( Te < cutoffEnergy2 ) {
-		sigma = 5.025e-17;
-	}
-	else {
-		double sum = 0.0;
-		double XEnergy = Te / excitationEnergy;
-		for ( size_t n = 0; n < fittingParamA.size() - 1; n++ ) {
-	      sum += fittingParamA.at( n ) / ::pow( XEnergy, n - 1 );
-	   }
-		sigma = 5.984e-16 / Te * ( sum + fittingParamA.back() * ::log( XEnergy ) );
-	}
-	return sigma;
-}
-
-double protonHydrogenExcitationN2CrossSection( double Ti )
-{
-	// Minimum energy of cross section in keV
-	const double minimumEnergySigma = 0.6;
-	double TiKEV = Ti / 1000;
-
-	// Contribution from ground state
-	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
-	// Equation 2.2.1
-	// H+ + H(1s) --> H+ + H+ + e
-	// Accuracy is 100% or better
-	const double A1 = 34.433;
-	const double A2 = 44.057;
-	const double A3 = 0.56870;
-	const double A4 = 8.5476;
-	const double A5 = 7.8501;
-	const double A6 = -9.2217;
-	const double A7 = 1.8020e-2;
-	const double A8 = 1.6931;
-	const double A9 = 1.9422e-3;
-	const double A10 = 2.9068;
-
-	double sigma;
-	if ( TiKEV < minimumEnergySigma ) {
-		sigma = 0;
-	}
-	else {
-		// Energy is in units of keV
-		sigma = 1e-16 * A1 * ( ::exp( -A2 / TiKEV ) * ::log( 1 + A3 * TiKEV ) / TiKEV + A4 * ::exp( -A5 * TiKEV ) / ( ::pow( TiKEV, A6 ) ) + A7 * ::exp( -A8 / TiKEV ) / ( 1 + A9 * ::pow( TiKEV, A10 ) ) );
-	}
-	return sigma;
-}
+// double electronHydrogenExcitationN2CrossSection( double Te )
+// {
+// 	// Minimum energy of cross section in eV
+// 	const double excitationEnergy = 10.2;
+// 	const double cutoffEnergy1 = 11.56;
+// 	const double cutoffEnergy2 = 12.23;
+//
+// 	// Contribution from ground state
+// 	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
+// 	// Equation 1.1.3
+// 	// e + H(1s) --> e + H*(n=2)
+// 	// Accuracy is 10% or better
+// 	std::vector<double> fittingParamA = { 1.4182, -20.877, 49.735, -46.249, 17.442, 4.4979 };
+//
+// 	double sigma;
+// 	if ( Te < excitationEnergy ) {
+// 		sigma = 0;
+// 	}
+// 	else if ( Te < cutoffEnergy1 ) {
+// 		sigma = 1e-16 * ( 0.255 + 0.1865 * ( Te - excitationEnergy ) );
+// 	}
+// 	else if ( Te < cutoffEnergy2 ) {
+// 		sigma = 5.025e-17;
+// 	}
+// 	else {
+// 		double sum = 0.0;
+// 		double XEnergy = Te / excitationEnergy;
+// 		for ( size_t n = 0; n < fittingParamA.size() - 1; n++ ) {
+// 	      sum += fittingParamA.at( n ) / ::pow( XEnergy, n - 1 );
+// 	   }
+// 		sigma = 5.984e-16 / Te * ( sum + fittingParamA.back() * ::log( XEnergy ) );
+// 	}
+// 	return sigma;
+// }
+//
+// double protonHydrogenExcitationN2CrossSection( double Ti )
+// {
+// 	// Minimum energy of cross section in keV
+// 	const double minimumEnergySigma = 0.6;
+// 	double TiKEV = Ti / 1000;
+//
+// 	// Contribution from ground state
+// 	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
+// 	// Equation 2.2.1
+// 	// H+ + H(1s) --> H+ + H+ + e
+// 	// Accuracy is 100% or better
+// 	const double A1 = 34.433;
+// 	const double A2 = 44.057;
+// 	const double A3 = 0.56870;
+// 	const double A4 = 8.5476;
+// 	const double A5 = 7.8501;
+// 	const double A6 = -9.2217;
+// 	const double A7 = 1.8020e-2;
+// 	const double A8 = 1.6931;
+// 	const double A9 = 1.9422e-3;
+// 	const double A10 = 2.9068;
+//
+// 	double sigma;
+// 	if ( TiKEV < minimumEnergySigma ) {
+// 		sigma = 0;
+// 	}
+// 	else {
+// 		// Energy is in units of keV
+// 		sigma = 1e-16 * A1 * ( ::exp( -A2 / TiKEV ) * ::log( 1 + A3 * TiKEV ) / TiKEV + A4 * ::exp( -A5 * TiKEV ) / ( ::pow( TiKEV, A6 ) ) + A7 * ::exp( -A8 / TiKEV ) / ( 1 + A9 * ::pow( TiKEV, A10 ) ) );
+// 	}
+// 	return sigma;
+// }
 
 /*
  * Use the above functions to set steady-state neutral density/source

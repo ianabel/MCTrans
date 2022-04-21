@@ -4,6 +4,8 @@ K = 8.617E-5 #[eV/K]
 MP = 1.673E-27 #[kg]
 ME = 9.11e-31 #[kg]
 QE = 1.602e-19 #[C]
+BohrRadius = 5.29177e-11 # m
+FineStructureConstant = 7.2973525694e-3
 
 species = {'proton': {'mass': 1, 'charge': 1},
     'hydrogen': {'mass': 1, 'charge': 0},
@@ -110,6 +112,24 @@ class Neutrals:
 
                 sigma[i] = 1.0e-13 / (ionizationEnergy * E) * (fittingParamA * np.log(E / ionizationEnergy) + sum)
 
+        return CrossSection(sigma, energy, particle, target, reaction)
+
+    def radiativeRecombinationCrossSection(self, energy):
+        # From https://iopscience-iop-org.proxy-um.researchport.umd.edu/article/10.1088/1402-4896/ab060a
+        # Igor A Kotelnikov and Alexander I Milstein 2019 Phys. Scr. 94 055403
+        # Equation 9
+        # H+ + e --> H + hν
+        reaction = 'H+ + e --> H + hν'
+        particle = Species('electron')
+        target = Species('proton')
+
+        Z = 1
+        IonizationEnergy = 13.59844 # eV
+        J_Z = np.power( Z, 2 ) * IonizationEnergy
+        eta = np.sqrt( J_Z / energy )
+        sigma = np.power( 2, 8 ) * np.power( np.pi * BohrRadius, 2 ) / 3 * np.power( eta, 6 ) * np.exp( - 4 * eta * np.arctan( 1 / eta ) ) / ( ( 1 - np.exp( -2 * np.pi * eta ) ) * np.power( np.power( eta, 2 ) + 1, 2 ) ) * np.power( FineStructureConstant, 3 )
+
+        sigma *= 1e4 # convert to cm^2
         return CrossSection(sigma, energy, particle, target, reaction)
 
 

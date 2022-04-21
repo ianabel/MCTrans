@@ -3,10 +3,10 @@ from scipy.integrate import cumtrapz
 from neutrals import *
 
 temperature = np.logspace(1, 5, 100) # eV
-energy = np.logspace(np.log10(200), 6, 200) # eV
-density = 1e19 # m^-3
+energy = np.logspace(1, 5, 200) # eV
+density = 1e20 # m^-3
 plasmaVolume = 10 # m^3
-MachNumber = 5.25257
+MachNumber = 2
 
 neutrals = Neutrals(MachNumber, temperature, energy)
 
@@ -15,7 +15,7 @@ plt.figure(1)
 for crossSection in neutrals.crossSections :
     plt.loglog(energy, crossSection.sigma, label=crossSection.reaction)
 
-plt.xlabel('T (eV)')
+plt.xlabel('Energy (eV)')
 plt.ylabel('$\sigma_{cx}$ (cm$^2$)')
 plt.legend()
 plt.grid()
