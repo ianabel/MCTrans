@@ -245,7 +245,6 @@ class MirrorPlasma {
 		std::unique_ptr<interpolant> VoltageFunction;
 		void ReadVoltageFile( std::string const& );
 		double time;
-		bool isTimeDependent;
 
 	public:
 		double AlphaHeating() const;
@@ -260,6 +259,7 @@ class MirrorPlasma {
 		double ParallelCurrent(double) const;
 		void UpdateVoltage();
 		void SetTime( double );
+		bool isTimeDependent;
 };
 
 

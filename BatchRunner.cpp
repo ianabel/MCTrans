@@ -213,7 +213,19 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	// Voltage Trace
 	if ( batch.count( "VoltageTrace" ) == 1 ) {
 		VoltageTrace = batch.at( "VoltageTrace" ).as_string();
-	} else VoltageTrace = "";
+		isTimeDependent = true;
+	} else {
+		VoltageTrace = "";
+	}
+
+	if ( batchConfig.count( "timestepping" ) == 1 ) {
+		const auto & timestep_conf = toml::find<toml::table>( batchConfig, "timestepping" );
+		OutputCadence = timestep_conf.at( "OutputCadence" ).as_floating();
+		EndTime = timestep_conf.at( "EndTime" ).as_floating();
+	} else {
+		OutputCadence = 0.0005;
+		EndTime = 1.00;
+	}
 }
 
 void BatchRunner::cartesianProduct(vecMap& vectorOfMaps, mapSD& currentMap, vecPairVS::const_iterator currentI, vecPairVS::const_iterator end)
@@ -241,8 +253,12 @@ void BatchRunner::runBatchSolve()
 	cartesianProduct(vectorOfMaps, currentMap, ptrsAndNamesToVectors.begin(), ptrsAndNamesToVectors.end());
 
 	totalRuns = vectorOfMaps.size();
+
 	if ( totalRuns > 1 && OutputFile == "" )
 		throw std::invalid_argument("[error] Output file name is needed when running a batch solve");
+
+	if ( totalRuns > 1 && isTimeDependent )
+		throw std::invalid_argument( "[error] Multiple simultaneous time-dependent runs is not currently supported" );
 
 	for ( int n = 0; n < totalRuns; n++ )
 	{
@@ -290,7 +306,8 @@ void BatchRunner::SolveIndividualMirrorPlasma(std::map<std::string, double> para
 {
 	std::shared_ptr< MirrorPlasma::VacuumMirrorConfiguration > pVacuumConfig = std::make_shared<MirrorPlasma::VacuumMirrorConfiguration>( parameterMap,FuelName,reportThrust,AlphaHeating,ReportNuclearDiagnostics, AmbipolarPhi, Collisional, IncludeCXLosses, OutputFile, NetcdfOutputFile );
 	std::shared_ptr< MirrorPlasma > pReferencePlasmaState = std::make_shared<MirrorPlasma>(pVacuumConfig, parameterMap, VoltageTrace);
-	MCTransConfig config(pReferencePlasmaState);
+	
+	MCTransConfig config(pReferencePlasmaState, OutputCadence, EndTime);
 
 	std::shared_ptr<MirrorPlasma> result = config.Solve();
 
