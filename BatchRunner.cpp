@@ -136,8 +136,8 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		if ( batch.count( "PlasmaRadiusMax" ) == 0 )
 			throw std::invalid_argument( toml::format_error( "[error] When PlasmaRadiusMin is specified you must also set PlasmaRadiusMax",batch.at( "PlasmaRadiusMin" )," min radius set here" ) );
 		
-		readParameterFromFile(batch, "PlasmaMinRadius", AxialGapDistanceVals, false);
-		readParameterFromFile(batch, "PlasmaMaxRadius", PlasmaMaxRadiusVals, false);
+		readParameterFromFile(batch, "PlasmaRadiusMin", AxialGapDistanceVals, false);
+		readParameterFromFile(batch, "PlasmaRadiusMax", PlasmaMaxRadiusVals, false);
 
 		if ( batch.count( "AxialGapDistance" ) == 1 ) {
 			throw std::invalid_argument( toml::format_error( "[error] When PlasmaRadiusMin / Max are specified you cannot set AxialGapDistance",batch.at( "PlasmaRadiusMin" )," minimum radius set here", batch.at( "AxialGapDistance" ), " AxialGapDistance found here" ) );
