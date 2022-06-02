@@ -35,8 +35,8 @@ class MCTransConfig {
 		};
 		*/
 
-		MCTransConfig(std::shared_ptr<MirrorPlasma> refPlasmaState)
-			: ReferencePlasmaState(refPlasmaState)
+		MCTransConfig(std::shared_ptr<MirrorPlasma> refPlasmaState, double deltaT = 0.0005, double tFinal = 0.5)
+			: ReferencePlasmaState(refPlasmaState), OutputDeltaT( deltaT ), EndTime( tFinal )
 		{
 			bool MachSolve = ( ReferencePlasmaState->ElectronTemperature > 0.0 );
 			bool TempSolve = ( ReferencePlasmaState->pVacuumConfig->ImposedVoltage > 0.0 );
@@ -48,22 +48,8 @@ class MCTransConfig {
 				throw std::invalid_argument( "[error] Cannot specify both temperature and voltage." );
 			else if ( !MachSolve && !TempSolve )
 				throw std::invalid_argument( "[error] Must specify at least one of ElectronTemperature or Voltage." );
+		};
 
-			OutputDeltaT = 0.0005; // 500µs cadence
-			EndTime = 0.500; // 500 ms run time
-
-			//To Do: add this time stuff to batch solve
-			/*
-			if ( config.count( "timestepping" ) ) {
-				const auto & timestep_conf = toml::find<toml::table>( config, "timestepping" );
-				OutputDeltaT = timestep_conf.at( "OutputCadence" ).as_floating();
-				EndTime = timestep_conf.at( "EndTime" ).as_floating();
-			} else {
-				OutputDeltaT = 0.0005; // 500µs cadence
-				EndTime = 0.500; // 500 ms run time
-			}
-			*/
-		}
 		enum SolveType {
 			SteadyStateMachSolve,
 			SteadyStateTempSolve

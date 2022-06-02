@@ -194,6 +194,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 
 #ifdef DEBUG
 	std::cerr << "Solving from t = 0 to t = " << EndTime << std::endl;
+	std::cerr << "Writing output every " << OutputDeltaT << std::endl;
 #endif 
 	ArkodeErrorWrapper( ARKStepSetStopTime( arkMem, EndTime ), "ARKStepSetStopTime" );
 	for ( t = OutputDeltaT; t < EndTime; t += OutputDeltaT )
@@ -212,6 +213,9 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 		plasma.SetMachFromVoltage();
 		plasma.ComputeSteadyStateNeutrals();
 		plasma.WriteTimeslice( t );
+#if defined( DEBUG )
+		std::cerr << "Writing timeslice at t = " << t << std::endl;
+#endif
 #if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
 	std::cerr << "After evolving to " << tRet << " T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
 #endif
@@ -222,10 +226,11 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 		std::cerr << " Relative Rate of Change in Ion Energy Density " << RelativeIonRate * 100 << " %/s" << std::endl;
 		std::cerr << " Relative Rate of Change in Electron Energy Density " << RelativeElectronRate * 100 << " %/s" << std::endl;
 #endif
-		if ( RelativeIonRate < plasma.pVacuumConfig->RateThreshold &&
+		if ( !plasma.isTimeDependent &&
+		     RelativeIonRate < plasma.pVacuumConfig->RateThreshold &&
 		     RelativeElectronRate < plasma.pVacuumConfig->RateThreshold )
 		{
-#if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
+#if defined( DEBUG )
 	std::cerr << "Steady state reached at time " << t << " with T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
 #endif
 			break;

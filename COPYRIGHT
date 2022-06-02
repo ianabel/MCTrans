@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Ian G Abel, Nick R. Schwartz
+# Copyright (c) 2021 Ian G Abel, Nick R. Schwartz, Myles Kelly
 # This file is part of the MCTrans software package, for more information and source code availability
 # see http://github.com/ianabel/MCTrans
 
@@ -7,7 +7,7 @@ COPYRIGHT
 The following copyright applies to each file in the MCTrans distribution, unless
 otherwise stated in the file:
 
-Copyright (c) 2021 Ian G Abel.
+Copyright (c) 2021-22 Ian G Abel, Nick Schwartz, Myles Kelly
 
 The toml11 library is redistributed under its own licence.
 
@@ -22,7 +22,7 @@ PARTICULAR PURPOSE.  See the LICENCE file for more details.
 
 CONTACT INFORMATION
 
-For licencing and other queries about MEQ, please contact Ian Abel via email at iabel-at-umd.edu.
+For licencing and other queries about MCTrans, please contact Ian Abel via email at iabel-at-umd.edu.
 
 Please see http://github.com/ianabel/MCTrans for more information and source code availability.
 

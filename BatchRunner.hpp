@@ -72,6 +72,8 @@ private:
 
 	// Time dependent parameters
 	std::string VoltageTrace;
+	double EndTime,OutputCadence;
+	bool isTimeDependent = false;
 
 	int totalRuns = 1;
 };
