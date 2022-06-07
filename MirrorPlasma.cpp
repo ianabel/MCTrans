@@ -665,6 +665,11 @@ double MirrorPlasma::CXMomentumLosses() const
 	return IonLoss * AngularMomentumPerParticle();
 }
 
+double MirrorPlasma::TotalAngularMomentumLosses() const
+{
+	return ViscousTorque() + ParallelAngularMomentumLossRate() +  CXMomentumLosses();
+}
+
 // Momentum Equation is
 //		I d omega / dt = <Viscous Torque> + <Parallel Angular Momentum Loss> + R J_R B_z
 //
@@ -674,9 +679,6 @@ double MirrorPlasma::CXMomentumLosses() const
 //
 double MirrorPlasma::RadialCurrent() const
 {
-	double Torque = -ViscousTorque();
-	double ParallelLosses = -ParallelAngularMomentumLossRate();
-	double CXLosses = -CXMomentumLosses();
 	// Inertial term = m_i n_i R^2 d omega / dt ~= m_i n_i R^2 d  / dt ( E/ ( R*B) )
 	//					~= m_i n_i (R/B) * d/dt ( V / a )
 	double Inertia;
@@ -686,10 +688,19 @@ double MirrorPlasma::RadialCurrent() const
 	else
 		Inertia = 0.0;
 
+	double Losses = TotalAngularMomentumLosses();
 	// R J_R = (<Torque> + <ParallelLosses> + <Inertia>)/B_z
 	// I_R = 2*Pi*R*L*J_R
-	double I_radial = 2.0 * M_PI * pVacuumConfig->PlasmaLength * ( Torque + ParallelLosses + Inertia + CXLosses ) / pVacuumConfig->CentralCellFieldStrength;
+	double I_radial = 2.0 * M_PI * pVacuumConfig->PlasmaLength * ( Inertia - Losses ) / pVacuumConfig->CentralCellFieldStrength;
 	return I_radial;
+}
+
+// Depending if we're solving with I_R(V_R) or V_R(I_R) we need the injected torque 
+// as a function of the radial current
+double MirrorPlasma::InjectedTorque( double I_Radial )
+{
+	double J_Radial = I_Radial / ( 2.0 * M_PI * pVacuumConfig->PlasmaLength );
+	return pVacuumConfig->PlasmaCentralRadius() * J_Radial * pVacuumConfig->CentralCellFieldStrength;
 }
 
 // Thrust from ions leaving
@@ -715,4 +726,11 @@ void MirrorPlasma::SetTime( double new_time )
 {
 	time = new_time;
 	UpdateVoltage();
+}
+
+double MirrorPlasma::MomentOfInertia() const
+{
+	double R1 = pVacuumConfig->PlasmaInnerRadius();
+	double R2 = pVacuumConfig->PlasmaOuterRadius();
+	return 0.5 * ( pVacuumConfig->PlasmaVolume() * IonDensity * pVacuumConfig->IonSpecies.Mass * ProtonMass ) * ( R1*R1 + R2*R2 );
 }

@@ -30,6 +30,8 @@ void NetCDFIO::Close()
 
 NetCDFIO::~NetCDFIO()
 {
+	if ( filename != "" )
+		Close();
 }
 
 void NetCDFIO::AddScalarVariable( std::string&& name, std::string&& description, std::string&& units, double value )
