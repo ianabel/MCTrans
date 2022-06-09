@@ -162,6 +162,9 @@ class MirrorPlasma {
 
 		void ComputeSteadyStateNeutrals();
 
+		double TotalAngularMomentumLosses() const;
+		double MomentOfInertia() const;
+		double InjectedTorque( double ) const;
 		double ParallelMomentumLossRate() const;
 		double initialTemperature() const { return pVacuumConfig->InitialTemp; };
 		double initialMach() const { return pVacuumConfig->InitialMach; };
@@ -260,6 +263,8 @@ class MirrorPlasma {
 		void UpdateVoltage();
 		void SetTime( double );
 		bool isTimeDependent;
+
+		double ExternalResistance;
 };
 
 

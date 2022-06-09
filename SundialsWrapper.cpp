@@ -135,7 +135,7 @@ int ARKStep_FreeWheel( realtype t, N_Vector u, N_Vector uDot, void* voidPlasma )
 	// We're now evolving the voltage with time 
 	plasmaPtr->IonTemperature = ION_TEMPERATURE( u );
 	plasmaPtr->ElectronTemperature = ELECTRON_TEMPERATURE( u );
-	plasmaPtr->ImposedVoltage = VOLTAGE( u );
+	plasmaPtr->pVacuumConfig->ImposedVoltage = VOLTAGE( u );
 
 
 	
@@ -176,6 +176,8 @@ int ARKStep_FreeWheel( realtype t, N_Vector u, N_Vector uDot, void* voidPlasma )
 
 		// Should be negative to decelerate the plasma
 		double RadialCurrent = -VOLTAGE( u ) / plasmaPtr->ExternalResistance;
+		double AngularMomentumInjection = plasmaPtr->InjectedTorque( RadialCurrent );
+		double AngularMomentumLoss = plasmaPtr->TotalAngularMomentumLosses();
 
 		MOMENTUM_BALANCE( uDot ) = ( MomentumToVoltage ) * ( AngularMomentumInjection - AngularMomentumLoss );
 

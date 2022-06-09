@@ -61,6 +61,7 @@ class MCTransConfig {
 		void doMachSolve( MirrorPlasma& plasma ) const;
 		void doTempSolve( MirrorPlasma& plasma ) const;
 		void doFixedTeSolve( MirrorPlasma& plasma ) const;
+		void doFreeWheel( MirrorPlasma& plasma ) const;
 
 		double OutputDeltaT,EndTime;
 

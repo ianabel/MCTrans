@@ -697,7 +697,7 @@ double MirrorPlasma::RadialCurrent() const
 
 // Depending if we're solving with I_R(V_R) or V_R(I_R) we need the injected torque 
 // as a function of the radial current
-double MirrorPlasma::InjectedTorque( double I_Radial )
+double MirrorPlasma::InjectedTorque( double I_Radial ) const
 {
 	double J_Radial = I_Radial / ( 2.0 * M_PI * pVacuumConfig->PlasmaLength );
 	return pVacuumConfig->PlasmaCentralRadius() * J_Radial * pVacuumConfig->CentralCellFieldStrength;
