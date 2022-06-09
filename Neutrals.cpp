@@ -79,13 +79,13 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 		return u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) ) * Jacobian;
 	};
 
-	constexpr double tolerance = 1e-5;
-	constexpr unsigned MaxDepth = 10;
+	constexpr double tolerance = 1e-6;
+	constexpr unsigned MaxDepth = 12;
 	double ColdRateCoeff = thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) )
 	        * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
-	std::cerr << "Computing a cold rate coefficient at T = " << plasma.ElectronTemperature*1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
+	std::cerr << "Computing a cold rate coefficient at T = " << 1000*temperature/ReferenceTemperature  << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
 #endif
 
 	return ColdRateCoeff;
