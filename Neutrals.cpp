@@ -386,8 +386,12 @@ double MirrorPlasma::CXLossRate() const
 
 	double CXRateCoefficient = neutralsRateCoefficientCold( HydrogenChargeExchange, *this );
 
+	// Really rate per unit plasma volume
+	double CXRate = CXRateCoefficient * ( NeutralDensity * ReferenceDensity * IonDensity * ReferenceDensity );
+
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
-	std::cerr << "Current CX Loss Rate is " << CXRateCoefficient * ( NeutralDensity * ReferenceDensity * IonDensity * ReferenceDensity ) << " particles/s"<<std::endl;
+	std::cerr << "Current CX Loss Rate is " << CXRate << " particles/s/m^3"<<std::endl;
+	std::cerr << " CX Frequency is " << CXRateCoefficient * NeutralDensity * ReferenceDensity << " /s " << std::endl;
 #endif
 
 	return CXRateCoefficient * ( NeutralDensity * ReferenceDensity * IonDensity * ReferenceDensity );
