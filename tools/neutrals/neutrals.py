@@ -215,10 +215,6 @@ class Neutrals:
         return CrossSection(sigma, energy, particle, target, reaction)
 
     def chargeExchangeCrossSection1993(self, energy):
-        # We need the energy in projectile form, while the input is in CoM
-        # Factor of two because of hydrogen
-        energy *= 2
-
         # Contribution from ground -> ground state
         # Janev 1993 2.3.1
         # H+ + H(1s) --> H + H+
