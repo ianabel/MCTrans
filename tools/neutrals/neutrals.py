@@ -66,23 +66,26 @@ class Neutrals:
         self.electronImpactIonizationCrossSection = self.electronImpactIonizationCrossSection(energy)
         self.protonImpactIonizationCrossSection = self.protonImpactIonizationCrossSection(energy)
         self.chargeExchangeCrossSection = self.chargeExchangeCrossSection(energy)
+        self.chargeExchangeCrossSection1993 = self.chargeExchangeCrossSection1993(energy)
         self.radiativeRecombinationCrossSection = self.radiativeRecombinationCrossSection(energy)
 
-        self.add_CrossSection([self.electronImpactIonizationCrossSection, self.protonImpactIonizationCrossSection, self.chargeExchangeCrossSection, self.radiativeRecombinationCrossSection])
+        self.add_CrossSection([self.electronImpactIonizationCrossSection, self.protonImpactIonizationCrossSection, self.chargeExchangeCrossSection, self.chargeExchangeCrossSection1993, self.radiativeRecombinationCrossSection])
 
     def computeRateCoefficients(self):
         self.electronImpactIonizationRateCoefficientCold = self.rateCoefficientCold(self.electronImpactIonizationCrossSection)
         self.protonImpactIonizationRateCoefficientCold = self.rateCoefficientCold(self.protonImpactIonizationCrossSection)
         self.chargeExchangeRateCoefficientCold = self.rateCoefficientCold(self.chargeExchangeCrossSection)
+        self.chargeExchangeRateCoefficientCold1993 = self.rateCoefficientCold(self.chargeExchangeCrossSection1993)
         self.radiativeRecombinationRateCoefficientCold = self.rateCoefficientCold(self.radiativeRecombinationCrossSection)
 
         self.electronImpactIonizationRateCoefficientHot = self.rateCoefficientHot(self.electronImpactIonizationCrossSection)
         self.protonImpactIonizationRateCoefficientHot = self.rateCoefficientHot(self.protonImpactIonizationCrossSection)
         self.chargeExchangeRateCoefficientHot = self.rateCoefficientHot(self.chargeExchangeCrossSection)
+        self.chargeExchangeRateCoefficientHot1993 = self.rateCoefficientHot(self.chargeExchangeCrossSection1993)
         self.radiativeRecombinationRateCoefficientHot = self.rateCoefficientHot(self.radiativeRecombinationCrossSection)
 
-        self.add_RateCoefficient([self.electronImpactIonizationRateCoefficientCold, self.protonImpactIonizationRateCoefficientCold, self.chargeExchangeRateCoefficientCold, self.radiativeRecombinationRateCoefficientCold], 'cold')
-        self.add_RateCoefficient([self.electronImpactIonizationRateCoefficientHot, self.protonImpactIonizationRateCoefficientHot, self.chargeExchangeRateCoefficientHot, self.radiativeRecombinationRateCoefficientHot], 'hot')
+        self.add_RateCoefficient([self.electronImpactIonizationRateCoefficientCold, self.protonImpactIonizationRateCoefficientCold, self.chargeExchangeRateCoefficientCold, self.chargeExchangeRateCoefficientCold1993, self.radiativeRecombinationRateCoefficientCold], 'cold')
+        self.add_RateCoefficient([self.electronImpactIonizationRateCoefficientHot, self.protonImpactIonizationRateCoefficientHot, self.chargeExchangeRateCoefficientHot, self.chargeExchangeRateCoefficientHot1993, self.radiativeRecombinationRateCoefficientHot], 'hot')
 
     def electronImpactIonizationCrossSection(self, energy):
         # Contribution from ground state
@@ -211,6 +214,52 @@ class Neutrals:
 
         return CrossSection(sigma, energy, particle, target, reaction)
 
+    def chargeExchangeCrossSection1993(self, energy):
+        # Contribution from ground -> ground state
+        # Janev 1993 2.3.1
+        # H+ + H(1s) --> H + H+
+        # Janev 1993 2.3.2
+        # H+ + H(n) --> H + H+
+        reaction = 'H+ + H --> H + H+ (1993)'
+        particle = Species('proton')
+        target = Species('hydrogen')
+
+        # Minimum energy of cross section in eV
+        minimumEnergySigma_n1 = 0.12
+        minimumEnergySigma_n2 = 10
+        minimumEnergySigma_n3 = 10
+
+        sigma = np.zeros(len(energy))
+        for i, E in enumerate(energy):
+            if (E < minimumEnergySigma_n1):
+                sigma_n1 = 0
+            else:
+                energyKEV = E / 1000
+                sigma_n1 = 1e-16 * 3.2345 * np.log( 235.88 / energyKEV + 2.3713 ) / ( 1 + 0.038371 * energyKEV + 3.8068e-6 * np.power( energyKEV, 3.5 ) + 1.1832e-10 * np.power( energyKEV, 5.4 ) )
+
+            # Contribution from n=2 -> ground
+            if (E < minimumEnergySigma_n2):
+                sigma_n2 = 0
+            else:
+                energyKEV = E / 1000
+                n = 2
+                Etilde = energyKEV * n**2
+                sigma_n2 = 1e-16 * 0.92750 * np.log( 6.5040e3 / Etilde + 20.699 ) / ( 1 + 1.3405e-2 * Etilde + 3.0842e-6 * np.power( Etilde, 3.5 ) + 1.1832e-10 * np.power( Etilde, 5.4 ) )
+
+
+            # Contribution from n=3 -> ground
+            if (E < minimumEnergySigma_n3):
+                sigma_n3 = 0
+            else:
+                energyKEV = E / 1000
+                n = 3
+                Etilde = energyKEV * n**2
+                sigma_n3 = 1e-16 * 0.37271 * np.log( 2.7645e6 / Etilde + 1.4857e3 ) / ( 1 + 1.5720e-3 * Etilde + 3.0842e-6 * np.power( Etilde, 3.5 ) + 1.1832e-10 * np.power( Etilde, 5.4 ) )
+
+            sigma[i] = sigma_n1 + sigma_n2 + sigma_n3
+
+        return CrossSection(sigma, energy, particle, target, reaction)
+
     def evaluateJanevCrossSectionFit(self, PolynomialCoefficients, energy):
         N_JANEV_COEFFS = 9
         if (len(PolynomialCoefficients) != N_JANEV_COEFFS):
@@ -224,16 +273,15 @@ class Neutrals:
     def rateCoefficientCold(self, crossSection):
         # temperature in eV, sigma in cm^2
         # k=<σv> in m^3/s
-        # Assumes a Maxwellian distribution and the neutrals are stationary, COM energy (as opposed to incident)
+        # Assumes a Maxwellian distribution and the neutrals are stationary, projectile energy (as opposed to CoM)
         # I am a bit unsure of using mass vs reducedMass
         mass = crossSection.particle.mass * MP # kg
         sigma = 1e-4 * crossSection.sigma # Convert to m^2
         temperature = self.temperature * QE # Convert to J
         thermalMachNumber = self.MachNumber * np.sqrt(crossSection.particle.charge / 2) # Assumes that Te = Ti
 
-        velocityCOM = np.sqrt(2 * self.energy * QE / (crossSection.reducedMass * MP)) # Convert to COM, m/s
+        velocityCOM = np.sqrt(2 * self.energy * QE / (mass)) # Convert to COM, m/s
         thermalVelocity = np.sqrt(2 * temperature / mass)
-        print(sigma)
 
         if isinstance(self.MachNumber, int) or isinstance(self.MachNumber, float):
             rateCoefficient = np.zeros(len(self.temperature))
@@ -259,11 +307,12 @@ class Neutrals:
         # Assumes a Maxwellian distribution and the neutrals are hot, COM energy (as opposed to incident)
         # I am a bit unsure of using mass vs reducedMass
         reducedMass = crossSection.reducedMass * MP # kg
+        mass = crossSection.particle.mass * MP # kg
         sigma = 1e-4 * crossSection.sigma # Convert to m^2
         temperature = self.temperature * QE # Convert to J
         energy = crossSection.energy * QE # Convert to J
 
-        rateCoefficient = np.array([4 / np.sqrt(2 * np.pi * reducedMass * T) / T * np.trapz(energy * sigma * np.exp(-energy / T), x=energy) for T in temperature])
+        rateCoefficient = np.array([4 / np.sqrt(2 * np.pi * mass * T) / T * np.trapz(energy * sigma * np.exp(-energy / T), x=energy) for T in temperature])
 
         rateCoefficient *= 1e6 # cm^3/s
 

@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 from scipy.integrate import cumtrapz
 from neutrals import *
 
-temperature = np.logspace(1, 5, 100) # eV
-energy = np.logspace(1, 5, 200) # eV
+temperature = np.logspace(1, 6, 100) # eV
+energy = np.logspace(1, 6, 200) # eV
 density = 1e20 # m^-3
 plasmaVolume = 10 # m^3
 MachNumber = 2
