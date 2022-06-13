@@ -220,44 +220,44 @@ double protonImpactIonizationCrossSection( double Energy )
 double HydrogenChargeExchangeCrossSection( double CoMEnergy )
 {
 	// Minimum energy of cross section in eV
-	// const double minimumEnergySigma_1s = 0.1;
-	const double minimumEnergySigma_2p = 19.0;
-	const double minimumEnergySigma_2s = 0.1;
+	const double minimumEnergySigma_n1 = 0.12;
+	const double minimumEnergySigma_n2 = 10;
+	const double minimumEnergySigma_n3 = 10;
 
 	// Contribution from ground -> ground state
 	// Janev 1987 3.1.8
 	// p + H(1s) --> H(1s) + p
-	double sigma_1s;
-	if ( CoMEnergy < minimumEnergySigma_2p ) {
-		sigma_1s = 0;
+	double sigma_n1;
+	if ( CoMEnergy < minimumEnergySigma_n1 ) {
+		sigma_n1 = 0;
 	} else {
-		sigma_1s = 0.6937e-14 * ::pow( 1 - 0.155 * ::log10( CoMEnergy ), 2 ) / (1 + 0.1112e-14 * ::pow( CoMEnergy, 3.3 ));
+		double CoMEnergyKEV = CoMEnergy / 1000;
+		sigma_n1 = 1e-16 * 3.2345 * ::log( 235.88 / CoMEnergyKEV + 2.3713 ) / ( 1 + 0.038371 * CoMEnergyKEV + 3.8068e-6 * ::pow( CoMEnergyKEV, 3.5 ) + 1.1832e-10 * ::pow( CoMEnergyKEV, 5.4 ) );
 	}
 
-	// Janev 1987 3.1.9
-	// p + H(1s) --> H(2p) + p
-	std::vector<double> aSigma_2p = {-2.197571949935e+01, -4.742502251260e+01, 3.628013140596e+01, -1.423003075866e+01, 3.273090240144e+00, -4.557928912260e-01, 3.773588347458e-02, -1.707904867106e-03, 3.251203344615e-05};
-	// Janev 1987 3.1.10
-	// p + H(1s) --> H(2s) + p
-	std::vector<double> aSigma_2s = {-1.327325087764e+04, 1.317576614520e+04, -5.683932157858e+03, 1.386309780149e+03, -2.089794561307e+02, 1.992976245274e+01, -1.173800576157e+00, 3.902422810767e-02, -5.606240339932e-04};
-
 	// Contribution from ground -> 2p orbital
-	double sigma_2p;
-	if ( CoMEnergy < minimumEnergySigma_2p ) {
-		sigma_2p = 0;
+	double sigma_n2;
+	if ( CoMEnergy < minimumEnergySigma_n2 ) {
+		sigma_n2 = 0;
 	} else {
-		sigma_2p = EvaluateJanevCrossSectionFit( aSigma_2p, CoMEnergy );
+		double CoMEnergyKEV = CoMEnergy / 1000;
+		int n = 2;
+		double EnergyTilde = CoMEnergyKEV * ::pow( n, 2 );
+		sigma_n2 = 1e-16 * 0.92750 * ::log( 6.5040e3 / EnergyTilde + 20.699 ) / ( 1 + 1.3405e-2 * EnergyTilde + 3.0842e-6 * ::pow( EnergyTilde, 3.5 ) + 1.1832e-10 * ::pow( EnergyTilde, 5.4 ) );
 	}
 
 	// Contribution from ground -> 2s orbital
-	double sigma_2s;
-	if ( CoMEnergy < minimumEnergySigma_2s ) {
-		sigma_2s = 0;
+	double sigma_n3;
+	if ( CoMEnergy < minimumEnergySigma_n3 ) {
+		sigma_n3 = 0;
 	} else {
-		sigma_2s = EvaluateJanevCrossSectionFit( aSigma_2s, CoMEnergy );
+		double CoMEnergyKEV = CoMEnergy / 1000;
+		int n = 3;
+		double EnergyTilde = CoMEnergyKEV * ::pow( n, 2 );
+		sigma_n3 = 1e-16 * 0.37271 * ::log( 2.7645e6 / EnergyTilde + 1.4857e3 ) / ( 1 + 1.5720e-3 * EnergyTilde + 3.0842e-6 * ::pow( EnergyTilde, 3.5 ) + 1.1832e-10 * ::pow( EnergyTilde, 5.4 ) );
 	}
 
-	return sigma_1s + sigma_2p + sigma_2s;
+	return sigma_n1 + sigma_n2 + sigma_n3;
 }
 
 // Energy in electron volts, returns cross section in cm^2
