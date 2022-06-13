@@ -44,7 +44,7 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 
 	constexpr double tolerance = 1e-5;
 	constexpr unsigned MaxDepth = 10;
-	double HotRateCoeff = 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * temperature) * temperature )
+	double HotRateCoeff = 4.0 / ( ::sqrt(2 * M_PI * sigma.Particle.Mass * temperature) * temperature )
 	         * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
@@ -71,9 +71,9 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 	double thermalSpeed = ::sqrt( 2.0 * temperature / sigma.Particle.Mass );
 	double thermalMachNumber = plasma.MachNumber * ::sqrt( ::abs( sigma.Particle.Charge ) * plasma.ElectronTemperature * ReferenceTemperature / ( 2 * temperature ) );
 
-	double Jacobian = ElectronCharge / (sigma.ReducedMass * thermalSpeed * thermalSpeed); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from du to dE (less one power of u, which cancels with one in the integrand
+	double Jacobian = ElectronCharge / (sigma.Particle.Mass * thermalSpeed * thermalSpeed); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from du to dE (less one power of u, which cancels with one in the integrand
 	auto integrand = [&]( double Energy ) {
-		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / sigma.ReducedMass );
+		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / sigma.Particle.Mass );
 		double u = velocity / thermalSpeed;
 		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
 		return u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) ) * Jacobian;
@@ -155,7 +155,7 @@ double evaluateJanevDFunction( double beta )
 }
 */
 
-double electronImpactIonizationCrossSection( double CoMEnergy )
+double electronImpactIonizationCrossSection( double Energy )
 {
 	// Minimum energy of cross section in eV
 	constexpr double ionizationEnergy = 13.6;
@@ -170,16 +170,16 @@ double electronImpactIonizationCrossSection( double CoMEnergy )
 	constexpr std::array<double,5> fittingParamB{ -0.032226, -0.034539, 1.4003, -2.8115, 2.2986 };
 
 	double sigma;
-	if ( CoMEnergy < minimumEnergySigma ) {
+	if ( Energy < minimumEnergySigma ) {
 		sigma = 0;
 	}
 	else {
 		double sum = 0.0;
-		double x = 1.0 - ionizationEnergy / CoMEnergy;
+		double x = 1.0 - ionizationEnergy / Energy;
 		for ( size_t n = 0; n < fittingParamB.size(); n++ ) {
 	      sum += fittingParamB.at( n ) * ::pow( x, n );
 	   }
-		sigma = 1.0e-13 / ( ionizationEnergy * CoMEnergy ) * ( fittingParamA * ::log( CoMEnergy / ionizationEnergy ) + sum );
+		sigma = 1.0e-13 / ( ionizationEnergy * Energy ) * ( fittingParamA * ::log( Energy / ionizationEnergy ) + sum );
 	}
 	return sigma;
 }
@@ -188,9 +188,9 @@ double electronImpactIonizationCrossSection( double CoMEnergy )
 double protonImpactIonizationCrossSection( double Energy )
 {
 	// Minimum energy of cross section in keV
-	const double minimumEnergySigma = 0.2;
+	const double minimumEnergySigma = 0.5;
 	// Convert to keV
-	double CoMEnergy = Energy / 1000;
+	double EnergyKEV = Energy / 1000;
 
 	// Contribution from ground state
 	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
@@ -207,17 +207,17 @@ double protonImpactIonizationCrossSection( double Energy )
 	constexpr double A8 = -3.7154;
 
 	double sigma;
-	if ( CoMEnergy < minimumEnergySigma ) {
+	if ( EnergyKEV < minimumEnergySigma ) {
 		sigma = 0;
 	}
 	else {
 		// Energy is in units of keV
-		sigma = 1e-16 * A1 * ( ::exp( -A2 / CoMEnergy ) * ::log( 1 + A3 * CoMEnergy ) / CoMEnergy + A4 * ::exp( -A5 * CoMEnergy ) / ( ::pow( CoMEnergy, A6 ) + A7 * ::pow( CoMEnergy, A8 ) ) );
+		sigma = 1e-16 * A1 * ( ::exp( -A2 / EnergyKEV ) * ::log( 1 + A3 * EnergyKEV ) / EnergyKEV + A4 * ::exp( -A5 * EnergyKEV ) / ( ::pow( EnergyKEV, A6 ) + A7 * ::pow( EnergyKEV, A8 ) ) );
 	}
 	return sigma;
 }
 
-double HydrogenChargeExchangeCrossSection( double CoMEnergy )
+double HydrogenChargeExchangeCrossSection( double Energy )
 {
 	// Minimum energy of cross section in eV
 	const double minimumEnergySigma_n1 = 0.12;
@@ -225,35 +225,35 @@ double HydrogenChargeExchangeCrossSection( double CoMEnergy )
 	const double minimumEnergySigma_n3 = 10;
 
 	// Contribution from ground -> ground state
-	// Janev 1987 3.1.8
-	// p + H(1s) --> H(1s) + p
+	// Janev 1993 2.3.1
+	// p + H(n=1) --> H + p
 	double sigma_n1;
-	if ( CoMEnergy < minimumEnergySigma_n1 ) {
+	if ( Energy < minimumEnergySigma_n1 ) {
 		sigma_n1 = 0;
 	} else {
-		double CoMEnergyKEV = CoMEnergy / 1000;
-		sigma_n1 = 1e-16 * 3.2345 * ::log( 235.88 / CoMEnergyKEV + 2.3713 ) / ( 1 + 0.038371 * CoMEnergyKEV + 3.8068e-6 * ::pow( CoMEnergyKEV, 3.5 ) + 1.1832e-10 * ::pow( CoMEnergyKEV, 5.4 ) );
+		double EnergyKEV = Energy / 1000;
+		sigma_n1 = 1e-16 * 3.2345 * ::log( 235.88 / EnergyKEV + 2.3713 ) / ( 1 + 0.038371 * EnergyKEV + 3.8068e-6 * ::pow( EnergyKEV, 3.5 ) + 1.1832e-10 * ::pow( EnergyKEV, 5.4 ) );
 	}
 
-	// Contribution from ground -> 2p orbital
+	// Contribution from n=2 orbital
 	double sigma_n2;
-	if ( CoMEnergy < minimumEnergySigma_n2 ) {
+	if ( Energy < minimumEnergySigma_n2 ) {
 		sigma_n2 = 0;
 	} else {
-		double CoMEnergyKEV = CoMEnergy / 1000;
+		double EnergyKEV = Energy / 1000;
 		int n = 2;
-		double EnergyTilde = CoMEnergyKEV * ::pow( n, 2 );
+		double EnergyTilde = EnergyKEV * ::pow( n, 2 );
 		sigma_n2 = 1e-16 * 0.92750 * ::log( 6.5040e3 / EnergyTilde + 20.699 ) / ( 1 + 1.3405e-2 * EnergyTilde + 3.0842e-6 * ::pow( EnergyTilde, 3.5 ) + 1.1832e-10 * ::pow( EnergyTilde, 5.4 ) );
 	}
 
-	// Contribution from ground -> 2s orbital
+	// Contribution from n=3 orbital
 	double sigma_n3;
-	if ( CoMEnergy < minimumEnergySigma_n3 ) {
+	if ( Energy < minimumEnergySigma_n3 ) {
 		sigma_n3 = 0;
 	} else {
-		double CoMEnergyKEV = CoMEnergy / 1000;
+		double EnergyKEV = Energy / 1000;
 		int n = 3;
-		double EnergyTilde = CoMEnergyKEV * ::pow( n, 2 );
+		double EnergyTilde = EnergyKEV * ::pow( n, 2 );
 		sigma_n3 = 1e-16 * 0.37271 * ::log( 2.7645e6 / EnergyTilde + 1.4857e3 ) / ( 1 + 1.5720e-3 * EnergyTilde + 3.0842e-6 * ::pow( EnergyTilde, 3.5 ) + 1.1832e-10 * ::pow( EnergyTilde, 5.4 ) );
 	}
 

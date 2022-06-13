@@ -215,6 +215,10 @@ class Neutrals:
         return CrossSection(sigma, energy, particle, target, reaction)
 
     def chargeExchangeCrossSection1993(self, energy):
+        # We need the energy in projectile form, while the input is in CoM
+        # Factor of two because of hydrogen
+        energy *= 2
+
         # Contribution from ground -> ground state
         # Janev 1993 2.3.1
         # H+ + H(1s) --> H + H+
@@ -273,14 +277,14 @@ class Neutrals:
     def rateCoefficientCold(self, crossSection):
         # temperature in eV, sigma in cm^2
         # k=<σv> in m^3/s
-        # Assumes a Maxwellian distribution and the neutrals are stationary, COM energy (as opposed to incident)
+        # Assumes a Maxwellian distribution and the neutrals are stationary, projectile energy (as opposed to CoM)
         # I am a bit unsure of using mass vs reducedMass
         mass = crossSection.particle.mass * MP # kg
         sigma = 1e-4 * crossSection.sigma # Convert to m^2
         temperature = self.temperature * QE # Convert to J
         thermalMachNumber = self.MachNumber * np.sqrt(crossSection.particle.charge / 2) # Assumes that Te = Ti
 
-        velocityCOM = np.sqrt(2 * self.energy * QE / (crossSection.reducedMass * MP)) # Convert to COM, m/s
+        velocityCOM = np.sqrt(2 * self.energy * QE / (mass)) # Convert to COM, m/s
         thermalVelocity = np.sqrt(2 * temperature / mass)
 
         if isinstance(self.MachNumber, int) or isinstance(self.MachNumber, float):
@@ -307,11 +311,12 @@ class Neutrals:
         # Assumes a Maxwellian distribution and the neutrals are hot, COM energy (as opposed to incident)
         # I am a bit unsure of using mass vs reducedMass
         reducedMass = crossSection.reducedMass * MP # kg
+        mass = crossSection.particle.mass * MP # kg
         sigma = 1e-4 * crossSection.sigma # Convert to m^2
         temperature = self.temperature * QE # Convert to J
         energy = crossSection.energy * QE # Convert to J
 
-        rateCoefficient = np.array([4 / np.sqrt(2 * np.pi * reducedMass * T) / T * np.trapz(energy * sigma * np.exp(-energy / T), x=energy) for T in temperature])
+        rateCoefficient = np.array([4 / np.sqrt(2 * np.pi * mass * T) / T * np.trapz(energy * sigma * np.exp(-energy / T), x=energy) for T in temperature])
 
         rateCoefficient *= 1e6 # cm^3/s
 
