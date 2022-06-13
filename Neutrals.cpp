@@ -79,8 +79,8 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 		return u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) ) * Jacobian;
 	};
 
-	constexpr double tolerance = 1e-6;
-	constexpr unsigned MaxDepth = 12;
+	constexpr double tolerance = 1e-7;
+	constexpr unsigned MaxDepth = 15;
 	double ColdRateCoeff = thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) )
 	        * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
