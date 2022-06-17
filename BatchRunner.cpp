@@ -309,9 +309,14 @@ void BatchRunner::SolveIndividualMirrorPlasma(std::map<std::string, double> para
 	
 	MCTransConfig config(pReferencePlasmaState, OutputCadence, EndTime);
 
-	std::shared_ptr<MirrorPlasma> result = config.Solve();
-
-	result->PrintReport(&parameterMap, currentRun, totalRuns);
+	try
+	{
+		std::shared_ptr<MirrorPlasma> result = config.Solve();
+		result->PrintReport(&parameterMap, currentRun, totalRuns);
+	}
+	catch (int e ){}
+	catch(boost::exception const&  ex){}
+	catch(std::exception e){}
 }
 
 template<typename K, typename V>

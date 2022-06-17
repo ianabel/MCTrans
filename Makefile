@@ -12,7 +12,7 @@ OBJECTS = $(patsubst %.cpp,%.o,$(SOURCES))
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
 MCTrans++: $(OBJECTS) $(HEADERS) Makefile Makefile.local
-	$(CXX) $(CXXFLAGS) -o MCTrans++ $(OBJECTS) $(SUN_LINK_FLAGS) $(NETCDF_LINK_FLAGS)
+	$(CXX) $(CXXFLAGS) -g -o MCTrans++ $(OBJECTS) $(SUN_LINK_FLAGS) $(NETCDF_LINK_FLAGS)
 
 MCTrans.pdf: manual/Makefile manual/MCTrans.tex manual/macros.tex manual/references.bib
 	make -C manual MCTrans.pdf
