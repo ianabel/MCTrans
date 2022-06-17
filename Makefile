@@ -18,13 +18,6 @@ MCTrans.pdf: manual/Makefile manual/MCTrans.tex manual/macros.tex manual/referen
 	make -C manual MCTrans.pdf
 	ln -s manual/MCTrans.pdf
 
-examples: examples/*.report
-
-
-examples/%.report: examples/%.conf MCTrans++
-	$(warning "WARNING: Replacing the old output $@ with current output of MCTrans++ $<")
-	./MCTrans++ $< > $@
-
 test: MCTrans++
 	cd examples/; ./check_examples
 
