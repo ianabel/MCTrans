@@ -8,7 +8,7 @@
 #include "BatchRunner.hpp"
 
 MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(const std::map<std::string, double>& parameterMap, std::string FuelName, 
-	bool rThrust, tribool AHeating, tribool rDiagnostics, bool ambiPolPhi, bool collisions, bool includeCXLosses, std::string asciiOut, std::string netCdfOut)
+	bool rThrust, std::optional<bool> AHeating, std::optional<bool> rDiagnostics, bool ambiPolPhi, bool collisions, bool includeCXLosses, std::string asciiOut, std::string netCdfOut)
 	: AmbipolarPhi(ambiPolPhi), IncludeCXLosses(includeCXLosses), Collisional(collisions), OutputFile(asciiOut), NetcdfOutputFile(netCdfOut)
 {
 	if( parameterMap.find("CentralCellField") != parameterMap.end())
@@ -86,11 +86,11 @@ MirrorPlasma::VacuumMirrorConfiguration::VacuumMirrorConfiguration(const std::ma
 	}
 
 	// If specified in the config file these values override the defaults from the fuel
-	if(AHeating == tribool::tru) AlphaHeating = true;
-	else if(AHeating == tribool::fal) AlphaHeating = false;
+	if(AHeating.has_value() && AHeating.value() == true) AlphaHeating = true;
+	else if(AHeating.has_value() && AHeating.value() == false) AlphaHeating = false;
 
-	if(rDiagnostics == tribool::tru) ReportNuclearDiagnostics = true;
-	else if(rDiagnostics == tribool::fal) ReportNuclearDiagnostics = false;
+	if(rDiagnostics.has_value() && rDiagnostics.value() == true) ReportNuclearDiagnostics = true;
+	else if(rDiagnostics.has_value() && rDiagnostics.value() == false) ReportNuclearDiagnostics = false;
 }
 
 /* Replaced by Batch Runner 

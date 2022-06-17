@@ -181,19 +181,19 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	if ( batch.count( "IncludeAlphaHeating" ) == 1 )
 	{
 		bool aHeating = batch.at( "IncludeAlphaHeating" ).as_boolean();
-		if ( aHeating ) AlphaHeating = tru;
-		else AlphaHeating = fal;
+		if ( aHeating ) AlphaHeating = true;
+		else AlphaHeating = false;
 	}
-	else AlphaHeating = unspecified;
+	else AlphaHeating = std::nullopt;
 
 	// This overrides the default for the chosen fuel
 	if ( batch.count( "ReportNuclearDiagnostics" ) == 1 )
 	{
 		bool nucDiagnostics = batch.at( "ReportNuclearDiagnostics" ).as_boolean();
-		if ( nucDiagnostics ) ReportNuclearDiagnostics = tru;
-		else ReportNuclearDiagnostics = fal;
+		if ( nucDiagnostics ) ReportNuclearDiagnostics = true;
+		else ReportNuclearDiagnostics = false;
 	}
-	else ReportNuclearDiagnostics = unspecified;
+	else ReportNuclearDiagnostics = std::nullopt;
 
 	// Ion to electron temperature ratio
 	readParameterFromFile(batch, "IonToElectronTemperatureRatio", TiTeVals, false, 0.0, true);

@@ -10,7 +10,7 @@ int main( int argc, char** argv )
 		{ "PlasmaRadiusMin", 0.2 },
 		{ "PlasmaRadiusMax", 0.6 }
 	};
-	auto pVacConfig = std::make_shared<MirrorPlasma::VacuumMirrorConfiguration>( parameterMap,FuelName,false,tribool::fal,tribool::fal,false,false,false,"","" );
+	auto pVacConfig = std::make_shared<MirrorPlasma::VacuumMirrorConfiguration>( parameterMap,FuelName,false,false,false,false,false,false,"","" );
 	auto pReferencePlasmaState = std::make_shared<MirrorPlasma>(pVacuumConfig, parameterMap, VoltageTrace);
 
 	std::cout << protonImpactIonizationCrossSection( 1.0 ) << std::endl;
