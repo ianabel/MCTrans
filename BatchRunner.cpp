@@ -260,6 +260,7 @@ void BatchRunner::runBatchSolve()
 	if ( totalRuns > 1 && isTimeDependent )
 		throw std::invalid_argument( "[error] Multiple simultaneous time-dependent runs is not currently supported" );
 
+	#pragma omp parallel for
 	for ( int n = 0; n < totalRuns; n++ )
 	{
 		SolveIndividualMirrorPlasma(vectorOfMaps[n], n);
