@@ -212,7 +212,7 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 	nc_output.AddScalarVariable( "V_plasma", "Plasma Volume", "m^3", pVacuumConfig->PlasmaVolume() );
 
 	nc_output.AddScalarVariable( "B_midplane", "Magnetic Field Strength in the Central Cell", "T", pVacuumConfig->CentralCellFieldStrength );
-	nc_output.AddScalarVariable( "B_midplane", "Magnetic Field Strength in the mirror throat", "T", pVacuumConfig->CentralCellFieldStrength * pVacuumConfig->MirrorRatio );
+	nc_output.AddScalarVariable( "B_throat", "Magnetic Field Strength in the mirror throat", "T", pVacuumConfig->CentralCellFieldStrength * pVacuumConfig->MirrorRatio );
 	
 	nc_output.AddScalarVariable( "RhoIon", "Ion Larmor Radius in the central cell", "m", IonLarmorRadius() );
 	nc_output.AddScalarVariable( "a", "Typical plasma scale length", "m", pVacuumConfig->PlasmaColumnWidth/2.0 );
