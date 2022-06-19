@@ -313,6 +313,8 @@ void BatchRunner::SolveIndividualMirrorPlasma(std::map<std::string, double> para
 	std::shared_ptr<MirrorPlasma> result = config.Solve();
 
 	result->PrintReport(&parameterMap, currentRun, totalRuns);
+
+	result->WriteNetCDFReport( &parameterMap, currentRun, totalRuns );
 }
 
 template<typename K, typename V>

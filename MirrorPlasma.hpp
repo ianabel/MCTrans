@@ -149,6 +149,7 @@ class MirrorPlasma {
 		double ThermalEnergy() const;
 
 		void PrintReport(std::map<std::string, double>* parameterMap = nullptr, int currentRun = 1, int totalRun = 1);
+		void WriteNetCDFReport(std::map<std::string, double>* parameterMap = nullptr, int currentRun = 1, int totalRun = 1);
 
 		void InitialiseNetCDF();
 		void WriteTimeslice( double T );

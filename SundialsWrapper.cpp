@@ -326,6 +326,8 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 	plasma.IonTemperature      =      ION_TEMPERATURE( initialCondition );
 	// plasma.SetTime( EndTime );
+	
+	plasma.FinaliseNetCDF();
 
 #ifdef DEBUG
 	long nSteps = 0,nfeEvals = 0,nfiEvals = 0;
