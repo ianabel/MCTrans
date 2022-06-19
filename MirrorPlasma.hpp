@@ -12,14 +12,12 @@
 #include <cmath>
 #include <map>
 
-enum tribool{ tru, fal, unspecified};
-
 class MirrorPlasma {
 	public:
 		class VacuumMirrorConfiguration {
 			public:
 				// VacuumMirrorConfiguration( toml::value const& );
-				VacuumMirrorConfiguration(const std::map<std::string, double>& parameterMap, std::string FuelName, bool reportThrust, tribool AlphaHeating, tribool ReportNuclearDiagnostics, bool ambiPolPhi, bool collisions, bool includeCXLosses, std::string asciiOut, std::string netCdfOut);
+				VacuumMirrorConfiguration(const std::map<std::string, double>& parameterMap, std::string FuelName, bool reportThrust, std::optional<bool> AlphaHeating, std::optional<bool> ReportNuclearDiagnostics, bool ambiPolPhi, bool collisions, bool includeCXLosses, std::string asciiOut, std::string netCdfOut);
 				/*
 				VacuumMirrorConfiguration( const& VacuumMirrorConfiguration other ) :
 					IonSpecies( other.IonSpecies )

@@ -181,19 +181,19 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	if ( batch.count( "IncludeAlphaHeating" ) == 1 )
 	{
 		bool aHeating = batch.at( "IncludeAlphaHeating" ).as_boolean();
-		if ( aHeating ) AlphaHeating = tru;
-		else AlphaHeating = fal;
+		if ( aHeating ) AlphaHeating = true;
+		else AlphaHeating = false;
 	}
-	else AlphaHeating = unspecified;
+	else AlphaHeating = std::nullopt;
 
 	// This overrides the default for the chosen fuel
 	if ( batch.count( "ReportNuclearDiagnostics" ) == 1 )
 	{
 		bool nucDiagnostics = batch.at( "ReportNuclearDiagnostics" ).as_boolean();
-		if ( nucDiagnostics ) ReportNuclearDiagnostics = tru;
-		else ReportNuclearDiagnostics = fal;
+		if ( nucDiagnostics ) ReportNuclearDiagnostics = true;
+		else ReportNuclearDiagnostics = false;
 	}
-	else ReportNuclearDiagnostics = unspecified;
+	else ReportNuclearDiagnostics = std::nullopt;
 
 	// Ion to electron temperature ratio
 	readParameterFromFile(batch, "IonToElectronTemperatureRatio", TiTeVals, false, 0.0, true);
@@ -309,12 +309,16 @@ void BatchRunner::SolveIndividualMirrorPlasma(std::map<std::string, double> para
 	std::shared_ptr< MirrorPlasma > pReferencePlasmaState = std::make_shared<MirrorPlasma>(pVacuumConfig, parameterMap, VoltageTrace);
 	
 	MCTransConfig config(pReferencePlasmaState, OutputCadence, EndTime);
-
-	std::shared_ptr<MirrorPlasma> result = config.Solve();
-
-	result->PrintReport(&parameterMap, currentRun, totalRuns);
-
-	result->WriteNetCDFReport( &parameterMap, currentRun, totalRuns );
+	
+	try
+	{
+		std::shared_ptr<MirrorPlasma> result = config.Solve();
+		result->PrintReport(&parameterMap, currentRun, totalRuns);
+		result->WriteNetCDFReport( &parameterMap, currentRun, totalRuns );
+	}
+	catch (int e ){}
+	catch(boost::exception const&  ex){}
+	catch(std::exception e){}
 }
 
 template<typename K, typename V>

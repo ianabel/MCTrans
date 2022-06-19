@@ -2,8 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-folder = '//wsl$/Ubuntu-20.04/home/nickschw2/programs/MCTrans/parameter_sweep/DT_test_cases'
-folder = '/Users/Nick/Downloads/DTTests3'
+folder = '/home/mylo_linux/MCTrans-original/MCTrans/Test_Results/DTTests'
+#folder = '/Users/Nick/Downloads/DTTests3'
 files = [file for file in os.listdir(folder) if file.endswith('.out')]
 
 columns = ['voltage', 'centralField', 'throatField', 'fieldRatio', 'rotationPower', 'MachAlfven', 'Q_scientific', 'ionTemperature', 'electronTemperature', 'nuStar']
@@ -29,12 +29,13 @@ def getResult(filepath):
                 throatField = float(line.split(' ')[7]) # T
 
             elif 'Power Required (at the plasma) to support rotation' in line:
-                rotationPowerText = line.split(' ')[8].strip() # W
-                rotationPower = float(rotationPowerText[:-1])
-                units = rotationPowerText[-1]
+                rotationPower = float(line.split(' ')[8])
+                units = line.split(' ')[9].strip()
                 if units == 'W':
                     rotationPower /= 1e6
-                else:
+                elif units == 'kW':
+                    rotationPower /= 1e3
+                elif units != 'MW':
                     print(units)
 
             elif 'Alfven Mach number is' in line:
@@ -65,6 +66,7 @@ def getResult(filepath):
         fieldRatio = throatField / centralField
         result = pd.DataFrame([[voltage, centralField, throatField, fieldRatio, rotationPower, MachAlfven, Q_scientific, ionTemperature, electronTemperature, nuStar]], columns=columns)
         return result
+
 
 for file in files:
     filepath = f'{folder}/{file}'
@@ -111,3 +113,4 @@ handles, labels = axes[0].get_legend_handles_labels()
 fig.legend(handles, labels, loc='center right', bbox_to_anchor=(0.92, 0.5))
 
 plt.savefig('results.png', dpi=200)
+

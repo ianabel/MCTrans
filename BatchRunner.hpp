@@ -46,8 +46,8 @@ private:
 	std::vector<double> AuxiliaryHeatingVals;
 	std::vector<double> NeutralDensityVals;
 
-	tribool AlphaHeating = unspecified;
-	tribool ReportNuclearDiagnostics = unspecified;
+	std::optional<bool> AlphaHeating = std::nullopt;
+	std::optional<bool> ReportNuclearDiagnostics = std::nullopt;
 	bool ReportThrust;
 
 	// MirrorPlasma parameters
