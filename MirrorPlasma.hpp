@@ -11,6 +11,7 @@
 #include <memory>
 #include <cmath>
 #include <map>
+#include <optional>
 
 class MirrorPlasma {
 	public:

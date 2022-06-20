@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <toml.hpp>
+#include <optional>
 
 #include "MirrorPlasma.hpp"
 
