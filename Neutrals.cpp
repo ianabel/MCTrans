@@ -171,17 +171,19 @@ double electronImpactIonizationCrossSection( double Energy )
 
 	double sigma;
 	if ( Energy < minimumEnergySigma ) {
-		sigma = 0;
+		return 0.0;
 	}
 	else {
 		double sum = 0.0;
 		double x = 1.0 - ionizationEnergy / Energy;
+		if ( x <= 0 )
+			return 0.0;
 		for ( size_t n = 0; n < fittingParamB.size(); n++ ) {
-	      sum += fittingParamB.at( n ) * ::pow( x, n );
+	      sum += fittingParamB.at( n ) * ::pow( x, n+1 );
 	   }
-		sigma = 1.0e-13 / ( ionizationEnergy * Energy ) * ( fittingParamA * ::log( Energy / ionizationEnergy ) + sum );
+		sigma = ( 1.0e-13 / ( ionizationEnergy * Energy ) ) * ( fittingParamA * ::log( Energy / ionizationEnergy ) + sum );
+		return sigma;
 	}
-	return sigma;
 }
 
 // Energy in electron volts, returns cross section in cm^2
