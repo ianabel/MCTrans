@@ -30,7 +30,7 @@ Angular Velocity at the plasma centre (R = 0.25 m) is 6.22e+06 /s
 Viscous Heating is 10.5 kW
 Bremsstrahlung losses are 30.2 W
 Cyclotron emission losses are 587 µW
-Heat loss due to charge exchange with neutrals is 2.9 kW
+Heat loss due to charge exchange with neutrals is 2.91 kW
 
 Total potential drop is 93.3 kV
 Radial Current Drawn from Power Supply 995 mA
@@ -55,9 +55,9 @@ Ion-Electron Temperature Equilibration Time is 41.8 ms
 Plasma must be provided at a rate of 2.41e+18 electrons /s to maintain steady-state
 
 Neutral gas must be provided at a rate of 2.41e+18 particles/s to refuel the plasma
-This leads to a steady-state neutral density of 8.4e+13/m^3
+This leads to a steady-state neutral density of 8.41e+13/m^3
 The level of charge-exchange losses due to the neutrals is 1.81e+19 particles/s lost
-	 This is equivalent to a heat loss rate of 2.9 kW
+	 This is equivalent to a heat loss rate of 2.91 kW
 
 Electrical Properties of the Plasma:
 	Resistance  = 93.8 kΩ

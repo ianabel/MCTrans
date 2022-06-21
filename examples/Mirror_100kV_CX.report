@@ -33,8 +33,8 @@ Cyclotron emission losses are 636 µW
 Heat loss due to charge exchange with neutrals is 2.63 kW
 
 Total potential drop is 100 kV
-Radial Current Drawn from Power Supply 728 mA
-Power Required (at the plasma) to support rotation 72.8 kW
+Radial Current Drawn from Power Supply 729 mA
+Power Required (at the plasma) to support rotation 72.9 kW
 	 Power Loss from viscous torque  10.4 kW
 	 Power Loss from parallel loss   8.2 kW
 	 Power Loss from charge exchange 54.2 kW
@@ -48,14 +48,14 @@ Of which
 	Confinement time from perpendicular losses is	189 ms
 	Confinement time from charge-exchange losses is	161 ms
 
-Particle (Ion) Confinement Time ~= 139 ms
+Particle (Ion) Confinement Time ~= 138 ms
 
 Ion-Electron Temperature Equilibration Time is 43.8 ms
 
 Plasma must be provided at a rate of 1.94e+18 electrons /s to maintain steady-state
 
 Neutral gas must be provided at a rate of 1.94e+18 particles/s to refuel the plasma
-This leads to a steady-state neutral density of 5.82e+13/m^3
+This leads to a steady-state neutral density of 5.83e+13/m^3
 The level of charge-exchange losses due to the neutrals is 1.17e+19 particles/s lost
 	 This is equivalent to a heat loss rate of 2.63 kW
 
