@@ -1,5 +1,4 @@
 
-#define BOOST_TEST_MODULE collisional_transport_tests
 
 #include <algorithm>
 #include <complex>
