@@ -18,7 +18,7 @@ double MirrorPlasma::PromptAlphaLossFraction() const
 	// Transforming to pitch angle and integrating, 
 	// the formula is
 	// Loss Fraction = 1 - Sqrt(1 - 1/R)
-	return 1.0 - ::sqrt( 1.0 - 1.0 / pVacuumConfig->MirrorRatio );
+	return 1.0 - ::sqrt( 1.0 - 1.0 / MirrorRatio );
 }
 
 // Just use classical formula 
@@ -51,10 +51,10 @@ double MirrorPlasma::AlphaParallelLossRate() const
 {
 	double tau_SD = SlowingDownTime();
 
-	double R = pVacuumConfig->MirrorRatio;
+	double R = MirrorRatio;
 
 	// In Units of T_e
-	double CriticalEnergy = ::pow( pVacuumConfig->IonSpecies.Charge * 3.0 * ::sqrt( M_PI ) * ElectronMass / ( pVacuumConfig->IonSpecies.Mass * ProtonMass ), 2./3. ) * ( AlphaMass / ElectronMass ); 
+	double CriticalEnergy = ::pow( IonSpecies.Charge * 3.0 * ::sqrt( M_PI ) * ElectronMass / ( IonSpecies.Mass * ProtonMass ), 2./3. ) * ( AlphaMass / ElectronMass ); 
 
 
 	double x0 = CentrifugalPotential() * Z_Alpha / CriticalEnergy;
@@ -91,6 +91,6 @@ double MirrorPlasma::PromptAlphaThrust() const
 	// Integrate m_alpha v_|| * isotropic alpha birth distribution
 	// Lost momentum = Alpha Birth Rate * Alpha Birth Momentum / Mirror Ratio
 	double AlphaMomentum = ::sqrt( 2.0 * AlphaMass * AlphaBirthEnergy );
-	double AlphasPerSecond = AlphaProductionRate() * pVacuumConfig->PlasmaVolume();
-	return AlphasPerSecond * AlphaMomentum / pVacuumConfig->MirrorRatio;
+	double AlphasPerSecond = AlphaProductionRate() * PlasmaVolume();
+	return AlphasPerSecond * AlphaMomentum / MirrorRatio;
 }

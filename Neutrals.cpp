@@ -110,7 +110,7 @@ bool isCoronalEquilibrium( double excitationRate, double deexcitationRate, doubl
 
 double reactionRate( double density_1, double density_2, double rateCoefficient, std::shared_ptr<MirrorPlasma> pMirrorPlasma )
 {
-	return density_1 * density_2 * rateCoefficient * pMirrorPlasma->pVacuumConfig->PlasmaVolume();
+	return density_1 * density_2 * rateCoefficient * pMirrorPlasma->PlasmaVolume();
 }
 
 double EvaluateJanevCrossSectionFit ( std::vector<double> PolynomialCoefficients, double Energy )
@@ -381,7 +381,7 @@ void MirrorPlasma::ComputeSteadyStateNeutrals()
 // requires computed neutral density
 double MirrorPlasma::CXLossRate() const
 {
-	if ( !pVacuumConfig->IncludeCXLosses )
+	if ( !IncludeCXLosses )
 		return 0.0;
 
 	double CXRateCoefficient = neutralsRateCoefficientCold( HydrogenChargeExchange, *this );

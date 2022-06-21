@@ -107,7 +107,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	sunindextype NDims = N_DIMENSIONS;
 	N_Vector initialCondition = N_VNew_Serial( NDims );
 
-	double InitialTemperature = plasma.pVacuumConfig->InitialTemp;
+	double InitialTemperature = plasma.InitialTemp;
 	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
 	ELECTRON_TEMPERATURE( initialCondition ) = InitialTemperature;
 
@@ -135,8 +135,8 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	
 	
 
-	double abstol = plasma.pVacuumConfig->SundialsAbsTol;
-	double reltol = plasma.pVacuumConfig->SundialsRelTol;
+	double abstol = plasma.SundialsAbsTol;
+	double reltol = plasma.SundialsRelTol;
 
 #ifdef DEBUG
 	std::cerr << "Using SundialsAbsTol = " << abstol << " and SundialsRelTol = " << reltol << std::endl;
@@ -183,8 +183,8 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 		std::cerr << " Relative Rate of Change in Ion Energy Density " << RelativeIonRate * 100 << " %/s" << std::endl;
 		std::cerr << " Relative Rate of Change in Electron Energy Density " << RelativeElectronRate * 100 << " %/s" << std::endl;
 #endif
-		if ( RelativeIonRate < plasma.pVacuumConfig->RateThreshold &&
-		     RelativeElectronRate < plasma.pVacuumConfig->RateThreshold )
+		if ( RelativeIonRate < plasma.RateThreshold &&
+		     RelativeElectronRate < plasma.RateThreshold )
 		{
 #if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
 	std::cerr << "Steady state reached at time " << t << " with T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;

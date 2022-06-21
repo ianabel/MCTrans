@@ -87,19 +87,19 @@ void MirrorPlasma::InitialiseNetCDF()
 	if ( !isTimeDependent )
 		return;
 		
-	if ( pVacuumConfig->NetcdfOutputFile == "" )
+	if ( NetcdfOutputFile == "" )
 		return;
 
-	nc_output.Open( pVacuumConfig->NetcdfOutputFile );
-	nc_output.AddScalarVariable( "R_min","Innermost plasma radius", "m", pVacuumConfig->PlasmaInnerRadius() );
-	nc_output.AddScalarVariable( "R_max","Outermost plasma radius", "m", pVacuumConfig->PlasmaOuterRadius() );
-	nc_output.AddScalarVariable( "R_plasma","Plasma radius on centreline", "m", pVacuumConfig->PlasmaCentralRadius() );
+	nc_output.Open( NetcdfOutputFile );
+	nc_output.AddScalarVariable( "R_min","Innermost plasma radius", "m", PlasmaInnerRadius() );
+	nc_output.AddScalarVariable( "R_max","Outermost plasma radius", "m", PlasmaOuterRadius() );
+	nc_output.AddScalarVariable( "R_plasma","Plasma radius on centreline", "m", PlasmaCentralRadius() );
 	nc_output.AddScalarVariable( "IonDensity","Density of bulk ion species in the central cell", "10^20 m^-3", IonDensity );
 	nc_output.AddScalarVariable( "ElectronDensity","Density of electrons in the central cell", "10^20 m^-3", ElectronDensity );
-	nc_output.AddScalarVariable( "MirrorRatio","Ratio of Minimum to Maximum B along a field line", "", pVacuumConfig->MirrorRatio );
+	nc_output.AddScalarVariable( "MirrorRatio","Ratio of Minimum to Maximum B along a field line", "", MirrorRatio );
 
 	// Time Dependent Variables
-	nc_output.AddTimeSeries( "Voltage", "Voltage drop across the plasma","V", pVacuumConfig->ImposedVoltage );
+	nc_output.AddTimeSeries( "Voltage", "Voltage drop across the plasma","V", ImposedVoltage );
 	nc_output.AddTimeSeries( "MachNumber", "Plasma velocity divided by Sqrt(T_e/m_i)", "", MachNumber );
 	nc_output.AddTimeSeries( "IonTemperature", "Temperature of the bulk ion species", "keV", IonTemperature );
 	nc_output.AddTimeSeries( "ElectronTemperature", "Temperature of the bulk ion species", "keV", ElectronTemperature );
@@ -113,11 +113,11 @@ void MirrorPlasma::WriteTimeslice( double tNew )
 	if ( !isTimeDependent )
 		return;
 
-	if ( pVacuumConfig->NetcdfOutputFile == "" )
+	if ( NetcdfOutputFile == "" )
 		return;
 
 	int tIndex = nc_output.AddTimeSlice( tNew );
-	nc_output.AppendToTimeSeries( "Voltage", pVacuumConfig->ImposedVoltage, tIndex );
+	nc_output.AppendToTimeSeries( "Voltage", ImposedVoltage, tIndex );
 	nc_output.AppendToTimeSeries( "MachNumber", MachNumber, tIndex );
 	nc_output.AppendToTimeSeries( "IonTemperature", IonTemperature, tIndex );
 	nc_output.AppendToTimeSeries( "ElectronTemperature", ElectronTemperature, tIndex );
@@ -129,7 +129,7 @@ void MirrorPlasma::FinaliseNetCDF()
 	if ( !isTimeDependent )
 		return;
 
-	if ( pVacuumConfig->NetcdfOutputFile == "" )
+	if ( NetcdfOutputFile == "" )
 		return;
 
 	nc_output.Close();
@@ -173,13 +173,13 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 	if ( isTimeDependent )
 		return;
 
-	if ( pVacuumConfig->NetcdfOutputFile == "" )
+	if ( NetcdfOutputFile == "" )
 		return;
 
-	std::string outputFileName = pVacuumConfig->NetcdfOutputFile;
+	std::string outputFileName = NetcdfOutputFile;
 
 	if ( totalRuns > 1 )
-		outputFileName = pVacuumConfig->NetcdfOutputFile.insert( std::min(pVacuumConfig->NetcdfOutputFile.find_last_of("."), pVacuumConfig->NetcdfOutputFile.size()) , "_" + std::to_string(currentRun + 1));
+		outputFileName = NetcdfOutputFile.insert( std::min(NetcdfOutputFile.find_last_of("."), NetcdfOutputFile.size()) , "_" + std::to_string(currentRun + 1));
 
 	nc_output.Open( outputFileName );
 
@@ -192,7 +192,7 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 		}
 	}
 
-	nc_output.AddTextVariable( "FuelName", "Fuel ion species", "", pVacuumConfig->IonSpecies.Name );
+	nc_output.AddTextVariable( "FuelName", "Fuel ion species", "", IonSpecies.Name );
 
 	nc_output.AddScalarVariable( "ZEff", "Effective ion charge", "", Zeff );
 	nc_output.AddScalarVariable( "IonTemperature", "Temperature of the bulk ion species", "keV", IonTemperature );
@@ -200,30 +200,30 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 	nc_output.AddScalarVariable( "IonDensity","Density of bulk ion species in the central cell", "10^20 m^-3", IonDensity );
 	nc_output.AddScalarVariable( "ElectronDensity","Density of electrons in the central cell", "10^20 m^-3", ElectronDensity );
 
-	nc_output.AddScalarVariable( "R_min","Innermost plasma radius", "m", pVacuumConfig->PlasmaInnerRadius() );
-	nc_output.AddScalarVariable( "R_max","Outermost plasma radius", "m", pVacuumConfig->PlasmaOuterRadius() );
-	nc_output.AddScalarVariable( "R_plasma","Plasma mid-radius on midplane", "m", pVacuumConfig->PlasmaCentralRadius() );
+	nc_output.AddScalarVariable( "R_min","Innermost plasma radius", "m", PlasmaInnerRadius() );
+	nc_output.AddScalarVariable( "R_max","Outermost plasma radius", "m", PlasmaOuterRadius() );
+	nc_output.AddScalarVariable( "R_plasma","Plasma mid-radius on midplane", "m", PlasmaCentralRadius() );
 
-	nc_output.AddScalarVariable( "R_wall", "Radius of central cell (first wall)", "m", pVacuumConfig->WallRadius );
+	nc_output.AddScalarVariable( "R_wall", "Radius of central cell (first wall)", "m", WallRadius );
 
-	nc_output.AddScalarVariable( "R_throat", "Outer Radius of the plasma at the mirror throat", "m", (pVacuumConfig->PlasmaColumnWidth + pVacuumConfig->AxialGapDistance) /::sqrt( pVacuumConfig->MirrorRatio ) );
+	nc_output.AddScalarVariable( "R_throat", "Outer Radius of the plasma at the mirror throat", "m", (PlasmaColumnWidth + AxialGapDistance) /::sqrt( MirrorRatio ) );
 
-	nc_output.AddScalarVariable( "L_plasma", "Axial Length of the plasma", "m", pVacuumConfig->PlasmaLength );
-	nc_output.AddScalarVariable( "V_plasma", "Plasma Volume", "m^3", pVacuumConfig->PlasmaVolume() );
+	nc_output.AddScalarVariable( "L_plasma", "Axial Length of the plasma", "m", PlasmaLength );
+	nc_output.AddScalarVariable( "V_plasma", "Plasma Volume", "m^3", PlasmaVolume() );
 
-	nc_output.AddScalarVariable( "B_midplane", "Magnetic Field Strength in the Central Cell", "T", pVacuumConfig->CentralCellFieldStrength );
-	nc_output.AddScalarVariable( "B_throat", "Magnetic Field Strength in the mirror throat", "T", pVacuumConfig->CentralCellFieldStrength * pVacuumConfig->MirrorRatio );
+	nc_output.AddScalarVariable( "B_midplane", "Magnetic Field Strength in the Central Cell", "T", CentralCellFieldStrength );
+	nc_output.AddScalarVariable( "B_throat", "Magnetic Field Strength in the mirror throat", "T", CentralCellFieldStrength * MirrorRatio );
 	
 	nc_output.AddScalarVariable( "RhoIon", "Ion Larmor Radius in the central cell", "m", IonLarmorRadius() );
-	nc_output.AddScalarVariable( "a", "Typical plasma scale length", "m", pVacuumConfig->PlasmaColumnWidth/2.0 );
-	nc_output.AddScalarVariable( "RhoStar", "Normalised larmor radius - rho_i/a", "", pVacuumConfig->PlasmaColumnWidth / ( 2.0 * IonLarmorRadius() ) );
+	nc_output.AddScalarVariable( "a", "Typical plasma scale length", "m", PlasmaColumnWidth/2.0 );
+	nc_output.AddScalarVariable( "RhoStar", "Normalised larmor radius - rho_i/a", "", PlasmaColumnWidth / ( 2.0 * IonLarmorRadius() ) );
 
-	nc_output.AddScalarVariable( "AuxiliaryHeating", "Auxiliary electron heating.", "W", pVacuumConfig->AuxiliaryHeating * 1e6 );
+	nc_output.AddScalarVariable( "AuxiliaryHeating", "Auxiliary electron heating.", "W", AuxiliaryHeating * 1e6 );
 
-	if ( pVacuumConfig->AlphaHeating ) {
-		nc_output.AddScalarVariable( "AlphaHeating", "Electron heating from alpha particles", "MW", AlphaHeating()*pVacuumConfig->PlasmaVolume()*1e6 )  ;
-		nc_output.AddScalarVariable( "AlphaPromptLossRate", "Prompt loss rate of energetic alpha particles", "s^-1", PromptAlphaLossFraction() * AlphaProductionRate() * pVacuumConfig->PlasmaVolume() );
-		nc_output.AddScalarVariable( "AlphaPromptHeating", "Energy loss rate from prompt alpha particles", "W", AlphaPromptLosses() * pVacuumConfig->PlasmaVolume() * 1e6 );
+	if ( IncludeAlphaHeating ) {
+		nc_output.AddScalarVariable( "AlphaHeating", "Electron heating from alpha particles", "MW", AlphaHeating()*PlasmaVolume()*1e6 )  ;
+		nc_output.AddScalarVariable( "AlphaPromptLossRate", "Prompt loss rate of energetic alpha particles", "s^-1", PromptAlphaLossFraction() * AlphaProductionRate() * PlasmaVolume() );
+		nc_output.AddScalarVariable( "AlphaPromptHeating", "Energy loss rate from prompt alpha particles", "W", AlphaPromptLosses() * PlasmaVolume() * 1e6 );
 		nc_output.AddScalarVariable( "AlphaSlowingDown", "Alpha particle slowing down time", "s", SlowingDownTime() );
 	}
 
@@ -231,19 +231,19 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 	nc_output.AddScalarVariable( "AlfvenMach", "Alfven Mach Number", "", AlfvenMachNumber() );
 	double v = SoundSpeed() * MachNumber;
 	nc_output.AddScalarVariable( "Velocity","Peak rotational velocity", "m/s", v );
-	double Rmid = pVacuumConfig->PlasmaCentralRadius();
+	double Rmid = PlasmaCentralRadius();
 	nc_output.AddScalarVariable( "AngularVelocity","Angular veloticy at the plasma centre", "s^-1", v/Rmid );
 
-	nc_output.AddScalarVariable( "ViscousHeating", "Viscous Heating", "W", ViscousHeating() * pVacuumConfig->PlasmaVolume() );
+	nc_output.AddScalarVariable( "ViscousHeating", "Viscous Heating", "W", ViscousHeating() * PlasmaVolume() );
 
 	if ( Zeff > 0.0 )
 	{
-		nc_output.AddScalarVariable( "BremsstrahlungLosses", "Bremsstrahlung losses","W",BremsstrahlungLosses()*pVacuumConfig->PlasmaVolume() );
-		nc_output.AddScalarVariable( "CyclotronLosses","Cyclotron emission losses","W", CyclotronLosses()*pVacuumConfig->PlasmaVolume() );
+		nc_output.AddScalarVariable( "BremsstrahlungLosses", "Bremsstrahlung losses","W",BremsstrahlungLosses()*PlasmaVolume() );
+		nc_output.AddScalarVariable( "CyclotronLosses","Cyclotron emission losses","W", CyclotronLosses()*PlasmaVolume() );
 	}
 
-	if ( pVacuumConfig->IncludeCXLosses ) {
-		nc_output.AddScalarVariable( "CXLosses", "Heat loss due to charge exchange with neutrals", "W", CXHeatLosses()*pVacuumConfig->PlasmaVolume() );
+	if ( IncludeCXLosses ) {
+		nc_output.AddScalarVariable( "CXLosses", "Heat loss due to charge exchange with neutrals", "W", CXHeatLosses()*PlasmaVolume() );
 	}
 		
 	nc_output.AddScalarVariable( "Voltage", "Total potential difference across the plasma","V",ElectricPotential() );
@@ -252,11 +252,11 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 	nc_output.AddScalarVariable( "JRadial", "Radial Current Drawn from Power Supply", "A", JRadial );
 	nc_output.AddScalarVariable( "RotationPower", "Power Required (at the plasma) to support rotation","W", ElectricPotential() * JRadial );
 	double omega = v/Rmid;
-	nc_output.AddScalarVariable( "ViscousTorque","Power Loss from viscous torque", "W", ViscousTorque()*omega*pVacuumConfig->PlasmaVolume() );
-	nc_output.AddScalarVariable( "ParallelRotationLosses","Power Loss from parallel losses", "W", ParallelAngularMomentumLossRate()*omega*pVacuumConfig->PlasmaVolume() );
+	nc_output.AddScalarVariable( "ViscousTorque","Power Loss from viscous torque", "W", ViscousTorque()*omega*PlasmaVolume() );
+	nc_output.AddScalarVariable( "ParallelRotationLosses","Power Loss from parallel losses", "W", ParallelAngularMomentumLossRate()*omega*PlasmaVolume() );
 
-	if (  pVacuumConfig->IncludeCXLosses ) {
-		nc_output.AddScalarVariable( "CXRotationLosses","Rotational power loss from charge exchange", "W", CXMomentumLosses()*omega*pVacuumConfig->PlasmaVolume() );
+	if (  IncludeCXLosses ) {
+		nc_output.AddScalarVariable( "CXRotationLosses","Rotational power loss from charge exchange", "W", CXMomentumLosses()*omega*PlasmaVolume() );
 	} 
 
 	double KineticStoredEnergy = KineticEnergy();
@@ -273,7 +273,7 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 
 	nc_output.AddScalarVariable( "ParallelConfinementTime", "Confinement time from parallel losses", "s", ParallelConfinementTime );
 	nc_output.AddScalarVariable( "PerpConfinementTime", "Confinement time from perpendicular losses", "s", PerpConfinementTime );
-	if ( pVacuumConfig->IncludeCXLosses ) {
+	if ( IncludeCXLosses ) {
 		nc_output.AddScalarVariable( "CXConfinementTime", "Confinement time from charge-exchange losses", "s", CXConfinementTime );
 	}
 
@@ -285,7 +285,7 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 
 
 	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
-	nc_output.AddScalarVariable( "ParticleLossRate","Total plasma loss rate ","electrons/s", ElectronLossRate*pVacuumConfig->PlasmaVolume() );
+	nc_output.AddScalarVariable( "ParticleLossRate","Total plasma loss rate ","electrons/s", ElectronLossRate*PlasmaVolume() );
 
 	nc_output.AddScalarVariable( "NeutralDensity","Density of neutral particles", "m^-3", NeutralDensity * ReferenceDensity );
 
@@ -293,9 +293,9 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 		ComputeSteadyStateNeutrals();
 	}
 
-	if ( pVacuumConfig->IncludeCXLosses ) {
+	if ( IncludeCXLosses ) {
 
-		double CXR = CXLossRate() * pVacuumConfig->PlasmaVolume();
+		double CXR = CXLossRate() * PlasmaVolume();
 		nc_output.AddScalarVariable( "CXRate","Rate of charge-exchange reactions","s^-1", CXR );
 		nc_output.AddScalarVariable( "CXHeatLoss","Thermal energy loss from charge-exchange","W", CXR * IonTemperature * ReferenceTemperature );
 
@@ -314,20 +314,20 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 	double TripleProduct = IonDensity * ReferenceDensity * IonTemperature * EnergyConfinementTime();
 	nc_output.AddScalarVariable( "TripleProduct", "n_i T_i τ_E", "keV s/m^3", TripleProduct );
 	
-	if ( pVacuumConfig->ReportThrust ) {
+	if ( ReportThrust ) {
 			nc_output.AddScalarVariable( "IonThrust","Thrust provided by fuel ions lost from the central cell","", ParallelIonThrust() );
-			if ( pVacuumConfig->AlphaHeating )
+			if ( IncludeAlphaHeating )
 				nc_output.AddScalarVariable( "AlphaThrust","Thrust provided by alpha particles promptly lost from the central cell","", PromptAlphaThrust() );
 	}
 
-	if ( pVacuumConfig->ReportNuclearDiagnostics ) {
-		if ( pVacuumConfig->IonSpecies.Name == "Deuterium" ) {
+	if ( ReportNuclearDiagnostics ) {
+		if ( IonSpecies.Name == "Deuterium" ) {
 			nc_output.AddScalarVariable( "DDNeutrons", "D/D Neutrons (2.45 MeV) per second","n/s", DDNeutronRate() ); 
-			double Yield = ( 14.1/3.52 + 1.0 ) * FusionAlphaPowerDensity()*pVacuumConfig->PlasmaVolume();
+			double Yield = ( 14.1/3.52 + 1.0 ) * FusionAlphaPowerDensity()*PlasmaVolume();
 			nc_output.AddScalarVariable( "DTEquivalentQ","Effective D/T Figure of Merit, assuming an identical plasma. Scientific D-T equivalent Q.","",Yield/( ElectricPotential()*JRadial ) );
-		} else if ( pVacuumConfig->IonSpecies.Name == "Deuterium/Tritium Fuel" ) {
+		} else if ( IonSpecies.Name == "Deuterium/Tritium Fuel" ) {
 
-			double FusionAlphaPower = FusionAlphaPowerDensity()*pVacuumConfig->PlasmaVolume();
+			double FusionAlphaPower = FusionAlphaPowerDensity()*PlasmaVolume();
 			double FusionNeutronPower = ( 14.1/3.52 ) * FusionAlphaPower;
 			nc_output.AddScalarVariable( "FusionAlphaPower", "Fusion Power Output as Alphas","W",FusionAlphaPower*1e6 );
 			nc_output.AddScalarVariable( "FusionNeutronPower", "Fusion Power Output as Alphas","W",FusionNeutronPower*1e6 );
@@ -342,7 +342,7 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 
 			nc_output.AddScalarVariable( "ScientificQ","Scientific Q-factor, not including tritium breeding, or engineering efficiencies","", TotalOutputPower1/TotalInputPower1 );
 		} else {
-			std::cerr << "Nuclear Reaction Diagnostics requested but no diagnostics exist for ion species: " << pVacuumConfig->IonSpecies.Name << std::endl;
+			std::cerr << "Nuclear Reaction Diagnostics requested but no diagnostics exist for ion species: " << IonSpecies.Name << std::endl;
 		}
 	}
 

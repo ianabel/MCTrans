@@ -119,7 +119,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 
 	N_Vector initialCondition = N_VNew_Serial( NDims );
 
-	double InitialTemperature = plasma.pVacuumConfig->InitialTemp;
+	double InitialTemperature = plasma.InitialTemp;
 	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
 	ELECTRON_TEMPERATURE( initialCondition ) = InitialTemperature;
 

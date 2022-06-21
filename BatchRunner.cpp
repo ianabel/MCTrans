@@ -181,10 +181,13 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	if ( batch.count( "IncludeAlphaHeating" ) == 1 )
 	{
 		bool aHeating = batch.at( "IncludeAlphaHeating" ).as_boolean();
-		if ( aHeating ) AlphaHeating = true;
-		else AlphaHeating = false;
+		if ( aHeating )
+			IncludeAlphaHeating = true;
+		else
+			IncludeAlphaHeating = false;
 	}
-	else AlphaHeating = std::nullopt;
+	else
+		IncludeAlphaHeating = std::nullopt;
 
 	// This overrides the default for the chosen fuel
 	if ( batch.count( "ReportNuclearDiagnostics" ) == 1 )
@@ -305,8 +308,7 @@ void BatchRunner::readParameterFromFile(toml::value batch, std::string configNam
 
 void BatchRunner::SolveIndividualMirrorPlasma(std::map<std::string, double> parameterMap, int currentRun)
 {
-	std::shared_ptr< MirrorPlasma::VacuumMirrorConfiguration > pVacuumConfig = std::make_shared<MirrorPlasma::VacuumMirrorConfiguration>( parameterMap,FuelName,reportThrust,AlphaHeating,ReportNuclearDiagnostics, AmbipolarPhi, Collisional, IncludeCXLosses, OutputFile, NetcdfOutputFile );
-	std::shared_ptr< MirrorPlasma > pReferencePlasmaState = std::make_shared<MirrorPlasma>(pVacuumConfig, parameterMap, VoltageTrace);
+	std::shared_ptr< MirrorPlasma > pReferencePlasmaState = std::make_shared<MirrorPlasma>( parameterMap,FuelName,ReportThrust,IncludeAlphaHeating,ReportNuclearDiagnostics, AmbipolarPhi, Collisional, IncludeCXLosses, OutputFile, NetcdfOutputFile, VoltageTrace);
 	
 	MCTransConfig config(pReferencePlasmaState, OutputCadence, EndTime);
 	

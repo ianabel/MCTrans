@@ -14,7 +14,7 @@ class MCTransConfig {
 			ReferencePlasmaState = std::make_unique<MirrorPlasma>( config );
 
 			bool MachSolve = ( ReferencePlasmaState->ElectronTemperature > 0.0 );
-			bool TempSolve = ( ReferencePlasmaState->pVacuumConfig->ImposedVoltage > 0.0 );
+			bool TempSolve = ( ReferencePlasmaState->ImposedVoltage > 0.0 );
 			if ( MachSolve && !TempSolve )
 				Type = SteadyStateMachSolve;
 			else if ( !MachSolve && TempSolve )
@@ -39,7 +39,7 @@ class MCTransConfig {
 			: ReferencePlasmaState(refPlasmaState), OutputDeltaT( deltaT ), EndTime( tFinal )
 		{
 			bool MachSolve = ( ReferencePlasmaState->ElectronTemperature > 0.0 );
-			bool TempSolve = ( ReferencePlasmaState->pVacuumConfig->ImposedVoltage > 0.0 );
+			bool TempSolve = ( ReferencePlasmaState->ImposedVoltage > 0.0 );
 			if ( MachSolve && !TempSolve )
 				Type = SteadyStateMachSolve;
 			else if ( !MachSolve && TempSolve )

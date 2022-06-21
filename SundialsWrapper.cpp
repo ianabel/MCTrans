@@ -135,7 +135,7 @@ int ARKStep_FreeWheel( realtype t, N_Vector u, N_Vector uDot, void* voidPlasma )
 	// We're now evolving the voltage with time 
 	plasmaPtr->IonTemperature = ION_TEMPERATURE( u );
 	plasmaPtr->ElectronTemperature = ELECTRON_TEMPERATURE( u );
-	plasmaPtr->pVacuumConfig->ImposedVoltage = VOLTAGE( u );
+	plasmaPtr->ImposedVoltage = VOLTAGE( u );
 
 
 	
@@ -158,7 +158,7 @@ int ARKStep_FreeWheel( realtype t, N_Vector u, N_Vector uDot, void* voidPlasma )
 	// I d omega / dt = ( MomentumToVoltage )^(-1) dV/dt
 	// so dV/dt = MtoV * ( Change in Angular Momentum )
 	
-	double MomentumToVoltage = plasmaPtr->pVacuumConfig->PlasmaColumnWidth * plasmaPtr->pVacuumConfig->PlasmaCentralRadius() * plasmaPtr->pVacuumConfig->CentralCellFieldStrength / plasmaPtr->MomentOfInertia();
+	double MomentumToVoltage = plasmaPtr->PlasmaColumnWidth * plasmaPtr->PlasmaCentralRadius() * plasmaPtr->CentralCellFieldStrength / plasmaPtr->MomentOfInertia();
 
 	try {
 		double IonHeating  = plasmaPtr->IonHeating();
@@ -229,7 +229,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	sunindextype NDims = N_DIMENSIONS;
 	N_Vector initialCondition = N_VNew_Serial( NDims );
 
-	double InitialTemperature = plasma.pVacuumConfig->InitialTemp;
+	double InitialTemperature = plasma.InitialTemp;
 	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
 	ELECTRON_TEMPERATURE( initialCondition ) = InitialTemperature;
 
@@ -257,8 +257,8 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	
 	
 
-	double abstol = plasma.pVacuumConfig->SundialsAbsTol;
-	double reltol = plasma.pVacuumConfig->SundialsRelTol;
+	double abstol = plasma.SundialsAbsTol;
+	double reltol = plasma.SundialsRelTol;
 
 #ifdef DEBUG
 	std::cerr << "Using SundialsAbsTol = " << abstol << " and SundialsRelTol = " << reltol << std::endl;
@@ -310,8 +310,8 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 		std::cerr << " Relative Rate of Change in Electron Energy Density " << RelativeElectronRate * 100 << " %/s" << std::endl;
 #endif
 		if ( !plasma.isTimeDependent &&
-		     RelativeIonRate < plasma.pVacuumConfig->RateThreshold &&
-		     RelativeElectronRate < plasma.pVacuumConfig->RateThreshold )
+		     RelativeIonRate < plasma.RateThreshold &&
+		     RelativeElectronRate < plasma.RateThreshold )
 		{
 #if defined( DEBUG )
 	std::cerr << "Steady state reached at time " << t << " with T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
@@ -354,7 +354,7 @@ void MCTransConfig::doFixedTeSolve( MirrorPlasma& plasma ) const
 	sunindextype NDims = N_DIMENSIONS;
 	N_Vector initialCondition = N_VNew_Serial( NDims );
 
-	double InitialTemperature = plasma.pVacuumConfig->InitialTemp;
+	double InitialTemperature = plasma.InitialTemp;
 	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
 	ELECTRON_TEMPERATURE( initialCondition ) = InitialTemperature;
 
@@ -375,8 +375,8 @@ void MCTransConfig::doFixedTeSolve( MirrorPlasma& plasma ) const
 	
 	
 
-	double abstol = plasma.pVacuumConfig->SundialsAbsTol;
-	double reltol = plasma.pVacuumConfig->SundialsRelTol;
+	double abstol = plasma.SundialsAbsTol;
+	double reltol = plasma.SundialsRelTol;
 
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
 	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, DEFAULT_DIRK_5, -1 ), "ARKStepSetTableNum" );
@@ -421,7 +421,7 @@ void MCTransConfig::doFreeWheel( MirrorPlasma& plasma ) const
 	sunindextype NDims = N_DIMENSIONS;
 	N_Vector initialCondition = N_VNew_Serial( NDims );
 
-	double InitialTemperature = plasma.pVacuumConfig->InitialTemp;
+	double InitialTemperature = plasma.InitialTemp;
 	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
 	ELECTRON_TEMPERATURE( initialCondition ) = InitialTemperature;
 
@@ -449,8 +449,8 @@ void MCTransConfig::doFreeWheel( MirrorPlasma& plasma ) const
 	
 	
 
-	double abstol = plasma.pVacuumConfig->SundialsAbsTol;
-	double reltol = plasma.pVacuumConfig->SundialsRelTol;
+	double abstol = plasma.SundialsAbsTol;
+	double reltol = plasma.SundialsRelTol;
 
 #ifdef DEBUG
 	std::cerr << "Using SundialsAbsTol = " << abstol << " and SundialsRelTol = " << reltol << std::endl;
