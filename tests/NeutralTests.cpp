@@ -41,6 +41,33 @@ BOOST_AUTO_TEST_CASE( electron_impact_ionization_test )
 		BOOST_TEST( electronImpactIonizationCrossSection( sample.first ) == sample.second, boost::test_tools::tolerance( 0.035 ) );
 }
 
+BOOST_AUTO_TEST_CASE( proton_impact_ionization_test )
+{
+	// Check it's 0 below the min energy
+	BOOST_TEST( protonImpactIonizationCrossSection( 450.0 ) == 0.0 );
+	// Check zero energy gives zero rather than an error
+	BOOST_TEST( protonImpactIonizationCrossSection( 0.0 ) == 0.0 );
+	// Check -ve energy gives zero rather than an error
+	BOOST_TEST( protonImpactIonizationCrossSection( -1.0 ) == 0.0 );
 
+	std::vector<std::pair<double,double>> JanevReferenceData{
+		{ 5.00E+02, 1.46E-20 },
+		{ 1.00E+03, 1.46E-19 },
+		{ 2.00E+03, 1.02E-18 },
+		{ 5.00E+03, 6.24E-18 },
+		{ 1.00E+04, 1.94E-17 },
+		{ 2.00E+04, 6.73E-17 },
+		{ 5.00E+04, 1.43E-16 },
+		{ 1.00E+05, 1.10E-16 },
+		{ 2.00E+05, 6.99E-17 },
+		{ 5.00E+05, 3.48E-17 },
+		{ 1.00E+06, 1.94E-17 },
+		{ 2.00E+06, 1.05E-17 },
+		{ 5.00E+06, 4.62E-18 }
+	};
+
+	for ( auto sample : JanevReferenceData )
+		BOOST_TEST( protonImpactIonizationCrossSection( sample.first ) == sample.second, boost::test_tools::tolerance( 0.05 ) );
+}
 
 BOOST_AUTO_TEST_SUITE_END()
