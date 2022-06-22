@@ -335,10 +335,7 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 			nc_output.AddScalarVariable( "ThermalOutputPower","Total Thermal Power Output","W", ThermalPowerOutput() *1e6 );
 
 			double TotalOutputPower1 = FusionNeutronPower + FusionAlphaPower;
-			double TotalOutputPower2 = ThermalPowerOutput();
 			double TotalInputPower1 = ElectricPotential() * JRadial / 1e6; // Because the output is in MW
-			double RotationDriveEta = 0.75;
-			double TotalInputPower2 = ElectricPotential() * JRadial / ( RotationDriveEta * 1e6 ); // ditto
 
 			nc_output.AddScalarVariable( "ScientificQ","Scientific Q-factor, not including tritium breeding, or engineering efficiencies","", TotalOutputPower1/TotalInputPower1 );
 		} else {
