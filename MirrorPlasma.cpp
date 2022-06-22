@@ -8,7 +8,7 @@
 #include "BatchRunner.hpp"
 
 MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, std::string FuelName, bool rThrust, std::optional<bool> AHeating, std::optional<bool> rDiagnostics, bool ambiPolPhi, bool collisions, bool includeCXLosses, std::string asciiOut, std::string netCdfOut, std::string vTrace )
-	: UseAmbipolarPhi(ambiPolPhi), ReportThrust( rThrust ), IncludeCXLosses(includeCXLosses), Collisional(collisions), OutputFile(asciiOut), NetcdfOutputFile(netCdfOut)
+	: UseAmbipolarPhi(ambiPolPhi), IncludeCXLosses(includeCXLosses), ReportThrust( rThrust ), Collisional(collisions), OutputFile(asciiOut), NetcdfOutputFile(netCdfOut)
 {
 	if( parameterMap.find("CentralCellField") != parameterMap.end())
 		CentralCellFieldStrength = parameterMap.at("CentralCellField");
@@ -88,8 +88,10 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 	if(AHeating.has_value() && AHeating.value() == true) IncludeAlphaHeating = true;
 	else if(AHeating.has_value() && AHeating.value() == false) IncludeAlphaHeating = false;
 
-	if(rDiagnostics.has_value() && rDiagnostics.value() == true) ReportNuclearDiagnostics = true;
-	else if(rDiagnostics.has_value() && rDiagnostics.value() == false) ReportNuclearDiagnostics = false;
+	if( rDiagnostics.has_value() && rDiagnostics.value() == true )
+		ReportNuclearDiagnostics = true;
+	else if(rDiagnostics.has_value() && rDiagnostics.value() == false)
+		ReportNuclearDiagnostics = false;
 
 	{
 		if( parameterMap.find("Zeff") != parameterMap.end())
