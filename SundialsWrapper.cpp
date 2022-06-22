@@ -277,7 +277,6 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	ArkodeErrorWrapper( ARKStepSetConstraints( arkMem, positivityEnforcement ), "ARKStepSetConstraints" );
 
 	ArkodeErrorWrapper( ARKStepSetMaxStep( arkMem, OutputDeltaT*10 ), "ARKStepSetMaxStep" );
-	ArkodeErrorWrapper( ARKStepSetInitStep( arkMem, OutputDeltaT/10 ), "ARKStepSetInitStep" );
 
 	const unsigned long MaxSteps = 1e4;
 	ArkodeErrorWrapper( ARKStepSetMaxNumSteps( arkMem, MaxSteps ), "ARKStepSetMaxNumSteps" );

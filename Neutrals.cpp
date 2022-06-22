@@ -42,7 +42,7 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 		return Energy * ElectronCharge * sigmaM2 * ::exp( -Energy * ElectronCharge / temperature ) * Jacobian;
 	};
 
-	constexpr double tolerance = 1e-5;
+	constexpr double tolerance = 1e-7;
 	constexpr unsigned MaxDepth = 10;
 	double HotRateCoeff = 4.0 / ( ::sqrt(2 * M_PI * sigma.Particle.Mass * temperature) * temperature )
 	         * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
@@ -80,7 +80,7 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 	};
 
 	constexpr double tolerance = 1e-7;
-	constexpr unsigned MaxDepth = 15;
+	constexpr unsigned MaxDepth = 10;
 	double ColdRateCoeff = thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) )
 	        * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
