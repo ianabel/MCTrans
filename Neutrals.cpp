@@ -259,9 +259,9 @@ double HydrogenChargeExchangeCrossSection( double Energy )
 		sigma_n3 = 1e-16 * 0.37271 * ::log( 2.7645e6 / EnergyTilde + 1.4857e3 ) / ( 1 + 1.5720e-3 * EnergyTilde + 3.0842e-6 * ::pow( EnergyTilde, 3.5 ) + 1.1832e-10 * ::pow( EnergyTilde, 5.4 ) );
 	}
 
-	// IGA: I believe with cold neutrals the contribution from higher orbitals is negligible
-	// but leaving as-is for the moment as a pessimistic assumption
-	return sigma_n1 + sigma_n2 + sigma_n3;
+	// IGA: I believe for cold neutrals the contribution from higher orbitals is negligible
+	// (assume the neutrals are in thermal equlibrium with a wall at <= 1000C)
+	return sigma_n1; // + sigma_n2 + sigma_n3;
 }
 
 // Energy in electron volts, returns cross section in cm^2
