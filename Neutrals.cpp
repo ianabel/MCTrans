@@ -222,9 +222,9 @@ double protonImpactIonizationCrossSection( double Energy )
 double HydrogenChargeExchangeCrossSection( double Energy )
 {
 	// Minimum energy of cross section in eV
-	const double minimumEnergySigma_n1 = 0.12;
-	const double minimumEnergySigma_n2 = 10;
-	const double minimumEnergySigma_n3 = 10;
+	constexpr double minimumEnergySigma_n1 = 0.12;
+	// constexpr double minimumEnergySigma_n2 = 10;
+	// constexpr double minimumEnergySigma_n3 = 10;
 
 	// Contribution from ground -> ground state
 	// Janev 1993 2.3.1
@@ -237,6 +237,7 @@ double HydrogenChargeExchangeCrossSection( double Energy )
 		sigma_n1 = 1e-16 * 3.2345 * ::log( 235.88 / EnergyKEV + 2.3713 ) / ( 1 + 0.038371 * EnergyKEV + 3.8068e-6 * ::pow( EnergyKEV, 3.5 ) + 1.1832e-10 * ::pow( EnergyKEV, 5.4 ) );
 	}
 
+	/*
 	// Contribution from n=2 orbital
 	double sigma_n2;
 	if ( Energy < minimumEnergySigma_n2 ) {
@@ -258,6 +259,7 @@ double HydrogenChargeExchangeCrossSection( double Energy )
 		double EnergyTilde = EnergyKEV * ::pow( n, 2 );
 		sigma_n3 = 1e-16 * 0.37271 * ::log( 2.7645e6 / EnergyTilde + 1.4857e3 ) / ( 1 + 1.5720e-3 * EnergyTilde + 3.0842e-6 * ::pow( EnergyTilde, 3.5 ) + 1.1832e-10 * ::pow( EnergyTilde, 5.4 ) );
 	}
+	*/
 
 	// IGA: I believe for cold neutrals the contribution from higher orbitals is negligible
 	// (assume the neutrals are in thermal equlibrium with a wall at <= 1000C)
@@ -398,5 +400,5 @@ double MirrorPlasma::CXLossRate() const
 	std::cerr << " CX Frequency is " << CXRateCoefficient * NeutralDensity * ReferenceDensity << " /s " << std::endl;
 #endif
 
-	return CXRateCoefficient * ( NeutralDensity * ReferenceDensity * IonDensity * ReferenceDensity );
+	return CXRate;
 }
