@@ -221,12 +221,15 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		VoltageTrace = "";
 	}
 
-	if ( batchConfig.count( "timestepping" ) == 1 ) {
-		const auto & timestep_conf = toml::find<toml::table>( batchConfig, "timestepping" );
-		OutputCadence = timestep_conf.at( "OutputCadence" ).as_floating();
-		EndTime = timestep_conf.at( "EndTime" ).as_floating();
+	if ( batchConfig.count( "timestepping.OutputCadence" ) == 1 ) {
+		OutputCadence = batchConfig.at( "timestepping.OutputCadence" ).as_floating();
 	} else {
 		OutputCadence = 0.0005;
+	}
+
+	if ( batchConfig.count( "timestepping.EndTime" ) == 1 ) {
+		EndTime = batchConfig.at( "timestepping.EndTime" ).as_floating();
+	} else {
 		EndTime = 1.00;
 	}
 }
@@ -263,7 +266,9 @@ void BatchRunner::runBatchSolve()
 	if ( totalRuns > 1 && isTimeDependent )
 		throw std::invalid_argument( "[error] Multiple simultaneous time-dependent runs is not currently supported" );
 
+#ifdef USE_OPENMP
 	#pragma omp parallel for
+#endif
 	for ( int n = 0; n < totalRuns; n++ )
 	{
 		SolveIndividualMirrorPlasma(vectorOfMaps[n], n);
@@ -318,9 +323,11 @@ void BatchRunner::SolveIndividualMirrorPlasma(std::map<std::string, double> para
 		result->PrintReport(&parameterMap, currentRun, totalRuns);
 		result->WriteNetCDFReport( &parameterMap, currentRun, totalRuns );
 	}
-	catch (int e ){}
-	catch(boost::exception const&  ex){}
-	catch(std::exception e){}
+	catch(std::exception& e){
+		std::cerr << "Exception encountered in Batch Run " << currentRun << " of " << totalRuns << std::endl;
+		std::cerr << "=> " << e.what() << std::endl;
+		std::cerr << "Continuing with other batch runs" << std::endl;
+	}
 }
 
 template<typename K, typename V>
