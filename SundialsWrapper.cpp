@@ -269,6 +269,16 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 
 
+	N_Vector positivityEnforcement = N_VNew_Serial( NDims );
+	N_VConst( 0.0, positivityEnforcement ); // Default to no constraints
+	ION_TEMPERATURE( positivityEnforcement ) = 2.0;      // T_i > 0
+	ELECTRON_TEMPERATURE( positivityEnforcement ) = 2.0; // T_e > 0
+
+	ArkodeErrorWrapper( ARKStepSetConstraints( arkMem, positivityEnforcement ), "ARKStepSetConstraints" );
+
+	ArkodeErrorWrapper( ARKStepSetMaxStep( arkMem, OutputDeltaT*10 ), "ARKStepSetMaxStep" );
+	ArkodeErrorWrapper( ARKStepSetInitStep( arkMem, OutputDeltaT/10 ), "ARKStepSetInitStep" );
+
 	const unsigned long MaxSteps = 1e4;
 	ArkodeErrorWrapper( ARKStepSetMaxNumSteps( arkMem, MaxSteps ), "ARKStepSetMaxNumSteps" );
 
@@ -282,9 +292,16 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	ArkodeErrorWrapper( ARKStepSetStopTime( arkMem, EndTime ), "ARKStepSetStopTime" );
 	for ( t = OutputDeltaT; t < EndTime; t += OutputDeltaT )
 	{
+#if defined( DEBUG )
+		double curTime;
+		ArkodeErrorWrapper( ARKStepGetCurrentTime( arkMem, &curTime ), "ARKStepGetCurrentTime" );
+#endif
 		errorFlag = ARKStepEvolve( arkMem, t, initialCondition, &tRet, ARK_NORMAL );
 		switch ( errorFlag ) {
 			case ARK_SUCCESS:
+#if defined( DEBUG )
+				std::cerr << "Internal time is " << curTime << " Evolved to " << tRet << " with intent of reaching " << t << std::endl;
+#endif
 				break;
 			default:
 				throw std::runtime_error( "ARKStep failed with error " + std::to_string( errorFlag ) );
