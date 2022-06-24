@@ -151,8 +151,11 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 	if ( parameterMap.find( "ExternalResistance" ) != parameterMap.end() )
 	{
 		ExternalResistance = parameterMap.at( "ExternalResistance" );
-		isTimeDependent = true;
-		time = 0;
+		if ( ExternalResistance > 0.0 ) {
+			std::cerr << "Warning: doing unsupported free-wheel" << std::endl;
+			isTimeDependent = true;
+			time = 0;
+		}
 	}
 }
 
