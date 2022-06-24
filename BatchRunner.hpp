@@ -45,6 +45,7 @@ private:
 	std::vector<double> WallRadiusVals;
 	std::vector<double> AuxiliaryHeatingVals;
 	std::vector<double> NeutralDensityVals;
+	std::vector<double> ExternalResistanceVals;
 
 	std::optional<bool> IncludeAlphaHeating = std::nullopt;
 	std::optional<bool> ReportNuclearDiagnostics = std::nullopt;

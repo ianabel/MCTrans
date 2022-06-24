@@ -6,7 +6,7 @@
 #include "NetCDFIO.hpp"
 #include <toml.hpp>
 
-#include <boost/math/interpolators/barycentric_rational.hpp>
+#include <boost/math/interpolators/makima.hpp>
 
 #include <memory>
 #include <cmath>
@@ -201,7 +201,7 @@ class MirrorPlasma {
 		double NeutronWallLoading() const;
 		double DDNeutronRate() const;
 
-		using interpolant = boost::math::barycentric_rational<double>;
+		using interpolant = boost::math::interpolators::makima<std::vector<double>>;
 		std::unique_ptr<interpolant> VoltageFunction;
 		void ReadVoltageFile( std::string const& );
 		double time;

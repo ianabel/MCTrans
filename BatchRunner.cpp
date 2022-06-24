@@ -168,6 +168,9 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	// Imposed Voltage
 	readParameterFromFile(batch, "Voltage", ImposedVoltageVals, false, 0.0);
 
+	// External resistance for spin-down simulations
+	readParameterFromFile(batch, "ExternalResistance", ExternalResistanceVals, false, 0.0);
+
 	// Wall Radius
 	readParameterFromFile(batch, "WallRadius", WallRadiusVals, true);
 
@@ -221,15 +224,22 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		VoltageTrace = "";
 	}
 
-	if ( batchConfig.count( "timestepping.OutputCadence" ) == 1 ) {
-		OutputCadence = batchConfig.at( "timestepping.OutputCadence" ).as_floating();
-	} else {
-		OutputCadence = 0.0005;
-	}
+	if ( batchConfig.count( "timestepping" ) == 1 ) {
+		auto timestepConf = toml::find<toml::table>( batchConfig, "timestepping" );
+		if ( timestepConf.count( "OutputCadence" ) == 1 ) {
+			OutputCadence = timestepConf.at( "OutputCadence" ).as_floating();
+		} else {
+			OutputCadence = 0.005;
+		}
 
-	if ( batchConfig.count( "timestepping.EndTime" ) == 1 ) {
-		EndTime = batchConfig.at( "timestepping.EndTime" ).as_floating();
+		if ( timestepConf.count( "EndTime" ) == 1 ) {
+			EndTime = timestepConf.at( "EndTime" ).as_floating();
+		} else {
+			EndTime = 1.00;
+		}
+
 	} else {
+		OutputCadence = 0.005;
 		EndTime = 1.00;
 	}
 }

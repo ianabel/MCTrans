@@ -229,10 +229,18 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	sunindextype NDims = N_DIMENSIONS;
 	N_Vector initialCondition = N_VNew_Serial( NDims );
 
-	double InitialTemperature = plasma.InitialTemp;
+	// Set initial temperature to be such that the mach number is reasonable.
+	double InitialMach = plasma.InitialMach;
+	double SoundSpeed = ::fabs( plasma.ImposedVoltage / ( plasma.PlasmaColumnWidth * plasma.CentralCellFieldStrength * InitialMach ) );
+	double InitialTemperature = plasma.IonSpecies.Mass * ProtonMass * SoundSpeed * SoundSpeed / ReferenceTemperature;
+#ifdef DEBUG
+	std::cerr << "Setting T_0 = " << InitialTemperature  << " to have M at t=0 fixed to " << InitialMach << std::endl;
+#endif
+
+
 	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
 	ELECTRON_TEMPERATURE( initialCondition ) = InitialTemperature;
-
+	
 	plasma.ElectronTemperature = InitialTemperature;
 	plasma.IonTemperature = InitialTemperature;
 	plasma.SetMachFromVoltage();
@@ -264,7 +272,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	std::cerr << "Using SundialsAbsTol = " << abstol << " and SundialsRelTol = " << reltol << std::endl;
 #endif
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
-	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, DEFAULT_DIRK_5, -1 ), "ARKStepSetTableNum" );
+	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, DEFAULT_DIRK_4, -1 ), "ARKStepSetTableNum" );
 	
 	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 

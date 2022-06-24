@@ -103,7 +103,15 @@ void MirrorPlasma::InitialiseNetCDF()
 	nc_output.AddTimeSeries( "MachNumber", "Plasma velocity divided by Sqrt(T_e/m_i)", "", MachNumber );
 	nc_output.AddTimeSeries( "IonTemperature", "Temperature of the bulk ion species", "keV", IonTemperature );
 	nc_output.AddTimeSeries( "ElectronTemperature", "Temperature of the bulk ion species", "keV", ElectronTemperature );
+
 	nc_output.AddTimeSeries( "Current", "Radial current through the plasma","A", RadialCurrent() );
+	nc_output.AddTimeSeries( "ViscousTorque", "Viscous Torque","", ViscousTorque() );
+	nc_output.AddTimeSeries( "ParAngMomLoss", "Parallel Angular Momentum Loss","", ParallelAngularMomentumLossRate() );
+
+	nc_output.AddTimeSeries( "ViscousHeating", "Viscous Heating","W/m^3", ViscousHeating() );
+	nc_output.AddTimeSeries( "ParIonHeatLoss", "Parallel Ion Heat Loss","W/m^3", ParallelIonHeatLoss() );
+	nc_output.AddTimeSeries( "ParElecHeatLoss", "Parallel Electron Heat Loss","W/m^3", ParallelElectronHeatLoss() );
+	nc_output.AddTimeSeries( "PerpHeatLoss", "Perp Ion Heat Loss","W/m^3", ClassicalIonHeatLoss() );
 
 
 }
@@ -121,7 +129,16 @@ void MirrorPlasma::WriteTimeslice( double tNew )
 	nc_output.AppendToTimeSeries( "MachNumber", MachNumber, tIndex );
 	nc_output.AppendToTimeSeries( "IonTemperature", IonTemperature, tIndex );
 	nc_output.AppendToTimeSeries( "ElectronTemperature", ElectronTemperature, tIndex );
+
 	nc_output.AppendToTimeSeries( "Current", RadialCurrent(), tIndex );
+	nc_output.AppendToTimeSeries( "ViscousTorque", ViscousTorque(), tIndex );
+	nc_output.AppendToTimeSeries( "ParAngMomLoss", ParallelAngularMomentumLossRate(), tIndex );
+
+	nc_output.AppendToTimeSeries( "ViscousHeating", ViscousHeating(), tIndex );
+	nc_output.AppendToTimeSeries( "ParIonHeatLoss", ParallelIonHeatLoss(), tIndex );
+	nc_output.AppendToTimeSeries( "ParElecHeatLoss", ParallelElectronHeatLoss(), tIndex );
+	nc_output.AppendToTimeSeries( "PerpHeatLoss", ClassicalIonHeatLoss(), tIndex );
+
 }
 
 void MirrorPlasma::FinaliseNetCDF()

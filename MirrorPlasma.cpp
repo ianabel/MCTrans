@@ -263,8 +263,10 @@ double MirrorPlasma::ParallelIonPastukhovLossRate( double Chi_i ) const
 	double Sigma = 1.0;
 	double LossRate = ( M_2_SQRTPI / tau_ii ) * Sigma * IonDensity * ReferenceDensity * ( 1.0 / ::log( R * Sigma ) ) * ( ::exp( - Chi_i ) / Chi_i );
 
+
 	// To prevent false solutions, apply strong losses if the Mach number drops
 	if ( Chi_i < 1.0 ) {
+		// std::cerr << "Warning: Chi_i dropped below one" << std::endl;
 		double BaseLossRate = IonDensity * ReferenceDensity * ( SoundSpeed() / PlasmaLength );
 		double smoothing = Transition( Chi_i, .5, 1.0 );
 		return smoothing*BaseLossRate + ( 1-smoothing )*LossRate;
@@ -360,7 +362,7 @@ double MirrorPlasma::AmbipolarPhi() const
 		};
 
 		boost::uintmax_t iters = 1000;
-		boost::math::tools::eps_tolerance<double> tol( 11 ); // only bother getting part in 1024 accuracy
+		boost::math::tools::eps_tolerance<double> tol( 28 );
 		auto [ Phi_l, Phi_u ] = boost::math::tools::bracket_and_solve_root( ParallelCurrent, AmbipolarPhi, 1.2, false, tol, iters );
 		AmbipolarPhi = ( Phi_l + Phi_u )/2.0;
 
