@@ -47,8 +47,12 @@ class MCTransConfig {
 				Type = SteadyStateTempSolve;
 			else if ( MachSolve && TempSolve )
 				throw std::invalid_argument( "[error] Cannot specify both temperature and voltage." );
-			else if ( !MachSolve && !TempSolve )
-				throw std::invalid_argument( "[error] Must specify at least one of ElectronTemperature or Voltage." );
+			else if ( !MachSolve && !TempSolve ) {
+				if ( FWSolve )
+					Type = FreewheelSolve;
+				else
+					throw std::invalid_argument( "[error] Must specify at least one of ElectronTemperature or Voltage." );
+			}
 
 			if ( FWSolve ) {
 				if ( TempSolve || MachSolve )

@@ -93,61 +93,66 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 	else if(rDiagnostics.has_value() && rDiagnostics.value() == false)
 		ReportNuclearDiagnostics = false;
 
+	if( parameterMap.find("Zeff") != parameterMap.end())
+		Zeff = parameterMap.at("Zeff");
+	else Zeff = 1.0;
+
+	if( parameterMap.find("ElectronDensity") != parameterMap.end())
+		ElectronDensity = parameterMap.at("ElectronDensity");
+
+	IonDensity = ElectronDensity / IonSpecies.Charge; 
+
+	double TiTe = 0.0;
+	if( parameterMap.find("IonToElectronTemperatureRatio") != parameterMap.end())
+		TiTe = parameterMap.at("IonToElectronTemperatureRatio");
+
+
+	if( parameterMap.find("ElectronTemperature") != parameterMap.end())
 	{
-		if( parameterMap.find("Zeff") != parameterMap.end())
-			Zeff = parameterMap.at("Zeff");
-		else Zeff = 1.0;
+		ElectronTemperature = parameterMap.at("ElectronTemperature");
+		IonTemperature = ElectronTemperature < 0.0 ? -1.0 : ElectronTemperature * TiTe;
+	}
+	// Note if(...) only false if theres a bug. Batch runner will populate the value as -1.0 if its not found in the config file
+	else
+	{
+		ElectronTemperature = -1.0;
+		IonTemperature = -1.0;
+	}
 
-		if( parameterMap.find("ElectronDensity") != parameterMap.end())
-			ElectronDensity = parameterMap.at("ElectronDensity");
-
-		IonDensity = ElectronDensity / IonSpecies.Charge; 
-
-		double TiTe = 0.0;
-		if( parameterMap.find("IonToElectronTemperatureRatio") != parameterMap.end())
-			TiTe = parameterMap.at("IonToElectronTemperatureRatio");
-
-
-		if( parameterMap.find("ElectronTemperature") != parameterMap.end())
-		{
-			ElectronTemperature = parameterMap.at("ElectronTemperature");
-			IonTemperature = ElectronTemperature < 0.0 ? -1.0 : ElectronTemperature * TiTe;
-		}
-		// Note if(...) only false if theres a bug. Batch runner will populate the value as -1.0 if its not found in the config file
-		else
-		{
-			ElectronTemperature = -1.0;
-			IonTemperature = -1.0;
-		}
-
-		// Note: current excecution has NeutralSource always initially set to 0. If this changes work will have to be done in BatchRunner
-		if( parameterMap.find("NeutralDensity") != parameterMap.end())
-		{
-			NeutralDensity = parameterMap.at("NeutralDensity");
-			NeutralSource = 0.0;
-			if ( NeutralDensity == 0.0 )
-				FixedNeutralDensity = false;
-			else
-				FixedNeutralDensity = true;
-		}
-		else
-		{
-			NeutralDensity = 0.0;
-			NeutralSource = 0.0;
+	// Note: current excecution has NeutralSource always initially set to 0. If this changes work will have to be done in BatchRunner
+	if( parameterMap.find("NeutralDensity") != parameterMap.end())
+	{
+		NeutralDensity = parameterMap.at("NeutralDensity");
+		NeutralSource = 0.0;
+		if ( NeutralDensity == 0.0 )
 			FixedNeutralDensity = false;
-		}
-
-		if(!vTrace.empty())
-		{
-			ReadVoltageFile( vTrace );
-			isTimeDependent = true;
-			SetTime( 0 );
-		}
 		else
-		{
-			isTimeDependent = false;
-			time = -1;
-		}
+			FixedNeutralDensity = true;
+	}
+	else
+	{
+		NeutralDensity = 0.0;
+		NeutralSource = 0.0;
+		FixedNeutralDensity = false;
+	}
+
+	if(!vTrace.empty())
+	{
+		ReadVoltageFile( vTrace );
+		isTimeDependent = true;
+		SetTime( 0 );
+	}
+	else
+	{
+		isTimeDependent = false;
+		time = -1;
+	}
+
+	if ( parameterMap.find( "ExternalResistance" ) != parameterMap.end() )
+	{
+		ExternalResistance = parameterMap.at( "ExternalResistance" );
+		isTimeDependent = true;
+		time = 0;
 	}
 }
 
