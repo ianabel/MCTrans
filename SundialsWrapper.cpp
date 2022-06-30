@@ -27,6 +27,8 @@
 #define PARTICLE_BALANCE( F ) NV_Ith_S( F, DENSITY_IDX )
 #define MOMENTUM_BALANCE( F ) NV_Ith_S( F, MOMENTUM_IDX )
 
+#define IRK_SCHEME DEFAULT_DIRK_4
+
 #include "Config.hpp"
 #include "MirrorPlasma.hpp"
 #include <exception>
@@ -272,7 +274,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	std::cerr << "Using SundialsAbsTol = " << abstol << " and SundialsRelTol = " << reltol << std::endl;
 #endif
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
-	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, DEFAULT_DIRK_4, -1 ), "ARKStepSetTableNum" );
+	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, -1 ), "ARKStepSetTableNum" );
 	
 	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 
@@ -403,7 +405,7 @@ void MCTransConfig::doFixedTeSolve( MirrorPlasma& plasma ) const
 	double reltol = plasma.SundialsRelTol;
 
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
-	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, DEFAULT_DIRK_5, -1 ), "ARKStepSetTableNum" );
+	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, -1 ), "ARKStepSetTableNum" );
 	
 	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 
@@ -451,7 +453,10 @@ void MCTransConfig::doFreeWheel( MirrorPlasma& plasma ) const
 
 	plasma.ElectronTemperature = InitialTemperature;
 	plasma.IonTemperature = InitialTemperature;
-	plasma.SetMachFromVoltage();
+	plasma.MachNumber = plasma.InitialMach;
+
+	plasma.ImposedVoltage = plasma.MachNumber * plasma.SoundSpeed() * plasma.PlasmaColumnWidth * plasma.CentralCellFieldStrength;
+
 	plasma.ComputeSteadyStateNeutrals();
 
 	plasma.InitialiseNetCDF();
@@ -480,7 +485,7 @@ void MCTransConfig::doFreeWheel( MirrorPlasma& plasma ) const
 	std::cerr << "Using SundialsAbsTol = " << abstol << " and SundialsRelTol = " << reltol << std::endl;
 #endif
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
-	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, DEFAULT_DIRK_5, -1 ), "ARKStepSetTableNum" );
+	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, -1 ), "ARKStepSetTableNum" );
 	
 	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 

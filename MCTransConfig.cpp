@@ -14,8 +14,9 @@ std::shared_ptr<MirrorPlasma> MCTransConfig::Solve()
 		case SolveType::SteadyStateTempSolve:
 			doTempSolve( *ReferencePlasmaState );
 			break;
-		//case SolveType::FreewheelSolve;
-		//	break;
+		case SolveType::FreewheelSolve:
+			doFreeWheel( *ReferencePlasmaState );
+			break;
 		default:
 			throw std::invalid_argument( "Unknown Solve Type" );
 	}

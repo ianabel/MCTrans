@@ -22,9 +22,9 @@ VoltageVar = nc_root.createVariable("Voltage","f8",("Time",));
 # Generate a time trace that goes from t=0 to t=t_1 at V_1, then linearly 
 # up to V_2 at t_2, then constant to t_end
 
-t1 = 0.005
-t2 = 0.055
-t_end = 1.00
+t1 = 0.0500
+t2 = 0.0505
+t_end = 0.250
 
 V1 = 10000
 V2 =100000

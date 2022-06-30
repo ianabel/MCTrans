@@ -671,7 +671,8 @@ void MirrorPlasma::UpdateVoltage()
 void MirrorPlasma::SetTime( double new_time )
 {
 	time = new_time;
-	UpdateVoltage();
+	if ( VoltageFunction )
+		UpdateVoltage();
 }
 
 double MirrorPlasma::MomentOfInertia() const
