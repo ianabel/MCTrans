@@ -6,99 +6,59 @@
 #include "NetCDFIO.hpp"
 #include <toml.hpp>
 
-#include <boost/math/interpolators/barycentric_rational.hpp>
+#include <boost/math/interpolators/makima.hpp>
 
 #include <memory>
 #include <cmath>
 #include <map>
-
-enum tribool{ tru, fal, unspecified};
+#include <optional>
 
 class MirrorPlasma {
 	public:
-		class VacuumMirrorConfiguration {
-			public:
-				// VacuumMirrorConfiguration( toml::value const& );
-				VacuumMirrorConfiguration(const std::map<std::string, double>& parameterMap, std::string FuelName, bool reportThrust, tribool AlphaHeating, tribool ReportNuclearDiagnostics, bool ambiPolPhi, bool collisions, bool includeCXLosses, std::string asciiOut, std::string netCdfOut);
-				/*
-				VacuumMirrorConfiguration( const& VacuumMirrorConfiguration other ) :
-					IonSpecies( other.IonSpecies )
-				{
-					MirrorRatio = other.MirrorRatio;
-					PlasmaColumnWidth = other.PlasmaColumnWidth;
-					PlasmaLength = other.PlasmaLength;
-					AxialGapDistance = other.AxialGapDistance;
-					WallRadius = other.WallRadius;
-					CentralCellFieldStrength = other.CentralCellFieldStrength;
-					AuxiliaryHeating = other.AuxiliaryHeating;
-				}
-				*/
-				Species_t IonSpecies;
-				double MirrorRatio;
-				double PlasmaColumnWidth;
-				double PlasmaLength;
-				double AxialGapDistance;
-				double WallRadius;
-				double CentralCellFieldStrength;
-				double AuxiliaryHeating;
-
-				double ParallelFudgeFactor;
-				double PerpFudgeFactor;
-				bool AmbipolarPhi;
-
-				bool IncludeCXLosses;
-
-				bool AlphaHeating;
-				bool ReportNuclearDiagnostics;
-				bool ReportThrust;
-
-				double InitialTemp;
-				double InitialMach;
-				bool Collisional;
-
-				std::string OutputFile;
-				std::string NetcdfOutputFile;
-
-				double SundialsAbsTol,SundialsRelTol;
-				double RateThreshold;
-
-				double PlasmaVolume() const {
-					return M_PI * ( PlasmaColumnWidth + 2 * AxialGapDistance ) * PlasmaColumnWidth * PlasmaLength;
-				};
-				double WallArea() const {
-					return 2.0 * M_PI * WallRadius * WallRadius * PlasmaLength;
-				};
-
-				double ImposedVoltage;
-				double PlasmaInnerRadius() const { return AxialGapDistance; };
-				double PlasmaOuterRadius() const { return AxialGapDistance + PlasmaColumnWidth; };
-				double PlasmaCentralRadius() const { return AxialGapDistance + PlasmaColumnWidth / 2.0; };
-			private:
-
-		};
-
-		// Copy Constructor
-		/*
-		MirrorPlasma( MirrorPlasma const& other ) :
-			pVacuumConfig( other.pVacuumConfig )
-		{
-			FuellingRate = other.FuellingRate;
-			IonDensity = other.IonDensity;
-			IonTemperature = other.IonTemperature;
-			ElectronDensity = other.ElectronDensity;
-			ElectronTemperature = other.ElectronTemperature;
-		   NeutralDensity = other.NeutralDensity;
-			NeutralSource = other.NeutralSource;
-			Zeff = other.Zeff;
-		   MachNumber = other.MachNumber;
-		};
-		*/
-
 		MirrorPlasma( MirrorPlasma const& ) = delete;
 
-		// MirrorPlasma( toml::value const& configSection );
+		MirrorPlasma(const std::map<std::string, double>& parameterMap, std::string FuelName, bool reportThrust, std::optional<bool> IncludeAlphaHeating, std::optional<bool> ReportNuclearDiagnostics, bool ambiPolPhi, bool collisions, bool includeCXLosses, std::string asciiOut, std::string netCdfOut, std::string vTrace);
 
-		MirrorPlasma(std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig, std::map<std::string,double> parameterMap, std::string vTrace);
+		Species_t IonSpecies;
+		double MirrorRatio;
+		double PlasmaColumnWidth;
+		double PlasmaLength;
+		double AxialGapDistance;
+		double WallRadius;
+		double CentralCellFieldStrength;
+		double AuxiliaryHeating;
+
+		double ParallelFudgeFactor;
+		double PerpFudgeFactor;
+		bool UseAmbipolarPhi;
+
+		bool IncludeCXLosses;
+
+		bool IncludeAlphaHeating;
+		bool ReportNuclearDiagnostics;
+		bool ReportThrust;
+
+		double InitialTemp;
+		double InitialMach;
+		bool Collisional;
+
+		std::string OutputFile;
+		std::string NetcdfOutputFile;
+
+		double SundialsAbsTol,SundialsRelTol;
+		double RateThreshold;
+
+		double PlasmaVolume() const {
+			return M_PI * ( PlasmaColumnWidth + 2 * AxialGapDistance ) * PlasmaColumnWidth * PlasmaLength;
+		};
+		double WallArea() const {
+			return 2.0 * M_PI * WallRadius * WallRadius * PlasmaLength;
+		};
+
+		double ImposedVoltage;
+		double PlasmaInnerRadius() const { return AxialGapDistance; };
+		double PlasmaOuterRadius() const { return AxialGapDistance + PlasmaColumnWidth; };
+		double PlasmaCentralRadius() const { return AxialGapDistance + PlasmaColumnWidth / 2.0; };
 
 		double FuellingRate;
 		double IonDensity,IonTemperature;
@@ -112,7 +72,7 @@ class MirrorPlasma {
 
 		double SoundSpeed() const {
 			// We *define* c_s^2 = Z_i T_e / m_i.
-			double cs = ::sqrt( pVacuumConfig->IonSpecies.Charge * ElectronTemperature*ReferenceTemperature / ( pVacuumConfig->IonSpecies.Mass * ProtonMass ) );
+			double cs = ::sqrt( IonSpecies.Charge * ElectronTemperature*ReferenceTemperature / ( IonSpecies.Mass * ProtonMass ) );
 			return cs;
 		};
 
@@ -135,10 +95,10 @@ class MirrorPlasma {
 		double ElectronParticleLosses() const;
 
 		double ElectricPotential() const {
-			return pVacuumConfig->CentralCellFieldStrength * MachNumber * SoundSpeed() * pVacuumConfig->PlasmaColumnWidth;
+			return CentralCellFieldStrength * MachNumber * SoundSpeed() * PlasmaColumnWidth;
 		};
 		double IonLarmorRadius() const {
-			return 1.02 * ::sqrt( pVacuumConfig->IonSpecies.Mass * IonTemperature * 1000 ) / ( pVacuumConfig->IonSpecies.Charge * pVacuumConfig->CentralCellFieldStrength * 10000 );
+			return 1.02 * ::sqrt( IonSpecies.Mass * IonTemperature * 1000 ) / ( IonSpecies.Charge * CentralCellFieldStrength * 10000 );
 		};
 
 		double Beta() const;
@@ -149,25 +109,25 @@ class MirrorPlasma {
 		double ThermalEnergy() const;
 
 		void PrintReport(std::map<std::string, double>* parameterMap = nullptr, int currentRun = 1, int totalRun = 1);
+		void WriteNetCDFReport(std::map<std::string, double>* parameterMap = nullptr, int currentRun = 1, int totalRun = 1);
 
 		void InitialiseNetCDF();
 		void WriteTimeslice( double T );
 		void FinaliseNetCDF();
-
-
-		std::shared_ptr< VacuumMirrorConfiguration > pVacuumConfig;
 
 		void SetMachFromVoltage();
 		double AmbipolarPhi() const;
 
 		void ComputeSteadyStateNeutrals();
 
+		double TotalAngularMomentumLosses() const;
+		double MomentOfInertia() const;
+		double InjectedTorque( double ) const;
 		double ParallelMomentumLossRate() const;
-		double initialTemperature() const { return pVacuumConfig->InitialTemp; };
-		double initialMach() const { return pVacuumConfig->InitialMach; };
+		double initialTemperature() const { return InitialTemp; };
+		double initialMach() const { return InitialMach; };
 
 		bool isSteady;
-	private:
 		NetCDFIO nc_output;
 
 		double LogLambdaElectron() const;
@@ -224,13 +184,13 @@ class MirrorPlasma {
 
 		double IonCyclotronFrequency() const
 		{
-			double MagneticField = pVacuumConfig->CentralCellFieldStrength;
-			return pVacuumConfig->IonSpecies.Charge * ElectronCharge * MagneticField / ( pVacuumConfig->IonSpecies.Mass * ProtonMass );
+			double MagneticField = CentralCellFieldStrength;
+			return IonSpecies.Charge * ElectronCharge * MagneticField / ( IonSpecies.Mass * ProtonMass );
 		};
 
 		double ElectronCyclotronFrequency() const
 		{
-			double MagneticField = pVacuumConfig->CentralCellFieldStrength;
+			double MagneticField = CentralCellFieldStrength;
 			return ElectronCharge * MagneticField / ElectronMass;
 		};
 
@@ -241,12 +201,11 @@ class MirrorPlasma {
 		double NeutronWallLoading() const;
 		double DDNeutronRate() const;
 
-		using interpolant = boost::math::barycentric_rational<double>;
+		using interpolant = boost::math::interpolators::makima<std::vector<double>>;
 		std::unique_ptr<interpolant> VoltageFunction;
 		void ReadVoltageFile( std::string const& );
 		double time;
 
-	public:
 		double AlphaHeating() const;
 		double PromptAlphaLossFraction() const;
 		double PromptAlphaThrust() const;
@@ -260,6 +219,8 @@ class MirrorPlasma {
 		void UpdateVoltage();
 		void SetTime( double );
 		bool isTimeDependent;
+
+		double ExternalResistance;
 };
 
 

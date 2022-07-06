@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <toml.hpp>
+#include <optional>
 
 #include "MirrorPlasma.hpp"
 
@@ -26,7 +27,6 @@ private:
 	// recursive function which takes creates a map of each mirror plasma case and stores all the maps in a vector
 	void cartesianProduct(std::vector<std::map<std::string, double>>& final, std::map<std::string, double>& current, std::vector<std::pair<std::vector<double>*,std::string>>::const_iterator currentInput, std::vector<std::pair<std::vector<double>*,std::string>>::const_iterator end);
 	std::string FuelName;
-	bool reportThrust;
 
 	template<typename K, typename V>
 	void print_maps(std::vector<std::map<K, V>> const &vec);
@@ -45,9 +45,10 @@ private:
 	std::vector<double> WallRadiusVals;
 	std::vector<double> AuxiliaryHeatingVals;
 	std::vector<double> NeutralDensityVals;
+	std::vector<double> ExternalResistanceVals;
 
-	tribool AlphaHeating = unspecified;
-	tribool ReportNuclearDiagnostics = unspecified;
+	std::optional<bool> IncludeAlphaHeating = std::nullopt;
+	std::optional<bool> ReportNuclearDiagnostics = std::nullopt;
 	bool ReportThrust;
 
 	// MirrorPlasma parameters

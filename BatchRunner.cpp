@@ -168,6 +168,9 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	// Imposed Voltage
 	readParameterFromFile(batch, "Voltage", ImposedVoltageVals, false, 0.0);
 
+	// External resistance for spin-down simulations
+	readParameterFromFile(batch, "ExternalResistance", ExternalResistanceVals, false, 0.0);
+
 	// Wall Radius
 	readParameterFromFile(batch, "WallRadius", WallRadiusVals, true);
 
@@ -181,19 +184,22 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	if ( batch.count( "IncludeAlphaHeating" ) == 1 )
 	{
 		bool aHeating = batch.at( "IncludeAlphaHeating" ).as_boolean();
-		if ( aHeating ) AlphaHeating = tru;
-		else AlphaHeating = fal;
+		if ( aHeating )
+			IncludeAlphaHeating = true;
+		else
+			IncludeAlphaHeating = false;
 	}
-	else AlphaHeating = unspecified;
+	else
+		IncludeAlphaHeating = std::nullopt;
 
 	// This overrides the default for the chosen fuel
 	if ( batch.count( "ReportNuclearDiagnostics" ) == 1 )
 	{
 		bool nucDiagnostics = batch.at( "ReportNuclearDiagnostics" ).as_boolean();
-		if ( nucDiagnostics ) ReportNuclearDiagnostics = tru;
-		else ReportNuclearDiagnostics = fal;
+		if ( nucDiagnostics ) ReportNuclearDiagnostics = true;
+		else ReportNuclearDiagnostics = false;
 	}
-	else ReportNuclearDiagnostics = unspecified;
+	else ReportNuclearDiagnostics = std::nullopt;
 
 	// Ion to electron temperature ratio
 	readParameterFromFile(batch, "IonToElectronTemperatureRatio", TiTeVals, false, 0.0, true);
@@ -219,11 +225,21 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	}
 
 	if ( batchConfig.count( "timestepping" ) == 1 ) {
-		const auto & timestep_conf = toml::find<toml::table>( batchConfig, "timestepping" );
-		OutputCadence = timestep_conf.at( "OutputCadence" ).as_floating();
-		EndTime = timestep_conf.at( "EndTime" ).as_floating();
+		auto timestepConf = toml::find<toml::table>( batchConfig, "timestepping" );
+		if ( timestepConf.count( "OutputCadence" ) == 1 ) {
+			OutputCadence = timestepConf.at( "OutputCadence" ).as_floating();
+		} else {
+			OutputCadence = 0.005;
+		}
+
+		if ( timestepConf.count( "EndTime" ) == 1 ) {
+			EndTime = timestepConf.at( "EndTime" ).as_floating();
+		} else {
+			EndTime = 1.00;
+		}
+
 	} else {
-		OutputCadence = 0.0005;
+		OutputCadence = 0.005;
 		EndTime = 1.00;
 	}
 }
@@ -260,6 +276,9 @@ void BatchRunner::runBatchSolve()
 	if ( totalRuns > 1 && isTimeDependent )
 		throw std::invalid_argument( "[error] Multiple simultaneous time-dependent runs is not currently supported" );
 
+#ifdef USE_OPENMP
+	#pragma omp parallel for
+#endif
 	for ( int n = 0; n < totalRuns; n++ )
 	{
 		SolveIndividualMirrorPlasma(vectorOfMaps[n], n);
@@ -304,14 +323,21 @@ void BatchRunner::readParameterFromFile(toml::value batch, std::string configNam
 
 void BatchRunner::SolveIndividualMirrorPlasma(std::map<std::string, double> parameterMap, int currentRun)
 {
-	std::shared_ptr< MirrorPlasma::VacuumMirrorConfiguration > pVacuumConfig = std::make_shared<MirrorPlasma::VacuumMirrorConfiguration>( parameterMap,FuelName,reportThrust,AlphaHeating,ReportNuclearDiagnostics, AmbipolarPhi, Collisional, IncludeCXLosses, OutputFile, NetcdfOutputFile );
-	std::shared_ptr< MirrorPlasma > pReferencePlasmaState = std::make_shared<MirrorPlasma>(pVacuumConfig, parameterMap, VoltageTrace);
+	std::shared_ptr< MirrorPlasma > pReferencePlasmaState = std::make_shared<MirrorPlasma>( parameterMap,FuelName,ReportThrust,IncludeAlphaHeating,ReportNuclearDiagnostics, AmbipolarPhi, Collisional, IncludeCXLosses, OutputFile, NetcdfOutputFile, VoltageTrace);
 	
 	MCTransConfig config(pReferencePlasmaState, OutputCadence, EndTime);
-
-	std::shared_ptr<MirrorPlasma> result = config.Solve();
-
-	result->PrintReport(&parameterMap, currentRun, totalRuns);
+	
+	try
+	{
+		std::shared_ptr<MirrorPlasma> result = config.Solve();
+		result->PrintReport(&parameterMap, currentRun, totalRuns);
+		result->WriteNetCDFReport( &parameterMap, currentRun, totalRuns );
+	}
+	catch(std::exception& e){
+		std::cerr << "Exception encountered in Batch Run " << currentRun << " of " << totalRuns << std::endl;
+		std::cerr << "=> " << e.what() << std::endl;
+		std::cerr << "Continuing with other batch runs" << std::endl;
+	}
 }
 
 template<typename K, typename V>

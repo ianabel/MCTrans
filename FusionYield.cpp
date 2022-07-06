@@ -35,13 +35,13 @@ double MirrorPlasma::FusionAlphaPowerDensity() const
 // Neutron output in MW
 double MirrorPlasma::NeutronOutput() const
 {
-	return pVacuumConfig->PlasmaVolume() * FusionAlphaPowerDensity() * ( 14.1 / 3.52 );
+	return PlasmaVolume() * FusionAlphaPowerDensity() * ( 14.1 / 3.52 );
 }
 
 // Flux of neutrons through wall in MW/m^2
 double MirrorPlasma::NeutronWallLoading() const
 {
-	return NeutronOutput()/pVacuumConfig->WallArea();
+	return NeutronOutput()/WallArea();
 }
 
 // MW Th 
@@ -49,7 +49,7 @@ double MirrorPlasma::ThermalPowerOutput() const
 {
 	// Thermal power has several components:
 	// 1) Heat leaving the plasma, which in steady state is Aux + Alphas
-	double ExhaustHeat = pVacuumConfig->AuxiliaryHeating + FusionAlphaPowerDensity() * pVacuumConfig->PlasmaVolume();
+	double ExhaustHeat = AuxiliaryHeating + FusionAlphaPowerDensity() * PlasmaVolume();
 	// 2)  Neutrons absorbed in the blanket
 	double NeutronYield = NeutronOutput();
 	// 3) Heat Generated in the blanket from breeding reactions (which is 4.8MeV per triton, which is 4.8MeV per incident neutron assuming a TBR of 1), and thus
@@ -69,7 +69,7 @@ double MirrorPlasma::DDNeutronRate() const
 	double nD_cc = IonDensity * 1e14;
 	double NeutronRatePerCC = nD_cc * nD_cc * SigmaVelocityAverage;
 
-	return NeutronRatePerCC * pVacuumConfig->PlasmaVolume() * 1e6;
+	return NeutronRatePerCC * PlasmaVolume() * 1e6;
 }
 
 

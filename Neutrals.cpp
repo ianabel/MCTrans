@@ -42,9 +42,9 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 		return Energy * ElectronCharge * sigmaM2 * ::exp( -Energy * ElectronCharge / temperature ) * Jacobian;
 	};
 
-	constexpr double tolerance = 1e-5;
+	constexpr double tolerance = 1e-7;
 	constexpr unsigned MaxDepth = 10;
-	double HotRateCoeff = 4.0 / ( ::sqrt(2 * M_PI * sigma.ReducedMass * temperature) * temperature )
+	double HotRateCoeff = 4.0 / ( ::sqrt(2 * M_PI * sigma.Particle.Mass * temperature) * temperature )
 	         * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
@@ -71,21 +71,21 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 	double thermalSpeed = ::sqrt( 2.0 * temperature / sigma.Particle.Mass );
 	double thermalMachNumber = plasma.MachNumber * ::sqrt( ::abs( sigma.Particle.Charge ) * plasma.ElectronTemperature * ReferenceTemperature / ( 2 * temperature ) );
 
-	double Jacobian = ElectronCharge / (sigma.ReducedMass * thermalSpeed * thermalSpeed); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from du to dE (less one power of u, which cancels with one in the integrand
+	double Jacobian = ElectronCharge / (sigma.Particle.Mass * thermalSpeed * thermalSpeed); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from du to dE (less one power of u, which cancels with one in the integrand
 	auto integrand = [&]( double Energy ) {
-		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / sigma.ReducedMass );
+		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / sigma.Particle.Mass );
 		double u = velocity / thermalSpeed;
 		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
 		return u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) ) * Jacobian;
 	};
 
-	constexpr double tolerance = 1e-5;
+	constexpr double tolerance = 1e-7;
 	constexpr unsigned MaxDepth = 10;
 	double ColdRateCoeff = thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) )
 	        * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
-	std::cerr << "Computing a cold rate coefficient at T = " << plasma.ElectronTemperature*1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
+	std::cerr << "Computing a cold rate coefficient at T = " << 1000*temperature/ReferenceTemperature  << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
 #endif
 
 	return ColdRateCoeff;
@@ -110,7 +110,7 @@ bool isCoronalEquilibrium( double excitationRate, double deexcitationRate, doubl
 
 double reactionRate( double density_1, double density_2, double rateCoefficient, std::shared_ptr<MirrorPlasma> pMirrorPlasma )
 {
-	return density_1 * density_2 * rateCoefficient * pMirrorPlasma->pVacuumConfig->PlasmaVolume();
+	return density_1 * density_2 * rateCoefficient * pMirrorPlasma->PlasmaVolume();
 }
 
 double EvaluateJanevCrossSectionFit ( std::vector<double> PolynomialCoefficients, double Energy )
@@ -155,7 +155,7 @@ double evaluateJanevDFunction( double beta )
 }
 */
 
-double electronImpactIonizationCrossSection( double CoMEnergy )
+double electronImpactIonizationCrossSection( double Energy )
 {
 	// Minimum energy of cross section in eV
 	constexpr double ionizationEnergy = 13.6;
@@ -170,27 +170,29 @@ double electronImpactIonizationCrossSection( double CoMEnergy )
 	constexpr std::array<double,5> fittingParamB{ -0.032226, -0.034539, 1.4003, -2.8115, 2.2986 };
 
 	double sigma;
-	if ( CoMEnergy < minimumEnergySigma ) {
-		sigma = 0;
+	if ( Energy < minimumEnergySigma ) {
+		return 0.0;
 	}
 	else {
 		double sum = 0.0;
-		double x = 1.0 - ionizationEnergy / CoMEnergy;
+		double x = 1.0 - ionizationEnergy / Energy;
+		if ( x <= 0 )
+			return 0.0;
 		for ( size_t n = 0; n < fittingParamB.size(); n++ ) {
-	      sum += fittingParamB.at( n ) * ::pow( x, n );
+	      sum += fittingParamB.at( n ) * ::pow( x, n+1 );
 	   }
-		sigma = 1.0e-13 / ( ionizationEnergy * CoMEnergy ) * ( fittingParamA * ::log( CoMEnergy / ionizationEnergy ) + sum );
+		sigma = ( 1.0e-13 / ( ionizationEnergy * Energy ) ) * ( fittingParamA * ::log( Energy / ionizationEnergy ) + sum );
+		return sigma;
 	}
-	return sigma;
 }
 
 // Energy in electron volts, returns cross section in cm^2
 double protonImpactIonizationCrossSection( double Energy )
 {
 	// Minimum energy of cross section in keV
-	const double minimumEnergySigma = 0.2;
+	const double minimumEnergySigma = 0.5;
 	// Convert to keV
-	double CoMEnergy = Energy / 1000;
+	double EnergyKEV = Energy / 1000;
 
 	// Contribution from ground state
 	// Janev 1993, ATOMIC AND PLASMA-MATERIAL INTERACTION DATA FOR FUSION, Volume 4
@@ -207,57 +209,61 @@ double protonImpactIonizationCrossSection( double Energy )
 	constexpr double A8 = -3.7154;
 
 	double sigma;
-	if ( CoMEnergy < minimumEnergySigma ) {
+	if ( EnergyKEV < minimumEnergySigma ) {
 		sigma = 0;
 	}
 	else {
 		// Energy is in units of keV
-		sigma = 1e-16 * A1 * ( ::exp( -A2 / CoMEnergy ) * ::log( 1 + A3 * CoMEnergy ) / CoMEnergy + A4 * ::exp( -A5 * CoMEnergy ) / ( ::pow( CoMEnergy, A6 ) + A7 * ::pow( CoMEnergy, A8 ) ) );
+		sigma = 1e-16 * A1 * ( ::exp( -A2 / EnergyKEV ) * ::log( 1 + A3 * EnergyKEV ) / EnergyKEV + A4 * ::exp( -A5 * EnergyKEV ) / ( ::pow( EnergyKEV, A6 ) + A7 * ::pow( EnergyKEV, A8 ) ) );
 	}
 	return sigma;
 }
 
-double HydrogenChargeExchangeCrossSection( double CoMEnergy )
+double HydrogenChargeExchangeCrossSection( double Energy )
 {
 	// Minimum energy of cross section in eV
-	// const double minimumEnergySigma_1s = 0.1;
-	const double minimumEnergySigma_2p = 19.0;
-	const double minimumEnergySigma_2s = 0.1;
+	constexpr double minimumEnergySigma_n1 = 0.12;
+	// constexpr double minimumEnergySigma_n2 = 10;
+	// constexpr double minimumEnergySigma_n3 = 10;
 
 	// Contribution from ground -> ground state
-	// Janev 1987 3.1.8
-	// p + H(1s) --> H(1s) + p
-	double sigma_1s;
-	if ( CoMEnergy < minimumEnergySigma_2p ) {
-		sigma_1s = 0;
+	// Janev 1993 2.3.1
+	// p + H(n=1) --> H + p
+	double sigma_n1;
+	if ( Energy < minimumEnergySigma_n1 ) {
+		sigma_n1 = 0;
 	} else {
-		sigma_1s = 0.6937e-14 * ::pow( 1 - 0.155 * ::log10( CoMEnergy ), 2 ) / (1 + 0.1112e-14 * ::pow( CoMEnergy, 3.3 ));
+		double EnergyKEV = Energy / 1000;
+		sigma_n1 = 1e-16 * 3.2345 * ::log( 235.88 / EnergyKEV + 2.3713 ) / ( 1 + 0.038371 * EnergyKEV + 3.8068e-6 * ::pow( EnergyKEV, 3.5 ) + 1.1832e-10 * ::pow( EnergyKEV, 5.4 ) );
 	}
 
-	// Janev 1987 3.1.9
-	// p + H(1s) --> H(2p) + p
-	std::vector<double> aSigma_2p = {-2.197571949935e+01, -4.742502251260e+01, 3.628013140596e+01, -1.423003075866e+01, 3.273090240144e+00, -4.557928912260e-01, 3.773588347458e-02, -1.707904867106e-03, 3.251203344615e-05};
-	// Janev 1987 3.1.10
-	// p + H(1s) --> H(2s) + p
-	std::vector<double> aSigma_2s = {-1.327325087764e+04, 1.317576614520e+04, -5.683932157858e+03, 1.386309780149e+03, -2.089794561307e+02, 1.992976245274e+01, -1.173800576157e+00, 3.902422810767e-02, -5.606240339932e-04};
-
-	// Contribution from ground -> 2p orbital
-	double sigma_2p;
-	if ( CoMEnergy < minimumEnergySigma_2p ) {
-		sigma_2p = 0;
+	/*
+	// Contribution from n=2 orbital
+	double sigma_n2;
+	if ( Energy < minimumEnergySigma_n2 ) {
+		sigma_n2 = 0;
 	} else {
-		sigma_2p = EvaluateJanevCrossSectionFit( aSigma_2p, CoMEnergy );
+		double EnergyKEV = Energy / 1000;
+		int n = 2;
+		double EnergyTilde = EnergyKEV * ::pow( n, 2 );
+		sigma_n2 = 1e-16 * 0.92750 * ::log( 6.5040e3 / EnergyTilde + 20.699 ) / ( 1 + 1.3405e-2 * EnergyTilde + 3.0842e-6 * ::pow( EnergyTilde, 3.5 ) + 1.1832e-10 * ::pow( EnergyTilde, 5.4 ) );
 	}
 
-	// Contribution from ground -> 2s orbital
-	double sigma_2s;
-	if ( CoMEnergy < minimumEnergySigma_2s ) {
-		sigma_2s = 0;
+	// Contribution from n=3 orbital
+	double sigma_n3;
+	if ( Energy < minimumEnergySigma_n3 ) {
+		sigma_n3 = 0;
 	} else {
-		sigma_2s = EvaluateJanevCrossSectionFit( aSigma_2s, CoMEnergy );
+		double EnergyKEV = Energy / 1000;
+		int n = 3;
+		double EnergyTilde = EnergyKEV * ::pow( n, 2 );
+		sigma_n3 = 1e-16 * 0.37271 * ::log( 2.7645e6 / EnergyTilde + 1.4857e3 ) / ( 1 + 1.5720e-3 * EnergyTilde + 3.0842e-6 * ::pow( EnergyTilde, 3.5 ) + 1.1832e-10 * ::pow( EnergyTilde, 5.4 ) );
 	}
+	*/
 
-	return sigma_1s + sigma_2p + sigma_2s;
+	// IGA: I believe for cold neutrals the contribution from higher orbitals is negligible
+	// (assume the neutrals are in thermal equlibrium with a wall at <= 1000C)
+	return sigma_n1; // + sigma_n2 + sigma_n3;
 }
 
 // Energy in electron volts, returns cross section in cm^2
@@ -381,14 +387,18 @@ void MirrorPlasma::ComputeSteadyStateNeutrals()
 // requires computed neutral density
 double MirrorPlasma::CXLossRate() const
 {
-	if ( !pVacuumConfig->IncludeCXLosses )
+	if ( !IncludeCXLosses )
 		return 0.0;
 
 	double CXRateCoefficient = neutralsRateCoefficientCold( HydrogenChargeExchange, *this );
 
+	// Really rate per unit plasma volume
+	double CXRate = CXRateCoefficient * ( NeutralDensity * ReferenceDensity * IonDensity * ReferenceDensity );
+
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
-	std::cerr << "Current CX Loss Rate is " << CXRateCoefficient * ( NeutralDensity * ReferenceDensity * IonDensity * ReferenceDensity ) << " particles/s"<<std::endl;
+	std::cerr << "Current CX Loss Rate is " << CXRate << " particles/s/m^3"<<std::endl;
+	std::cerr << " CX Frequency is " << CXRateCoefficient * NeutralDensity * ReferenceDensity << " /s " << std::endl;
 #endif
 
-	return CXRateCoefficient * ( NeutralDensity * ReferenceDensity * IonDensity * ReferenceDensity );
+	return CXRate;
 }

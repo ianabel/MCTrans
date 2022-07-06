@@ -11,3 +11,4 @@ Makefile.local
 *.o
 toml11/
 sundials/
+gmon.out

@@ -2,6 +2,7 @@
 #define ATOMICPHYSICS_HPP
 
 #include "Species.hpp"
+#include <memory>
 #include <functional>
 
 
