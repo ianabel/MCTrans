@@ -65,27 +65,27 @@ class Neutrals:
     def computeCrossSections(self, energy):
         self.electronImpactIonizationCrossSection = self.electronImpactIonizationCrossSection(energy)
         self.protonImpactIonizationCrossSection = self.protonImpactIonizationCrossSection(energy)
-        self.chargeExchangeCrossSection = self.chargeExchangeCrossSection(energy)
+        # self.chargeExchangeCrossSection = self.chargeExchangeCrossSection(energy)
         self.chargeExchangeCrossSection1993 = self.chargeExchangeCrossSection1993(energy)
         self.radiativeRecombinationCrossSection = self.radiativeRecombinationCrossSection(energy)
 
-        self.add_CrossSection([self.electronImpactIonizationCrossSection, self.protonImpactIonizationCrossSection, self.chargeExchangeCrossSection, self.chargeExchangeCrossSection1993, self.radiativeRecombinationCrossSection])
+        self.add_CrossSection([self.electronImpactIonizationCrossSection, self.protonImpactIonizationCrossSection, self.chargeExchangeCrossSection1993])
 
     def computeRateCoefficients(self):
         self.electronImpactIonizationRateCoefficientCold = self.rateCoefficientCold(self.electronImpactIonizationCrossSection)
         self.protonImpactIonizationRateCoefficientCold = self.rateCoefficientCold(self.protonImpactIonizationCrossSection)
-        self.chargeExchangeRateCoefficientCold = self.rateCoefficientCold(self.chargeExchangeCrossSection)
+        # self.chargeExchangeRateCoefficientCold = self.rateCoefficientCold(self.chargeExchangeCrossSection)
         self.chargeExchangeRateCoefficientCold1993 = self.rateCoefficientCold(self.chargeExchangeCrossSection1993)
         self.radiativeRecombinationRateCoefficientCold = self.rateCoefficientCold(self.radiativeRecombinationCrossSection)
 
         self.electronImpactIonizationRateCoefficientHot = self.rateCoefficientHot(self.electronImpactIonizationCrossSection)
         self.protonImpactIonizationRateCoefficientHot = self.rateCoefficientHot(self.protonImpactIonizationCrossSection)
-        self.chargeExchangeRateCoefficientHot = self.rateCoefficientHot(self.chargeExchangeCrossSection)
+        # self.chargeExchangeRateCoefficientHot = self.rateCoefficientHot(self.chargeExchangeCrossSection)
         self.chargeExchangeRateCoefficientHot1993 = self.rateCoefficientHot(self.chargeExchangeCrossSection1993)
         self.radiativeRecombinationRateCoefficientHot = self.rateCoefficientHot(self.radiativeRecombinationCrossSection)
 
-        self.add_RateCoefficient([self.electronImpactIonizationRateCoefficientCold, self.protonImpactIonizationRateCoefficientCold, self.chargeExchangeRateCoefficientCold, self.chargeExchangeRateCoefficientCold1993, self.radiativeRecombinationRateCoefficientCold], 'cold')
-        self.add_RateCoefficient([self.electronImpactIonizationRateCoefficientHot, self.protonImpactIonizationRateCoefficientHot, self.chargeExchangeRateCoefficientHot, self.chargeExchangeRateCoefficientHot1993, self.radiativeRecombinationRateCoefficientHot], 'hot')
+        self.add_RateCoefficient([self.electronImpactIonizationRateCoefficientCold, self.protonImpactIonizationRateCoefficientCold, self.chargeExchangeRateCoefficientCold1993], 'cold')
+        self.add_RateCoefficient([self.electronImpactIonizationRateCoefficientHot, self.protonImpactIonizationRateCoefficientHot, self.chargeExchangeRateCoefficientHot1993], 'hot')
 
     def electronImpactIonizationCrossSection(self, energy):
         # Contribution from ground state
@@ -93,7 +93,7 @@ class Neutrals:
         # Equation 1.2.1
         # e + H(1s) --> e + H+ + e
         # Accuracy is 10% or better
-        reaction = 'e + H(1s) --> e + H+ + e'
+        reaction = r'e + H(1s) $\rightarrow$ e + H$^+$ + e'
         particle = Species('electron')
         target = Species('hydrogen')
 
@@ -122,7 +122,7 @@ class Neutrals:
         # Igor A Kotelnikov and Alexander I Milstein 2019 Phys. Scr. 94 055403
         # Equation 9
         # H+ + e --> H + hν
-        reaction = 'H+ + e --> H + hν'
+        reaction = r'H$^+$ + e $\rightarrow$ H + h$\nu$'
         particle = Species('electron')
         target = Species('proton')
 
@@ -142,7 +142,7 @@ class Neutrals:
     	# Equation 2.2.1
     	# H+ + H(1s) --> H+ + H+ + e
     	# Accuracy is 30% or better
-        reaction = 'H+ + H(1s) --> H+ + H+ + e'
+        reaction = r'H$^+$ + H(1s) $\rightarrow$ H$^+$ + H$^+$ + e'
         particle = Species('proton')
         target = Species('hydrogen')
 
@@ -173,7 +173,7 @@ class Neutrals:
         # Contribution from ground -> ground state
         # Janev 1987 3.1.8
         # H+ + H(1s) --> H(1s) + H+
-        reaction = 'H+ + H(1s) --> H(1s) + H+'
+        reaction = r'H$^+$ + H(1s) $\rightarrow$ H(1s) + H$^+$'
         particle = Species('proton')
         target = Species('hydrogen')
 
@@ -220,7 +220,7 @@ class Neutrals:
         # H+ + H(1s) --> H + H+
         # Janev 1993 2.3.2
         # H+ + H(n) --> H + H+
-        reaction = 'H+ + H --> H + H+ (1993)'
+        reaction = r'H$^+$ + H $\rightarrow$ H + H$^+$'
         particle = Species('proton')
         target = Species('hydrogen')
 
@@ -278,23 +278,27 @@ class Neutrals:
         mass = crossSection.particle.mass * MP # kg
         sigma = 1e-4 * crossSection.sigma # Convert to m^2
         temperature = self.temperature * QE # Convert to J
-        thermalMachNumber = self.MachNumber * np.sqrt(crossSection.particle.charge / 2) # Assumes that Te = Ti
+        thermalMachNumber = self.MachNumber * np.sqrt(crossSection.particle.charge * mass / (2 * crossSection.target.mass * MP)) # Assumes that Te = Ti
 
-        velocityCOM = np.sqrt(2 * self.energy * QE / (mass)) # Convert to COM, m/s
+        velocityCOM = np.sqrt(2 * self.energy * QE / mass) # Convert to COM, m/s
         thermalVelocity = np.sqrt(2 * temperature / mass)
+
+        if crossSection.particle.name == crossSection.target.name:
+            delta_ns = 1
+        else:
+            delta_ns = 0
 
         if isinstance(self.MachNumber, int) or isinstance(self.MachNumber, float):
             rateCoefficient = np.zeros(len(self.temperature))
             for i, v_th in enumerate(thermalVelocity):
-                u = velocityCOM / v_th
-                rateCoefficient[i] = v_th / (thermalMachNumber * np.sqrt(np.pi)) * np.trapz(u**2 * sigma * (np.exp(-(thermalMachNumber - u)**2) - np.exp(-(thermalMachNumber + u)**2)), x=u)
+                rateCoefficient[i] = 1 / (thermalMachNumber * v_th**2 * np.sqrt(np.pi) * (1 + delta_ns)) * np.trapz(velocityCOM**2 * sigma * (np.exp(-(thermalMachNumber - velocityCOM / v_th)**2) - np.exp(-(thermalMachNumber + velocityCOM / v_th)**2)), x=velocityCOM)
 
         else:
             rateCoefficient = np.zeros((len(self.MachNumber), len(self.temperature)))
             for i, M in enumerate(thermalMachNumber):
                 for j, v_th in enumerate(thermalVelocity):
                     u = velocityCOM / v_th
-                    rateCoefficient[i, j] = v_th / (M * np.sqrt(np.pi)) * np.trapz(u**2 * (np.exp(-(M - u)**2) - np.exp(-(M + u)**2)) * sigma, x=u)
+                    rateCoefficient[i, j] = 1 / (thermalMachNumber * v_th**2 * np.sqrt(np.pi) * (1 + delta_ns)) * np.trapz(velocityCOM**2 * sigma * (np.exp(-(thermalMachNumber - velocityCOM / v_th)**2) - np.exp(-(thermalMachNumber + velocityCOM / v_th)**2)), x=velocityCOM)
 
         rateCoefficient *= 1e6 # m^3/s
 
