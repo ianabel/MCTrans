@@ -39,14 +39,14 @@ Power Required (at the plasma) to support rotation 61.2 kW
 	 Power Loss from parallel loss   10.8 kW
 	 Power Loss from charge exchange 40.3 kW
 
-Total Stored Energy is 4.61 kJ
+Total Stored Energy is 4.6 kJ
  of which 3.7 kJ is kinetic energy in the rotation
       and 906 J is thermal energy of the plasma
 Energy Confinement Time is 89.2 ms
 Of which
 	Confinement time from parallel losses is	158 ms
 	Confinement time from perpendicular losses is	164 ms
-	Confinement time from charge-exchange losses is	183 ms
+	Confinement time from charge-exchange losses is	184 ms
 
 Particle (Ion) Confinement Time ~= 143 ms
 
@@ -55,7 +55,7 @@ Ion-Electron Temperature Equilibration Time is 41.8 ms
 Plasma must be provided at a rate of 2.92e+18 electrons /s to maintain steady-state
 
 Neutral gas must be provided at a rate of 2.92e+18 particles/s to refuel the plasma
-This leads to a steady-state neutral density of 5.57e+13/m^3
+This leads to a steady-state neutral density of 5.56e+13/m^3
 The level of charge-exchange losses due to the neutrals is 1.03e+19 particles/s lost
 	 This is equivalent to a heat loss rate of 1.65 kW
 
