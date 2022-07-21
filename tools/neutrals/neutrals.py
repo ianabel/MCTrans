@@ -93,7 +93,7 @@ class Neutrals:
         # Equation 1.2.1
         # e + H(1s) --> e + H+ + e
         # Accuracy is 10% or better
-        reaction = 'e + H(1s) --> e + H+ + e'
+        reaction = r'e + H(1s) $\rightarrow$ e + H$^+$ + e'
         particle = Species('electron')
         target = Species('hydrogen')
 
@@ -122,7 +122,7 @@ class Neutrals:
         # Igor A Kotelnikov and Alexander I Milstein 2019 Phys. Scr. 94 055403
         # Equation 9
         # H+ + e --> H + hν
-        reaction = 'H+ + e --> H + hν'
+        reaction = r'H$^+$ + e $\rightarrow$ H + h$\nu$'
         particle = Species('electron')
         target = Species('proton')
 
@@ -142,7 +142,7 @@ class Neutrals:
     	# Equation 2.2.1
     	# H+ + H(1s) --> H+ + H+ + e
     	# Accuracy is 30% or better
-        reaction = 'H+ + H(1s) --> H+ + H+ + e'
+        reaction = r'H$^+$ + H(1s) $\rightarrow$ H$^+$ + H$^+$ + e'
         particle = Species('proton')
         target = Species('hydrogen')
 
@@ -173,7 +173,7 @@ class Neutrals:
         # Contribution from ground -> ground state
         # Janev 1987 3.1.8
         # H+ + H(1s) --> H(1s) + H+
-        reaction = 'H+ + H(1s) --> H(1s) + H+'
+        reaction = r'H$^+$ + H(1s) $\rightarrow$ H(1s) + H$^+$'
         particle = Species('proton')
         target = Species('hydrogen')
 
@@ -220,7 +220,7 @@ class Neutrals:
         # H+ + H(1s) --> H + H+
         # Janev 1993 2.3.2
         # H+ + H(n) --> H + H+
-        reaction = 'H+ + H --> H + H+ (1993)'
+        reaction = r'H$^+$ + H $\rightarrow$ H + H$^+$'
         particle = Species('proton')
         target = Species('hydrogen')
 
