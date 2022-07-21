@@ -59,7 +59,7 @@ Ion-Electron Temperature Equilibration Time is 158 ms
 Plasma must be provided at a rate of 2.36e+19 electrons /s to maintain steady-state
 
 Neutral gas must be provided at a rate of 2.36e+19 particles/s to refuel the plasma
-This leads to a steady-state neutral density of 1.78e+12/m^3
+This leads to a steady-state neutral density of 1.4e+12/m^3
 Steady-state charge exchange losses were not included.
 
 Electrical Properties of the Plasma:

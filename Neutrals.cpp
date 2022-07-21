@@ -61,13 +61,15 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 	// k=<σv> in m^3/s
 	// Assumes ions are Maxwellian and neutrals are stationary
 	double temperature;
-	int delta_ns;
 	if ( sigma.Particle.Name == "Electron" ){
 		temperature = plasma.ElectronTemperature * ReferenceTemperature; // Convert to Joules
-		delta_ns = 0;
 	}
 	else{
 		temperature = plasma.IonTemperature * ReferenceTemperature; // Convert to Joules
+	}
+
+	int delta_ns = 0;
+	if ( sigma.Particle.Name == sigma.Target.Name ){
 		delta_ns = 1;
 	}
 
@@ -263,7 +265,8 @@ double HydrogenChargeExchangeCrossSection( double Energy )
 
 	// IGA: I believe with cold neutrals the contribution from higher orbitals is negligible
 	// but leaving as-is for the moment as a pessimistic assumption
-	return sigma_n1 + sigma_n2 + sigma_n3;
+	// NRS: I changed the cross section to only include the ground state
+	return sigma_n1;
 }
 
 // Energy in electron volts, returns cross section in cm^2
