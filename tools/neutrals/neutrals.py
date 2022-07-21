@@ -278,23 +278,27 @@ class Neutrals:
         mass = crossSection.particle.mass * MP # kg
         sigma = 1e-4 * crossSection.sigma # Convert to m^2
         temperature = self.temperature * QE # Convert to J
-        thermalMachNumber = self.MachNumber * np.sqrt(crossSection.particle.charge / 2) # Assumes that Te = Ti
+        thermalMachNumber = self.MachNumber * np.sqrt(crossSection.particle.charge * mass / (2 * crossSection.target.mass * MP)) # Assumes that Te = Ti
 
-        velocityCOM = np.sqrt(2 * self.energy * QE / (mass)) # Convert to COM, m/s
+        velocityCOM = np.sqrt(2 * self.energy * QE / mass) # Convert to COM, m/s
         thermalVelocity = np.sqrt(2 * temperature / mass)
+
+        if crossSection.particle.name == 'electron':
+            delta_ns = 0
+        else:
+            delta_ns = 1
 
         if isinstance(self.MachNumber, int) or isinstance(self.MachNumber, float):
             rateCoefficient = np.zeros(len(self.temperature))
             for i, v_th in enumerate(thermalVelocity):
-                u = velocityCOM / v_th
-                rateCoefficient[i] = v_th / (thermalMachNumber * np.sqrt(np.pi)) * np.trapz(u**2 * sigma * (np.exp(-(thermalMachNumber - u)**2) - np.exp(-(thermalMachNumber + u)**2)), x=u)
+                rateCoefficient[i] = 1 / (thermalMachNumber * v_th**2 * np.sqrt(np.pi) * (1 + delta_ns)) * np.trapz(velocityCOM**2 * sigma * (np.exp(-(thermalMachNumber - velocityCOM / v_th)**2) - np.exp(-(thermalMachNumber + velocityCOM / v_th)**2)), x=velocityCOM)
 
         else:
             rateCoefficient = np.zeros((len(self.MachNumber), len(self.temperature)))
             for i, M in enumerate(thermalMachNumber):
                 for j, v_th in enumerate(thermalVelocity):
                     u = velocityCOM / v_th
-                    rateCoefficient[i, j] = v_th / (M * np.sqrt(np.pi)) * np.trapz(u**2 * (np.exp(-(M - u)**2) - np.exp(-(M + u)**2)) * sigma, x=u)
+                    rateCoefficient[i, j] = 1 / (thermalMachNumber * v_th**2 * np.sqrt(np.pi) * (1 + delta_ns)) * np.trapz(velocityCOM**2 * sigma * (np.exp(-(thermalMachNumber - velocityCOM / v_th)**2) - np.exp(-(thermalMachNumber + velocityCOM / v_th)**2)), x=velocityCOM)
 
         rateCoefficient *= 1e6 # m^3/s
 

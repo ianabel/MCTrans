@@ -6,7 +6,7 @@ temperature = np.logspace(1, 6, 100) # eV
 energy = np.logspace(1, 6, 200) # eV
 density = 1e20 # m^-3
 plasmaVolume = 10 # m^3
-MachNumber = 2
+MachNumber = 4
 
 neutrals = Neutrals(MachNumber, temperature, energy)
 

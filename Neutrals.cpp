@@ -61,27 +61,29 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 	// k=<σv> in m^3/s
 	// Assumes ions are Maxwellian and neutrals are stationary
 	double temperature;
+	int delta_ns;
 	if ( sigma.Particle.Name == "Electron" ){
 		temperature = plasma.ElectronTemperature * ReferenceTemperature; // Convert to Joules
+		delta_ns = 0;
 	}
 	else{
 		temperature = plasma.IonTemperature * ReferenceTemperature; // Convert to Joules
+		delta_ns = 1;
 	}
 
 	double thermalSpeed = ::sqrt( 2.0 * temperature / sigma.Particle.Mass );
-	double thermalMachNumber = plasma.MachNumber * ::sqrt( ::abs( sigma.Particle.Charge ) * plasma.ElectronTemperature * ReferenceTemperature / ( 2 * temperature ) );
+	double thermalMachNumber = plasma.MachNumber * plasma.SoundSpeed() / thermalSpeed;
 
-	double Jacobian = ElectronCharge / (sigma.Particle.Mass * thermalSpeed * thermalSpeed); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from du to dE (less one power of u, which cancels with one in the integrand
 	auto integrand = [&]( double Energy ) {
 		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / sigma.Particle.Mass );
-		double u = velocity / thermalSpeed;
+		double Jacobian = ElectronCharge / ( sigma.Particle.Mass * velocity ); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from dvelocity to dE
 		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
-		return u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) ) * Jacobian;
+		return ::pow( velocity, 2 ) * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - velocity / thermalSpeed, 2 ) ) - ::exp( -::pow( thermalMachNumber + velocity / thermalSpeed, 2 ) ) ) * Jacobian;
 	};
 
 	constexpr double tolerance = 1e-7;
 	constexpr unsigned MaxDepth = 15;
-	double ColdRateCoeff = thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) )
+	double ColdRateCoeff = 1 / ( thermalMachNumber * ::pow( thermalSpeed, 2 ) * ::sqrt(M_PI) * ( 1 + delta_ns ) )
 	        * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
