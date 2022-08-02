@@ -1,30 +1,35 @@
 language: cpp
 
-compiler:
-  - clang
-  - gcc
+matrix:
+	include:
+	- os: linux
+		dist: jammy
+		addons:
+		  apt:
+			 packages:
+				libboost-dev
+				libnetcdf-c++4-dev
+				libnetcdf-dev
+				cmake
+				g++-11
+		env:
+		 - MATRIX_EVAL="CXX=g++-11"
 
-os: linux
-dist: jammy
+	- os: linux
+		dist: jammy
+		addons:
+		  apt:
+			 packages:
+				libboost-dev
+				libnetcdf-c++4-dev
+				libnetcdf-dev
+				cmake
+				clang++-14
+		env:
+		 - MATRIX_EVAL="CXX=clang++-14"
 
-addons:
-  apt:
-    packages:
-      libboost-dev
-      libnetcdf-c++4-dev
-      libnetcdf-dev
-      cmake
-
-#jobs:
-#  include:
-#    os: osx
-#    osx_image: xcode12.3
-#    compiler: clang
-#    addons:
-#      homebrew:
-#        packages:
-#          - boost
-#          - sundials
+before_install:
+    - eval "${MATRIX_EVAL}"
 
 script:
   - git clone https://github.com/toruniina/toml11
