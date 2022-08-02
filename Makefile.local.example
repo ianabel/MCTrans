@@ -9,5 +9,5 @@
 DEBUG = on
 
 SUNDIALS_DIR =./sundials/
-TOML11_DIR = ../toml11/
+TOML11_DIR = ./toml11/
 
