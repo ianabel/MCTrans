@@ -46,8 +46,8 @@ jobs:
       HOMEBREW_NO_AUTO_UPDATE: 1
     steps:
       - checkout
-      - run: brew install boost sundials
-      - run: wget https://github.com/macports/macports-base/releases/download/v2.7.2/MacPorts-2.7.2-12-Monterey.pkg -O macports.pkg; installer -package macports.pkg -target /
+      - run: brew install boost sundials wget
+      - run: curl -L https://github.com/macports/macports-base/releases/download/v2.7.2/MacPorts-2.7.2-12-Monterey.pkg --output macports.pkg; installer -package macports.pkg -target /
       - run: ports install netcdf netcdf-cxx4
       - run:
           command: git clone https://github.com/ToruNiina/toml11.git toml11/
