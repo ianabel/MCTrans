@@ -4,7 +4,7 @@
 
 
 # Sundials from homebrew
-SUNDIALS_DIR = /usr/local/opt/sundials/
+SUNDIALS_DIR = $(shell brew --prefix)/opt/sundials/
 
 # Netcdf from Macports
 NETCDF_DIR =  /opt/local/
