@@ -39,7 +39,7 @@ jobs:
           command: make test
       - run:
           command: make unit_tests
-  buildmacos12.3:
+  buildmacos:
     macos:
       xcode: 13.4.1
     environment:
@@ -65,4 +65,4 @@ workflows:
     jobs:
       - builddebian
       - buildubuntu
-      - buildmacos12.3
+      - buildmacos
