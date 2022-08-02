@@ -1,11 +1,11 @@
 language: cpp
 
 compiler:
-  - clang-11
-  - gcc-10
+  - clang
+  - gcc
 
 os: linux
-dist: focal
+dist: jammy
 
 addons:
   apt:
@@ -14,8 +14,6 @@ addons:
       libnetcdf-c++4-dev
       libnetcdf-dev
       cmake
-      g++-10
-      clang++-11
 
 #jobs:
 #  include:
@@ -34,3 +32,4 @@ script:
   - ./build_sundials
   - make
   - make test
+  - make unit_tests
