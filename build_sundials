@@ -1,7 +1,7 @@
 #!/bin/sh
 
 SUNDIALS_ROOT=`realpath ./sundials`
-SUNDIALS_URL="https://github.com/LLNL/sundials/releases/download/v5.7.0/sundials-5.7.0.tar.gz"
+SUNDIALS_URL=" https://github.com/LLNL/sundials/releases/download/v6.2.0/sundials-6.2.0.tar.gz"
 
 rm -rf $SUNDIALS_ROOT
 mkdir $SUNDIALS_ROOT
@@ -9,10 +9,10 @@ mkdir $SUNDIALS_ROOT
 cd $SUNDIALS_ROOT
 wget $SUNDIALS_URL
 
-tar xzf sundials-5.7.0.tar.gz
+tar xzf sundials-6.2.0.tar.gz
 mkdir build;
 cd build;
-cmake ../sundials-5.7.0/ -DCMAKE_INSTALL_PREFIX=$SUNDIALS_ROOT -DEXAMPLES_INSTALL=off;
+cmake ../sundials-6.2.0/ -DCMAKE_INSTALL_PREFIX=$SUNDIALS_ROOT -DEXAMPLES_INSTALL=off;
 make -j install;
 
 echo

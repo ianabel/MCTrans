@@ -27,7 +27,8 @@
 #define PARTICLE_BALANCE( F ) NV_Ith_S( F, DENSITY_IDX )
 #define MOMENTUM_BALANCE( F ) NV_Ith_S( F, MOMENTUM_IDX )
 
-#define IRK_SCHEME DEFAULT_DIRK_4
+#define IRK_SCHEME static_cast<ARKODE_DIRKTableID>( ARKSTEP_DEFAULT_DIRK_4 )
+#define ARKSTEP_NULL_STEPPER  static_cast<ARKODE_ERKTableID>( -1 )
 
 #include "Config.hpp"
 #include "MirrorPlasma.hpp"
@@ -41,7 +42,8 @@ void ArkodeErrorWrapper( int errorFlag, std::string&& fName )
 		return;
 	else
 	{
-		throw std::runtime_error( "Error " + std::to_string( errorFlag ) + " returned from ARKode function: " + fName );
+		std::string errName = ARKStepGetReturnFlagName( errorFlag );
+		throw std::runtime_error( "Error " + errName + " returned from ARKode function: " + fName );
 	}
 }
 
@@ -227,9 +229,9 @@ int ARKStep_FixedTeSolve( realtype t, N_Vector u, N_Vector F, void* voidPlasma )
 
 void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 {
-	
+	sundials::Context sunctx;
 	sunindextype NDims = N_DIMENSIONS;
-	N_Vector initialCondition = N_VNew_Serial( NDims );
+	N_Vector initialCondition = N_VNew_Serial( NDims, sunctx );
 
 	// Set initial temperature to be such that the mach number is reasonable.
 	double InitialMach = plasma.InitialMach;
@@ -252,16 +254,16 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 
 	realtype t0 = 0;
 
-	void *arkMem = ARKStepCreate( nullptr, ARKStep_TemperatureSolve, t0, initialCondition );
+	void *arkMem = ARKStepCreate( nullptr, ARKStep_TemperatureSolve, t0, initialCondition, sunctx );
 
 	if ( arkMem == nullptr ) {
 		throw std::runtime_error( "Cannot allocate ARKStep Working Memory" );
 	}
 
 	// Dummy Jacobian, will be filled by ARKStep with finite-difference approximations
-	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims );
+	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims, sunctx );
 	// Small system, direct solve is fastest
-	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian );
+	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian, sunctx );
 
 	ArkodeErrorWrapper( ARKStepSetLinearSolver( arkMem, LS, Jacobian ), "ARKStepSetLinearSolver" );
 	
@@ -274,12 +276,12 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	std::cerr << "Using SundialsAbsTol = " << abstol << " and SundialsRelTol = " << reltol << std::endl;
 #endif
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
-	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, -1 ), "ARKStepSetTableNum" );
+	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, ARKSTEP_NULL_STEPPER ), "ARKStepSetTableNum" );
 	
 	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 
 
-	N_Vector positivityEnforcement = N_VNew_Serial( NDims );
+	N_Vector positivityEnforcement = N_VNew_Serial( NDims, sunctx );
 	N_VConst( 0.0, positivityEnforcement ); // Default to no constraints
 	ION_TEMPERATURE( positivityEnforcement ) = 2.0;      // T_i > 0
 	ELECTRON_TEMPERATURE( positivityEnforcement ) = 2.0; // T_e > 0
@@ -377,8 +379,9 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 void MCTransConfig::doFixedTeSolve( MirrorPlasma& plasma ) const
 {
 	throw std::logic_error( "Fixed T_e solve not yet fully implemented" );
+	sundials::Context sunctx;
 	sunindextype NDims = N_DIMENSIONS;
-	N_Vector initialCondition = N_VNew_Serial( NDims );
+	N_Vector initialCondition = N_VNew_Serial( NDims, sunctx );
 
 	double InitialTemperature = plasma.InitialTemp;
 	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
@@ -386,16 +389,16 @@ void MCTransConfig::doFixedTeSolve( MirrorPlasma& plasma ) const
 
 	realtype t0 = 0;
 
-	void *arkMem = ARKStepCreate( nullptr, ARKStep_TemperatureSolve, t0, initialCondition );
+	void *arkMem = ARKStepCreate( nullptr, ARKStep_TemperatureSolve, t0, initialCondition, sunctx );
 
 	if ( arkMem == nullptr ) {
 		throw std::runtime_error( "Cannot allocate ARKStep Working Memory" );
 	}
 
 	// Dummy Jacobian, will be filled by ARKStep with finite-difference approximations
-	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims );
+	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims, sunctx );
 	// Small system, direct solve is fastest
-	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian );
+	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian, sunctx );
 
 	ArkodeErrorWrapper( ARKStepSetLinearSolver( arkMem, LS, Jacobian ), "ARKStepSetLinearSolver" );
 	
@@ -405,7 +408,7 @@ void MCTransConfig::doFixedTeSolve( MirrorPlasma& plasma ) const
 	double reltol = plasma.SundialsRelTol;
 
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
-	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, -1 ), "ARKStepSetTableNum" );
+	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, ARKSTEP_NULL_STEPPER ), "ARKStepSetTableNum" );
 	
 	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 
@@ -443,9 +446,9 @@ void MCTransConfig::doFixedTeSolve( MirrorPlasma& plasma ) const
 // Let the plasma decay through a resistor
 void MCTransConfig::doFreeWheel( MirrorPlasma& plasma ) const
 {
-	
+	sundials::Context sunctx;	
 	sunindextype NDims = N_DIMENSIONS;
-	N_Vector initialCondition = N_VNew_Serial( NDims );
+	N_Vector initialCondition = N_VNew_Serial( NDims, sunctx );
 
 	double InitialTemperature = plasma.InitialTemp;
 	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
@@ -463,16 +466,16 @@ void MCTransConfig::doFreeWheel( MirrorPlasma& plasma ) const
 
 	realtype t0 = 0;
 
-	void *arkMem = ARKStepCreate( nullptr, ARKStep_FreeWheel, t0, initialCondition );
+	void *arkMem = ARKStepCreate( nullptr, ARKStep_FreeWheel, t0, initialCondition, sunctx );
 
 	if ( arkMem == nullptr ) {
 		throw std::runtime_error( "Cannot allocate ARKStep Working Memory" );
 	}
 
 	// Dummy Jacobian, will be filled by ARKStep with finite-difference approximations
-	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims );
+	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims, sunctx );
 	// Small system, direct solve is fastest
-	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian );
+	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian, sunctx );
 
 	ArkodeErrorWrapper( ARKStepSetLinearSolver( arkMem, LS, Jacobian ), "ARKStepSetLinearSolver" );
 	
@@ -485,7 +488,7 @@ void MCTransConfig::doFreeWheel( MirrorPlasma& plasma ) const
 	std::cerr << "Using SundialsAbsTol = " << abstol << " and SundialsRelTol = " << reltol << std::endl;
 #endif
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
-	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, -1 ), "ARKStepSetTableNum" );
+	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, ARKSTEP_NULL_STEPPER ), "ARKStepSetTableNum" );
 	
 	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 
