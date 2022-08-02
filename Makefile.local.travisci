@@ -2,8 +2,10 @@
 # A simple makefile for compiling on linux
 # if you are following the guide in the README
 
-# Uncomment to use clang instead of g++
-# CXX = clang++
+ifdef CC_FOR_BUILD
+	CXX ?= CC_FOR_BUILD
+	echo " Building using $(CXX)"
+endif
 
 # Uncomment for debug information
 # Keep commented to build on OSX

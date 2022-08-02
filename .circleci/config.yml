@@ -28,6 +28,8 @@ jobs:
           command: CXX="g++-10" make
       - run:
           command: make test
+      - run:
+          command: make unit_test
   buildubuntu:
     docker:
       - image: buildpack-deps:jammy
@@ -45,6 +47,8 @@ jobs:
           command: CXX="g++-10" make
       - run:
           command: make test
+      - run:
+          command: make unit_test
 workflows:
   main:
     jobs:
