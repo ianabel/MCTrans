@@ -4,7 +4,6 @@
 
 ifdef CC_FOR_BUILD
 	CXX ?= CC_FOR_BUILD
-	echo " Building using $(CXX)"
 endif
 
 # Uncomment for debug information
