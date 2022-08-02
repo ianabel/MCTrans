@@ -9,7 +9,7 @@
 // This defines the name of the test suite and causes
 // the default behaviour of the BOOST_TEST macros to compare
 // within a part in 10^6 rather than exact comparison.
-BOOST_AUTO_TEST_SUITE( functiontal_test_suite, * boost::unit_test::tolerance( 1e-6 ) );
+BOOST_AUTO_TEST_SUITE( functiontal_test_suite, * boost::unit_test::tolerance( 1e-6 ) )
 
 BOOST_AUTO_TEST_CASE( construct_mirror_plasma_test )
 {
@@ -25,4 +25,4 @@ BOOST_AUTO_TEST_CASE( construct_mirror_plasma_test )
 
 }
 
-BOOST_AUTO_TEST_SUITE_END();
+BOOST_AUTO_TEST_SUITE_END()

@@ -12,7 +12,7 @@ wget $SUNDIALS_URL
 tar xzf sundials-6.2.0.tar.gz
 mkdir build;
 cd build;
-cmake ../sundials-6.2.0/ -DCMAKE_INSTALL_PREFIX=$SUNDIALS_ROOT -DEXAMPLES_INSTALL=off;
+cmake ../sundials-6.2.0/ -DCMAKE_INSTALL_PREFIX=$SUNDIALS_ROOT -DBUILD_EXAMPLES=off -DEXAMPLES_INSTALL=off;
 make -j install;
 
 echo
