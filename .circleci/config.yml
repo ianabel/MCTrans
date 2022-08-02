@@ -6,7 +6,7 @@ executors:
       - image: buildpack-deps:bullseye
   ubuntu-focal:
     docker:
-      - image: buildpack-deps:focal
+      - image: buildpack-deps:impish
 
 
 
@@ -30,7 +30,7 @@ jobs:
           command: make test
   buildubuntu:
     docker:
-      - image: buildpack-deps:focal
+      - image: buildpack-deps:impish
     steps:
       - checkout
       - run:

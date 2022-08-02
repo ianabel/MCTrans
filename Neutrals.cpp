@@ -68,20 +68,24 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 		temperature = plasma.IonTemperature * ReferenceTemperature; // Convert to Joules
 	}
 
-	double thermalSpeed = ::sqrt( 2.0 * temperature / sigma.Particle.Mass );
-	double thermalMachNumber = plasma.MachNumber * ::sqrt( ::abs( sigma.Particle.Charge ) * plasma.ElectronTemperature * ReferenceTemperature / ( 2 * temperature ) );
+	int delta_ns = 0;
+	if ( sigma.Particle.Name == sigma.Target.Name ){
+		delta_ns = 1;
+	}
 
-	double Jacobian = ElectronCharge / (sigma.Particle.Mass * thermalSpeed * thermalSpeed); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from du to dE (less one power of u, which cancels with one in the integrand
+	double thermalSpeed = ::sqrt( 2.0 * temperature / sigma.Particle.Mass );
+	double thermalMachNumber = plasma.MachNumber * plasma.SoundSpeed() / thermalSpeed;
+
 	auto integrand = [&]( double Energy ) {
 		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / sigma.Particle.Mass );
-		double u = velocity / thermalSpeed;
+		double Jacobian = ElectronCharge / ( sigma.Particle.Mass * velocity ); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from dvelocity to dE
 		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
-		return u * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - u, 2 ) ) - ::exp( -::pow( thermalMachNumber + u, 2 ) ) ) * Jacobian;
+		return ::pow( velocity, 2 ) * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - velocity / thermalSpeed, 2 ) ) - ::exp( -::pow( thermalMachNumber + velocity / thermalSpeed, 2 ) ) ) * Jacobian;
 	};
 
 	constexpr double tolerance = 1e-7;
-	constexpr unsigned MaxDepth = 10;
-	double ColdRateCoeff = thermalSpeed / ( thermalMachNumber * ::sqrt(M_PI) )
+	constexpr unsigned MaxDepth = 15;
+	double ColdRateCoeff = 1 / ( thermalMachNumber * ::pow( thermalSpeed, 2 ) * ::sqrt(M_PI) * ( 1 + delta_ns ) )
 	        * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
@@ -261,9 +265,10 @@ double HydrogenChargeExchangeCrossSection( double Energy )
 	}
 	*/
 
-	// IGA: I believe for cold neutrals the contribution from higher orbitals is negligible
-	// (assume the neutrals are in thermal equlibrium with a wall at <= 1000C)
-	return sigma_n1; // + sigma_n2 + sigma_n3;
+	// IGA: I believe with cold neutrals the contribution from higher orbitals is negligible
+	// but leaving as-is for the moment as a pessimistic assumption
+	// NRS: I changed the cross section to only include the ground state
+	return sigma_n1;
 }
 
 // Energy in electron volts, returns cross section in cm^2
