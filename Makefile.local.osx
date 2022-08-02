@@ -1,0 +1,17 @@
+
+# A simple makefile for compiling on linux
+# if you are following the guide in the README
+
+
+# Sundials from homebrew
+SUNDIALS_DIR = /usr/local/opt/sundials/
+
+# Netcdf from Macports
+NETCDF_DIR =  /opt/local/
+
+TOML11_DIR = ./toml11/
+
+# Boost from homebrew
+BOOST_DIR = /usr/local/opt/boost/
+
+

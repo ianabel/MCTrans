@@ -1,15 +1,5 @@
 version: 2.1
 
-executors:
-  debian-bullseye:
-    docker:
-      - image: buildpack-deps:bullseye
-  ubuntu-focal:
-    docker:
-      - image: buildpack-deps:jammy
-
-
-
 jobs:
   builddebian:
     docker:
@@ -49,8 +39,30 @@ jobs:
           command: make test
       - run:
           command: make unit_tests
+  buildmacos12.3:
+    macos:
+      xcode: 13.4.1
+    environment:
+      HOMEBREW_NO_AUTO_UPDATE: 1
+    steps:
+      - checkout
+      - run: brew install boost sundials
+      - run: ports install netcdf netcdf-cxx4
+      - run:
+          command: git clone https://github.com/ToruNiina/toml11.git toml11/
+      - run:
+          command: cp Makefile.local.osx Makefile.local
+      - run:
+          command: make
+      - run:
+          command: make test
+      - run:
+          command: make unit_tests
+
+
 workflows:
   main:
     jobs:
       - builddebian
       - buildubuntu
+      - buildmacos12.3
