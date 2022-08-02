@@ -12,6 +12,6 @@ NETCDF_DIR =  /opt/local/
 TOML11_DIR = ./toml11/
 
 # Boost from homebrew
-BOOST_DIR = /usr/local/opt/boost/
+BOOST_DIR = $(shell brew --prefix)/opt/boost/
 
 
