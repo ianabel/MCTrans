@@ -12,6 +12,7 @@ NETCDF_DIR = $(shell brew --prefix)/opt/netcdf/
 
 # Where we're going to compile it
 NETCDF_CXX_DIR = $(realpath ./netcdf-cxx4)
+NETCDF_CXX_LIB = netcdf-cxx4
 
 TOML11_DIR = ./toml11/
 
