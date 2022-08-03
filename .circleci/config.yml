@@ -46,7 +46,7 @@ jobs:
       HOMEBREW_NO_AUTO_UPDATE: 1
     steps:
       - checkout
-      - run: brew install coreutils boost sundials netcdf
+      - run: brew install coreutils boost sundials netcdf cmake
       - run: BUILD_NETCDFCXX=Y HDF5_DIR="/usr/local/opt/hdf5" NETCDF_DIR="/usr/local/opt/netcdf" ./build_netcdf_cxx
       - run: git clone https://github.com/ToruNiina/toml11.git toml11/
       - run: cp Makefile.local.circleci_osx Makefile.local
