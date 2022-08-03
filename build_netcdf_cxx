@@ -1,0 +1,53 @@
+#!/bin/bash
+
+if [ -z ${BUILD_NETCDFCXX} ]; then
+	echo "This tool is designed to compile netcdf-cxx4 against an existing HDF5 and netCDF install. In particular, the OSX homebrew installs. This may not work on debian or ubuntu -- just use the packaged libnetcdf_cxx; please."
+	exit 1;
+fi
+
+if [ -z ${NETCDF_DIR+X} ]; then
+	NETCDF_DIR=`brew --prefix`/netcdf/
+fi
+
+
+NETCDFCXX_ROOT=`realpath ./netcdf-cxx4`
+NETCDFCXX_URL="https://github.com/Unidata/netcdf-cxx4/archive/refs/tags/v4.3.1.tar.gz"
+
+rm -rf $NETCDFCXX_ROOT
+mkdir $NETCDFCXX_ROOT
+
+cd $NETCDFCXX_ROOT
+curl -L $NETCDFCXX_URL --output netcdf_cxx4.tar.gz
+
+tar xzf netcdf_cxx4.tar.gz
+
+CMAKE_FLAGS="-DENABLE_CONVERSION_WARNINGS=off -DBUILD_TESTING=off -DCMAKE_INSTALL_PREFIX=$NETCDFCXX_ROOT"
+
+# if the user sets a NETCDF_DIR variable then use that, else try and guess with pkg-config
+if [ -z ${NETCDF_DIR} ]; then
+	NETCDF_CFLAGS=`pkg-config netcdf --cflags --libs-only-L`
+else
+	NETCDF_CFLAGS="-I$(realpath $NETCDF_DIR)/include -L$(realpath $NETCDF_DIR)/lib -Wl,-rpath $(realpath $NETCDF_DIR)/lib"
+	CMAKE_FLAGS="$CMAKE_FLAGS -DnetCDF_DIR=$NETCDF_DIR"
+fi
+
+if [ -z ${HDF5_DIR} ]; then
+	HDF5_CFLAGS=`pkg-config hdf5 --cflags --libs-only-L`
+else
+	HDF5_CFLAGS="-I$(realpath $HDF5_DIR)/include -L$(realpath $HDF5_DIR)/lib -Wl,-rpath $(realpath $HDF5_DIR)/lib"
+	CMAKE_FLAGS="$CMAKE_FLAGS -DHDF5_DIR=$HDF5_DIR"
+fi
+
+COMPILE_FLAGS="$NETCDF_CFLAGS $HDF5_CFLAGS"
+cmake -S./netcdf-cxx4-4.3.1 -B ./build "-DCMAKE_C_FLAGS=$COMPILE_FLAGS" "-DCMAKE_CXX_FLAGS=$COMPILE_FLAGS" $CMAKE_FLAGS
+
+cd build; make -j install;
+cd ../../;
+
+echo
+echo
+echo "The netcdf C++ interface has been compiled. To make MCTrans++ you should add"
+echo " NETCDF_CXX_DIR=$NETCDFCXX_ROOT"
+echo "in Makefile.local"
+echo
+echo

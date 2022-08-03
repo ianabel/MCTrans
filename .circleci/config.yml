@@ -46,11 +46,10 @@ jobs:
       HOMEBREW_NO_AUTO_UPDATE: 1
     steps:
       - checkout
-      - run: brew install boost sundials cmake
-      - run: curl -L https://github.com/macports/macports-base/releases/download/v2.7.2/MacPorts-2.7.2-12-Monterey.pkg --output macports.pkg; sudo installer -package macports.pkg -target /
-      - run: sudo /opt/local/bin/port -N install netcdf netcdf-cxx4
+      - run: brew install boost sundials netcdf
+      - run: HDF5_DIR="/usr/local/opt/hdf5" NETCDF_DIR="/usr/local/opt/netcdf" ./build_netcdf_cxx
       - run: git clone https://github.com/ToruNiina/toml11.git toml11/
-      - run: cp Makefile.local.osx Makefile.local
+      - run: cp Makefile.local.circleci_osx Makefile.local
       - run: make
       - run: make test
       - run: make unit_tests
