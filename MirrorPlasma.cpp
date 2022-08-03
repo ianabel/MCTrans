@@ -628,7 +628,7 @@ double MirrorPlasma::RadialCurrent() const
 	// Inertial term = m_i n_i R^2 d omega / dt ~= m_i n_i R^2 d  / dt ( E/ ( R*B) )
 	//					~= m_i n_i (R/B) * d/dt ( V / a )
 	double Inertia;
-	if ( isTimeDependent )
+	if ( isTimeDependent && VoltageFunction )
 		Inertia = IonSpecies.Mass * ProtonMass * IonDensity * ( PlasmaCentralRadius() / CentralCellFieldStrength )
 		            * VoltageFunction->prime( time );
 	else
@@ -664,7 +664,7 @@ void MirrorPlasma::UpdateVoltage()
 {
 	if ( !isTimeDependent )
 		return;
-	else
+	else if ( VoltageFunction )
 		ImposedVoltage = ( *VoltageFunction )( time );
 }
 
@@ -679,5 +679,5 @@ double MirrorPlasma::MomentOfInertia() const
 {
 	double R1 = PlasmaInnerRadius();
 	double R2 = PlasmaOuterRadius();
-	return 0.5 * ( PlasmaVolume() * IonDensity * IonSpecies.Mass * ProtonMass ) * ( R1*R1 + R2*R2 );
+	return 0.5 * ( PlasmaVolume() * IonDensity * ReferenceDensity * IonSpecies.Mass * ProtonMass ) * ( R1*R1 + R2*R2 );
 }

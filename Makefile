@@ -4,8 +4,8 @@ all: MCTrans++
 include Makefile.config
 
 
-SOURCES = MCTransConfig.cpp MirrorPlasma.cpp FusionYield.cpp Report.cpp AlphaHeating.cpp Neutrals.cpp SundialsWrapper.cpp NetCDFIO.cpp BatchRunner.cpp
-HEADERS = MirrorPlasma.hpp FusionYield.hpp Config.hpp Species.hpp PlasmaPhysics.hpp NetCDFIO.hpp AtomicPhysics.hpp BatchRunner.hpp
+SOURCES = MCTransConfig.cpp MirrorPlasma.cpp FusionYield.cpp Report.cpp AlphaHeating.cpp Neutrals.cpp SundialsWrapper.cpp NetCDFIO.cpp BatchRunner.cpp FreeWheel.cpp
+HEADERS = MirrorPlasma.hpp FusionYield.hpp Config.hpp Species.hpp PlasmaPhysics.hpp NetCDFIO.hpp AtomicPhysics.hpp BatchRunner.hpp SundialsWrapper.hpp
 OBJECTS = $(patsubst %.cpp,%.o,$(SOURCES))
 
 

@@ -55,7 +55,7 @@ class MCTransConfig {
 			}
 
 			if ( FWSolve ) {
-				if ( TempSolve || MachSolve )
+				if ( MachSolve )
 					throw std::invalid_argument( "[error] If external resistance is specificed, a decaying simulation is assumed - neither the imposed voltage nor the temperature can be specified. The initial Voltage and initial temperature should be specified with appropriate options" );
 				else
 					Type = FreewheelSolve;
@@ -75,6 +75,8 @@ class MCTransConfig {
 		void doTempSolve( MirrorPlasma& plasma ) const;
 		void doFixedTeSolve( MirrorPlasma& plasma ) const;
 		void doFreeWheel( MirrorPlasma& plasma ) const;
+
+		void InitialisePlasma() const;
 
 		double OutputDeltaT,EndTime;
 

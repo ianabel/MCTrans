@@ -1,33 +1,118 @@
+#include "SundialsWrapper.hpp" 
 
-void MCTransConfig::FreeWheelSolve( MirrorPlasma& plasma ) const
+
+/*
+ *
+ * When doing a freewheeling plasma the time-dependent variables are 
+ * V ( or equivalently the Mach number ), T_i, T_e
+ *
+ */
+
+int ARKStep_FreeWheel( realtype t, N_Vector u, N_Vector uDot, void* voidPlasma )
 {
+	MirrorPlasma* plasmaPtr = reinterpret_cast<MirrorPlasma*>( voidPlasma );
+
+	double TiOld = plasmaPtr->IonTemperature;
+	double TeOld = plasmaPtr->ElectronTemperature;
+
+	if ( ION_TEMPERATURE( u ) < 0.0 ) {
+#if defined( DEBUG )
+		std::cerr << "Error in SUNDIALS solve, due to negative ion temperature" << std::endl;
+#endif
+		return 1;
+	}
+	if ( ELECTRON_TEMPERATURE( u ) < 0.0 ) {
+#if defined( DEBUG )
+		std::cerr << "Error in SUNDIALS solve, due to negative electron temperature" << std::endl;
+#endif
+		return 2;
+	}
+
+	// We're now evolving the voltage with time 
+	plasmaPtr->IonTemperature = ION_TEMPERATURE( u );
+	plasmaPtr->ElectronTemperature = ELECTRON_TEMPERATURE( u );
+	plasmaPtr->ImposedVoltage = VOLTAGE( u );
+
+
 	
-	sunindextype NDims = N_DIMENSIONS;
-	N_Vector initialCondition = N_VNew_Serial( NDims );
+	try {
+		plasmaPtr->SetTime(t);
+	} catch ( std::domain_error &e ) {
+		// Timestep too long?
+#ifdef DEBUG
+		std::cerr << "Evaluating RHS at t = " << std::setprecision( 20 ) << t << " ?!" << std::endl;
+#endif
+		return 3;
+	}
+	plasmaPtr->SetMachFromVoltage();
+	plasmaPtr->ComputeSteadyStateNeutrals();
+#if defined( DEBUG ) && defined( SUNDIALS_DEBUG ) && defined( INTERNAL_RK_DEBUG )
+	std::cerr << "t = " << t << " ; T_i = " << plasmaPtr->IonTemperature << " ; T_e = " << plasmaPtr->ElectronTemperature << " MachNumber " << plasmaPtr->MachNumber << std::endl;
+#endif
 
-	double InitialTemperature = plasma.InitialTemp;
-	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
-	ELECTRON_TEMPERATURE( initialCondition ) = InitialTemperature;
+	// I d omega / dt = ( Change in Angular Momentum )
+	// I d omega / dt = ( MomentumToVoltage )^(-1) dV/dt
+	// so dV/dt = MtoV * ( Change in Angular Momentum )
+	
+	double MomentumToVoltage = plasmaPtr->PlasmaColumnWidth * plasmaPtr->PlasmaCentralRadius() * plasmaPtr->CentralCellFieldStrength / plasmaPtr->MomentOfInertia();
 
-	plasma.ElectronTemperature = InitialTemperature;
-	plasma.IonTemperature = InitialTemperature;
-	plasma.SetMachFromVoltage();
-	plasma.ComputeSteadyStateNeutrals();
+	try {
+		double IonHeating  = plasmaPtr->IonHeating();
+		double IonHeatLoss = plasmaPtr->IonHeatLosses();
+		double ElectronHeating  = plasmaPtr->ElectronHeating();
+		double ElectronHeatLoss = plasmaPtr->ElectronHeatLosses();
 
-	plasma.InitialiseNetCDF();
+#if defined( DEBUG ) && defined( SUNDIALS_DEBUG ) && defined( INTERNAL_RK_DEBUG )
+		std::cerr << " Ion Heating      = " << IonHeating      << " ; Ion Heat Loss       = " << IonHeatLoss      << std::endl;
+		std::cerr << " Electron Heating = " << ElectronHeating << " ; Electron Heat Loss  = " << ElectronHeatLoss << std::endl;
+#endif
 
-	realtype t0 = 0;
+		ION_HEAT_BALANCE( uDot )      = ( IonHeating - IonHeatLoss );
+		ELECTRON_HEAT_BALANCE( uDot ) = ( ElectronHeating - ElectronHeatLoss );
 
-	void *arkMem = ARKStepCreate( nullptr, ARKStep_TemperatureSolve, t0, initialCondition );
+		// Should be negative to decelerate the plasma
+		double RadialCurrent = -VOLTAGE( u ) / plasmaPtr->ExternalResistance;
+		double AngularMomentumInjection = plasmaPtr->InjectedTorque( RadialCurrent );
+		double AngularMomentumLoss = plasmaPtr->TotalAngularMomentumLosses();
+
+		MOMENTUM_BALANCE( uDot ) = ( MomentumToVoltage ) * ( AngularMomentumInjection - AngularMomentumLoss );
+
+
+	} catch ( std::exception& e ) {
+		return -1;
+	} 
+
+	plasmaPtr->IonTemperature = TiOld;
+	plasmaPtr->ElectronTemperature = TeOld;
+	plasmaPtr->SetMachFromVoltage();
+	plasmaPtr->ComputeSteadyStateNeutrals();
+
+	return ARK_SUCCESS;
+}
+
+// Let the plasma decay through a resistor
+void MCTransConfig::doFreeWheel( MirrorPlasma& plasma ) const
+{
+	sundials::Context sunctx;	
+	sunindextype NDims = 3; // Two temps & a voltage
+	N_Vector initialCondition = N_VNew_Serial( NDims, sunctx );
+
+	ION_TEMPERATURE( initialCondition ) = plasma.IonTemperature;
+	ELECTRON_TEMPERATURE( initialCondition ) = plasma.ElectronTemperature;
+	VOLTAGE( initialCondition ) = plasma.ImposedVoltage;
+
+	realtype t0 = plasma.time;
+
+	void *arkMem = ARKStepCreate( nullptr, ARKStep_FreeWheel, t0, initialCondition, sunctx );
 
 	if ( arkMem == nullptr ) {
 		throw std::runtime_error( "Cannot allocate ARKStep Working Memory" );
 	}
 
 	// Dummy Jacobian, will be filled by ARKStep with finite-difference approximations
-	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims );
+	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims, sunctx );
 	// Small system, direct solve is fastest
-	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian );
+	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian, sunctx );
 
 	ArkodeErrorWrapper( ARKStepSetLinearSolver( arkMem, LS, Jacobian ), "ARKStepSetLinearSolver" );
 	
@@ -40,7 +125,7 @@ void MCTransConfig::FreeWheelSolve( MirrorPlasma& plasma ) const
 	std::cerr << "Using SundialsAbsTol = " << abstol << " and SundialsRelTol = " << reltol << std::endl;
 #endif
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
-	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, DEFAULT_DIRK_5, -1 ), "ARKStepSetTableNum" );
+	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, ARKSTEP_NULL_STEPPER ), "ARKStepSetTableNum" );
 	
 	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 
@@ -56,7 +141,7 @@ void MCTransConfig::FreeWheelSolve( MirrorPlasma& plasma ) const
 	std::cerr << "Writing output every " << OutputDeltaT << std::endl;
 #endif 
 	ArkodeErrorWrapper( ARKStepSetStopTime( arkMem, EndTime ), "ARKStepSetStopTime" );
-	for ( t = OutputDeltaT; t < EndTime; t += OutputDeltaT )
+	for ( t = t0 + OutputDeltaT; t < EndTime; t += OutputDeltaT )
 	{
 		errorFlag = ARKStepEvolve( arkMem, t, initialCondition, &tRet, ARK_NORMAL );
 		switch ( errorFlag ) {
@@ -71,37 +156,21 @@ void MCTransConfig::FreeWheelSolve( MirrorPlasma& plasma ) const
 		plasma.IonTemperature = ION_TEMPERATURE( initialCondition );
 		plasma.SetMachFromVoltage();
 		plasma.ComputeSteadyStateNeutrals();
-		plasma.WriteTimeslice( t );
+		plasma.WriteTimeslice( tRet );
+		plasma.SetTime( tRet );
 #if defined( DEBUG )
 		std::cerr << "Writing timeslice at t = " << t << std::endl;
 #endif
 #if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
 	std::cerr << "After evolving to " << tRet << " T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
 #endif
-
-		double RelativeIonRate = ::fabs( ( plasma.IonHeating() - plasma.IonHeatLosses() )/( plasma.IonDensity * plasma.IonTemperature * ReferenceTemperature * ReferenceDensity ) );
-		double RelativeElectronRate =::fabs( ( plasma.ElectronHeating() - plasma.ElectronHeatLosses() )/( plasma.ElectronDensity * plasma.ElectronTemperature * ReferenceTemperature * ReferenceDensity ) );
-#if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
-		std::cerr << " Relative Rate of Change in Ion Energy Density " << RelativeIonRate * 100 << " %/s" << std::endl;
-		std::cerr << " Relative Rate of Change in Electron Energy Density " << RelativeElectronRate * 100 << " %/s" << std::endl;
-#endif
-		if ( !plasma.isTimeDependent &&
-		     RelativeIonRate < plasma.RateThreshold &&
-		     RelativeElectronRate < plasma.RateThreshold )
-		{
-#if defined( DEBUG )
-	std::cerr << "Steady state reached at time " << t << " with T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
-#endif
-			break;
-		}
-
 	}
 
 	// We've solved and found the answer. Update the plasma object
 
 	plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 	plasma.IonTemperature      =      ION_TEMPERATURE( initialCondition );
-	// plasma.SetTime( EndTime );
+	plasma.ImposedVoltage      =              VOLTAGE( initialCondition );
 
 #ifdef DEBUG
 	long nSteps = 0,nfeEvals = 0,nfiEvals = 0;
