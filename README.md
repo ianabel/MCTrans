@@ -51,7 +51,7 @@ To compile the manual you will need a copy of pdflatex, bibtex, and revtex4. A p
 #### Installing SUNDIALS
 
 If you are only building a version of SUNDIALS for use with MCTrans++ the included script `build_sundials` should provide
-the minimal needed installation of SUNDIALS.
+the minimal needed installation of SUNDIALS. If using MacOS, use [MacPorts](https://www.macports.org/install.php) to install `wget` and `realpath`.
 
 If this is your first use of SUNDIALS, and you want a custom install, a quick guide to installing the base libraries follows here.
 
@@ -89,16 +89,15 @@ There is also a `check_examples.sh` script that will check all the examples stil
 
 ## Known Issues
 
-General issues include the fact that the steady-state equations may have multiple roots. Options exist including running a nonlinear solver from a given initial condition, or running the time-dependent solver to steaady-state from a given initial condition.
+General issues include the fact that the steady-state equations may have multiple roots. Options exist including running a nonlinear solver from a given initial condition, or running the time-dependent solver to steady-state from a given initial condition.
 
 Specific known issues are listed here.
 
  - Debug builds currently fail on OSX due to the use of `feenableexcept()`.
- - Sundials Versions before 5.6.0 are unsupported, as is Sundials v6.0.0
 
 ## Contributing
 
-Contributions to this project are welcome. However, as we are currently in active development, please email the authors if you wish to get involved.
+Contributions to this project through the github interface are welcome. However, as we are currently in active development, please email the authors if you wish to get involved -- surprise PRs may be ignored.
 
 ## Versioning
 
