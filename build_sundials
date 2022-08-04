@@ -1,13 +1,15 @@
 #!/bin/sh
 
-SUNDIALS_ROOT=`realpath ./sundials`
+REALPATH=realpath
+
+SUNDIALS_ROOT=`$REALPATH ./sundials`
 SUNDIALS_URL=" https://github.com/LLNL/sundials/releases/download/v6.2.0/sundials-6.2.0.tar.gz"
 
 rm -rf $SUNDIALS_ROOT
 mkdir $SUNDIALS_ROOT
 
 cd $SUNDIALS_ROOT
-wget $SUNDIALS_URL
+curl -L $SUNDIALS_URL --output sundials-6.2.0.tar.gz
 
 tar xzf sundials-6.2.0.tar.gz
 mkdir build;
