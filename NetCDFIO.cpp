@@ -100,6 +100,9 @@ void MirrorPlasma::InitialiseNetCDF()
 
 	// Time Dependent Variables
 	nc_output.AddTimeSeries( "Voltage", "Voltage drop across the plasma","V", ImposedVoltage );
+	nc_output.AddTimeSeries( "Voltage_fn", "Voltage drop across the plasma (f)","V", ( *VoltageFunction )( time ) );
+	nc_output.AddTimeSeries( "V_fn_prime", "dV/dt","V/t", VoltageFunction->prime( time ) );
+	nc_output.AddTimeSeries( "AmbipolarPhi", "Parallel phi drop","V", AmbipolarPhi() );
 	nc_output.AddTimeSeries( "MachNumber", "Plasma velocity divided by Sqrt(T_e/m_i)", "", MachNumber );
 	nc_output.AddTimeSeries( "IonTemperature", "Temperature of the bulk ion species", "keV", IonTemperature );
 	nc_output.AddTimeSeries( "ElectronTemperature", "Temperature of the bulk ion species", "keV", ElectronTemperature );
@@ -125,7 +128,14 @@ void MirrorPlasma::WriteTimeslice( double tNew )
 		return;
 
 	int tIndex = nc_output.AddTimeSlice( tNew );
+	if ( ::fabs( tNew - time ) > 1e-6 )
+	{
+		std::cerr << "Irregularity in output times" << std::endl;
+	}
 	nc_output.AppendToTimeSeries( "Voltage", ImposedVoltage, tIndex );
+	nc_output.AppendToTimeSeries( "Voltage_fn", ( *VoltageFunction )( tNew ), tIndex );
+	nc_output.AppendToTimeSeries( "V_fn_prime", VoltageFunction->prime( tNew ), tIndex );
+	nc_output.AppendToTimeSeries( "AmbipolarPhi", AmbipolarPhi(), tIndex );
 	nc_output.AppendToTimeSeries( "MachNumber", MachNumber, tIndex );
 	nc_output.AppendToTimeSeries( "IonTemperature", IonTemperature, tIndex );
 	nc_output.AppendToTimeSeries( "ElectronTemperature", ElectronTemperature, tIndex );

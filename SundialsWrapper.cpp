@@ -116,23 +116,15 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	sunindextype NDims = N_DIMENSIONS;
 	N_Vector initialCondition = N_VNew_Serial( NDims, sunctx );
 
-	// Set initial temperature to be such that the mach number is reasonable.
-	double InitialMach = plasma.InitialMach;
-	double SoundSpeed = ::fabs( plasma.ImposedVoltage / ( plasma.PlasmaColumnWidth * plasma.CentralCellFieldStrength * InitialMach ) );
-	double InitialTemperature = plasma.IonSpecies.Mass * ProtonMass * SoundSpeed * SoundSpeed / ReferenceTemperature;
-#ifdef DEBUG
-	std::cerr << "Setting T_0 = " << InitialTemperature  << " to have M at t=0 fixed to " << InitialMach << std::endl;
-#endif
-
-	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
-	ELECTRON_TEMPERATURE( initialCondition ) = InitialTemperature;
+	ION_TEMPERATURE( initialCondition ) = plasma.IonTemperature;
+	ELECTRON_TEMPERATURE( initialCondition ) = plasma.ElectronTemperature;
 	
-	plasma.ElectronTemperature = InitialTemperature;
-	plasma.IonTemperature = InitialTemperature;
+	realtype t0 = 0;
+
+	plasma.SetTime( t0 );
 	plasma.SetMachFromVoltage();
 	plasma.ComputeSteadyStateNeutrals();
 
-	realtype t0 = 0;
 
 	void *arkMem = ARKStepCreate( nullptr, ARKStep_TemperatureSolve, t0, initialCondition, sunctx );
 
@@ -156,6 +148,11 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	std::cerr << "Using SundialsAbsTol = " << abstol << " and SundialsRelTol = " << reltol << std::endl;
 #endif
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
+
+	ArkodeErrorWrapper( ARKStepSetMaxCFailGrowth( arkMem, 0.01 ), "ARKStepSetMaxCFailGrowth" );
+	ArkodeErrorWrapper( ARKStepSetMaxEFailGrowth( arkMem, 0.01 ), "ARKStepSetMaxEFailGrowth" );
+	ArkodeErrorWrapper( ARKStepSetMaxGrowth( arkMem, 100.0 ), "ARKStepSetMaxGrowth" );
+
 	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, ARKSTEP_NULL_STEPPER ), "ARKStepSetTableNum" );
 	
 	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
@@ -167,8 +164,6 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	ELECTRON_TEMPERATURE( positivityEnforcement ) = 2.0; // T_e > 0
 
 	ArkodeErrorWrapper( ARKStepSetConstraints( arkMem, positivityEnforcement ), "ARKStepSetConstraints" );
-
-	ArkodeErrorWrapper( ARKStepSetMaxStep( arkMem, OutputDeltaT*10 ), "ARKStepSetMaxStep" );
 
 	const unsigned long MaxSteps = 1e4;
 	ArkodeErrorWrapper( ARKStepSetMaxNumSteps( arkMem, MaxSteps ), "ARKStepSetMaxNumSteps" );
@@ -187,6 +182,8 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 		double curTime;
 		ArkodeErrorWrapper( ARKStepGetCurrentTime( arkMem, &curTime ), "ARKStepGetCurrentTime" );
 #endif
+		if ( t > EndTime )
+			t = EndTime;
 		errorFlag = ARKStepEvolve( arkMem, t, initialCondition, &tRet, ARK_NORMAL );
 		switch ( errorFlag ) {
 			case ARK_SUCCESS:

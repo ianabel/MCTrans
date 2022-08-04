@@ -19,6 +19,7 @@ std::shared_ptr<MirrorPlasma> MCTransConfig::Solve()
 			InitialisePlasma();
 			plasma.InitialiseNetCDF();
 			doTempSolve( plasma );
+			plasma.FinaliseNetCDF();
 			break;
 		case SolveType::FreewheelSolve:
 			// Set initial conditions
@@ -35,12 +36,12 @@ std::shared_ptr<MirrorPlasma> MCTransConfig::Solve()
 			plasma.isTimeDependent = true; // Now run for the prescribed time
 			EndTime += plasma.time; // So the time runs from 0 -> steady-state-time -> s-s-t + Endtime, giving a full 'EndTime' of decay
 			doFreeWheel( plasma );
+			plasma.FinaliseNetCDF();
 			break;
 		default:
 			throw std::invalid_argument( "Unknown Solve Type" );
 	}
 
-	plasma.FinaliseNetCDF();
 	return std::move( ReferencePlasmaState );
 }
 
