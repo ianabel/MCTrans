@@ -20,7 +20,7 @@ nc_root = Dataset(filename, "r", format="NETCDF4")
 voltages_var = nc_root.variables["Voltage"]
 t_var = nc_root.variables["t"]
 
-t_start_idx = 5
+t_start_idx = 1
 
 print(t_var[t_start_idx:].size)
 

@@ -201,11 +201,12 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 
 		plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 		plasma.IonTemperature = ION_TEMPERATURE( initialCondition );
+		plasma.SetTime( tRet );
 		plasma.SetMachFromVoltage();
 		plasma.ComputeSteadyStateNeutrals();
 		plasma.WriteTimeslice( tRet );
 #if defined( DEBUG )
-		std::cerr << "Writing timeslice at t = " << t << std::endl;
+		std::cerr << "Writing timeslice at t = " << tRet << std::endl;
 #endif
 #if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
 	std::cerr << "After evolving to " << tRet << " T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;

@@ -629,7 +629,7 @@ double MirrorPlasma::RadialCurrent() const
 	//					~= m_i n_i (R/B) * d/dt ( V / a )
 	double Inertia;
 	if ( isTimeDependent && VoltageFunction )
-		Inertia = IonSpecies.Mass * ProtonMass * IonDensity * ( PlasmaCentralRadius() / CentralCellFieldStrength )
+		Inertia = IonSpecies.Mass * ProtonMass * ReferenceDensity * IonDensity * ( PlasmaCentralRadius() / CentralCellFieldStrength )
 		            * VoltageFunction->prime( time );
 	else
 		Inertia = 0.0;

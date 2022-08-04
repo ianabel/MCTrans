@@ -10,7 +10,6 @@ std::shared_ptr<MirrorPlasma> MCTransConfig::Solve()
 	MirrorPlasma& plasma = *ReferencePlasmaState;
 
 
-	plasma.InitialiseNetCDF();
 
 	switch ( Type ) {
 		case SolveType::SteadyStateMachSolve:
@@ -18,11 +17,13 @@ std::shared_ptr<MirrorPlasma> MCTransConfig::Solve()
 			break;
 		case SolveType::SteadyStateTempSolve:
 			InitialisePlasma();
+			plasma.InitialiseNetCDF();
 			doTempSolve( plasma );
 			break;
 		case SolveType::FreewheelSolve:
 			// Set initial conditions
 			InitialisePlasma();
+			plasma.InitialiseNetCDF();
 			if ( ReferencePlasmaState->ImposedVoltage > 0.0 ) {
 				std::cerr << "Evolving to steady state before decaying" << std::endl;
 				plasma.isTimeDependent = false; // Just get a steady state
