@@ -24,7 +24,7 @@ VoltageVar = nc_root.createVariable("Voltage","f8",("Time",));
 
 t1 = 0.0050
 t2 = 0.0550
-t_end = 0.0750
+t_end = 0.505
 
 V1 = 10000
 V2 =100000
