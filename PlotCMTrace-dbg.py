@@ -54,8 +54,9 @@ ax3.tick_params(axis='y', labelcolor='tab:blue')
 
 viscous_var = nc_root.variables["ViscousTorque"]
 #ax3.plot(t_var[t_start_idx:],viscous_var[t_start_idx:],label = 'Viscous Torque')
-parallel_var = nc_root.variables["ParAngMomLoss"]
-ax3.plot(t_var[t_start_idx:125],parallel_var[t_start_idx:125],label = 'Parallel Angular Momentum Loss')
+#parallel_var = nc_root.variables["ParAngMomLoss"]
+#ax3.plot(t_var[t_start_idx:125],parallel_var[t_start_idx:125],label = 'Parallel Angular Momentum Loss')
+ax3.plot(t_var[t_start_idx:],nc_root.variables["MachNumber"][t_start_idx:],label = 'Mach')
 ax3.legend(loc='upper left')
 
 j_var = nc_root.variables["Current"]
@@ -63,7 +64,7 @@ ax4 = ax3.twinx()
 ax4.set_ylabel("A")
 ax4.tick_params(axis='y', labelcolor='tab:blue')
 #ax4.plot(t_var[t_start_idx:],j_var[t_start_idx:],label = 'Current',color = 'tab:blue')
-ax4.plot(t_var[t_start_idx:125],nc_root.variables["AmbipolarPhi"][t_start_idx:125],label = 'Phi',color='green')
+ax4.plot(t_var[t_start_idx:],nc_root.variables["AmbipolarPhi"][t_start_idx:],label = 'Phi',color='green')
 ax4.legend(loc='lower right')
 
 
