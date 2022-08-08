@@ -42,7 +42,7 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 		return Energy * ElectronCharge * sigmaM2 * ::exp( -Energy * ElectronCharge / temperature ) * Jacobian;
 	};
 
-	constexpr double tolerance = 1e-7;
+	constexpr double tolerance = 1e-6;
 	constexpr unsigned MaxDepth = 10;
 	double HotRateCoeff = 4.0 / ( ::sqrt(2 * M_PI * sigma.Particle.Mass * temperature) * temperature )
 	         * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
@@ -76,6 +76,7 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 	double thermalSpeed = ::sqrt( 2.0 * temperature / sigma.Particle.Mass );
 	double thermalMachNumber = plasma.MachNumber * plasma.SoundSpeed() / thermalSpeed;
 
+	// Needs Energy in electronVolts
 	auto integrand = [&]( double Energy ) {
 		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / sigma.Particle.Mass );
 		double Jacobian = ElectronCharge / ( sigma.Particle.Mass * velocity ); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from dvelocity to dE
@@ -83,10 +84,27 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 		return ::pow( velocity, 2 ) * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - velocity / thermalSpeed, 2 ) ) - ::exp( -::pow( thermalMachNumber + velocity / thermalSpeed, 2 ) ) ) * Jacobian;
 	};
 
-	constexpr double tolerance = 1e-7;
-	constexpr unsigned MaxDepth = 15;
+	constexpr double tolerance = 1e-6;
+	constexpr unsigned MaxDepth = 10;
+
+
+	double min_sqrt = 3.5; // Exp(-3.5^2) ~= 5e-6
+	// Velocity such that Exp( -(M-v)^2 ) is negligibly small;
+	double min_velocity;
+	if ( thermalMachNumber <= min_sqrt )
+		min_velocity = 0;
+	else 
+		min_velocity = thermalMachNumber - min_sqrt;
+	double max_velocity;
+	max_velocity = thermalMachNumber + min_sqrt;
+
+	double minEnergy = std::max( sigma.MinEnergy, min_velocity*min_velocity * temperature / ElectronCharge );
+	double maxEnergy = std::min( sigma.MaxEnergy, max_velocity * max_velocity * temperature / ElectronCharge );
+
+
+
 	double ColdRateCoeff = 1 / ( thermalMachNumber * ::pow( thermalSpeed, 2 ) * ::sqrt(M_PI) * ( 1 + delta_ns ) )
-	        * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
+	        * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, minEnergy, maxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
 	std::cerr << "Computing a cold rate coefficient at T = " << 1000*temperature/ReferenceTemperature  << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
