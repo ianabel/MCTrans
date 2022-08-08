@@ -45,7 +45,7 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 	constexpr double tolerance = 1e-7;
 	constexpr unsigned MaxDepth = 10;
 	double HotRateCoeff = 4.0 / ( ::sqrt(2 * M_PI * sigma.Particle.Mass * temperature) * temperature )
-	         * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
+	         * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
 	std::cerr << "Computing a hot rate coefficient at T = " << plasma.ElectronTemperature/1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << HotRateCoeff  << std::endl;
@@ -86,7 +86,7 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 	constexpr double tolerance = 1e-7;
 	constexpr unsigned MaxDepth = 15;
 	double ColdRateCoeff = 1 / ( thermalMachNumber * ::pow( thermalSpeed, 2 ) * ::sqrt(M_PI) * ( 1 + delta_ns ) )
-	        * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
+	        * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
 	std::cerr << "Computing a cold rate coefficient at T = " << 1000*temperature/ReferenceTemperature  << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
