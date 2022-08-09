@@ -382,7 +382,7 @@ double radiativeRecombinationCrossSection( double Energy )
 void MirrorPlasma::ComputeSteadyStateNeutrals()
 {
 	// Do not recalculate if we're in fixed-neutral-density mode
-	if ( FixedNeutralDensity )
+	if ( FixedNeutralDensity || !IncludeCXLosses )
 		return;
 
 	// Calculate the Ionization Rate of cold neutrals from proton and electron impact:

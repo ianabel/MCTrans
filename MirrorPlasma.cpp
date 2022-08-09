@@ -339,7 +339,7 @@ double MirrorPlasma::ParallelCurrent( double Phi ) const
 */
 
 // Sets Phi to the ambipolar Phi required such that ion loss = electron loss
-double MirrorPlasma::AmbipolarPhi() const
+double MirrorPlasma::AmbipolarPhi( double guess = 0 ) const
 {
 	double AmbipolarPhi = CentrifugalPotential();
 
@@ -370,8 +370,8 @@ double MirrorPlasma::AmbipolarPhi() const
 		};
 
 		boost::uintmax_t iters = 1000;
-		boost::math::tools::eps_tolerance<double> tol( 28 );
-		auto [ Phi_l, Phi_u ] = boost::math::tools::bracket_and_solve_root( ParallelCurrent, AmbipolarPhi, 1.2, false, tol, iters );
+		boost::math::tools::eps_tolerance<double> tol( 20 );
+		auto [ Phi_l, Phi_u ] = boost::math::tools::bracket_and_solve_root( ParallelCurrent, guess, 1.2, false, tol, iters );
 		AmbipolarPhi = ( Phi_l + Phi_u )/2.0;
 
 		if ( ::fabs( Phi_u - Phi_l )/2.0 > ::fabs( 0.01*AmbipolarPhi ) )
