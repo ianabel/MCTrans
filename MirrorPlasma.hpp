@@ -118,6 +118,9 @@ class MirrorPlasma {
 		void SetMachFromVoltage();
 		double AmbipolarPhi() const;
 
+		void UpdatePhi();
+		double StoredPhi;
+
 		void ComputeSteadyStateNeutrals();
 
 		double TotalAngularMomentumLosses() const;

@@ -157,6 +157,8 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 			time = 0;
 		}
 	}
+
+	StoredPhi = 0.0;
 }
 
 // From NRL Formulary p34
@@ -339,7 +341,7 @@ double MirrorPlasma::ParallelCurrent( double Phi ) const
 */
 
 // Sets Phi to the ambipolar Phi required such that ion loss = electron loss
-double MirrorPlasma::AmbipolarPhi( double guess = 0 ) const
+double MirrorPlasma::AmbipolarPhi() const
 {
 	double AmbipolarPhi = CentrifugalPotential();
 
@@ -347,6 +349,7 @@ double MirrorPlasma::AmbipolarPhi( double guess = 0 ) const
 		return AmbipolarPhi;
 
 	if ( UseAmbipolarPhi ) {
+
 		// Add correction.
 		double Sigma = 1.0 + Zeff;
 		double R = MirrorRatio;
@@ -354,6 +357,7 @@ double MirrorPlasma::AmbipolarPhi( double guess = 0 ) const
 
 		// This gives us a first-order guess for the Ambipolar potential. Now we solve j_|| = 0 to get the better answer.
 		//
+		// compute current density in units of e/s/m^2
 		auto ParallelCurrent = [ & ]( double Phi ) {
 			double Chi_e = -Phi; // Ignore small electron mass correction
 
@@ -370,19 +374,50 @@ double MirrorPlasma::AmbipolarPhi( double guess = 0 ) const
 		};
 
 		boost::uintmax_t iters = 1000;
-		boost::math::tools::eps_tolerance<double> tol( 20 );
-		auto [ Phi_l, Phi_u ] = boost::math::tools::bracket_and_solve_root( ParallelCurrent, guess, 1.2, false, tol, iters );
-		AmbipolarPhi = ( Phi_l + Phi_u )/2.0;
+		boost::math::tools::eps_tolerance<double> tol( 25 );
 
-		if ( ::fabs( Phi_u - Phi_l )/2.0 > ::fabs( 0.01*AmbipolarPhi ) )
+		double guess;
+		if ( StoredPhi != 0 )
+			guess = StoredPhi;
+		else
+			guess = AmbipolarPhi + Correction/2.0;
+
+		double ThresholdCurrent = 1e-10 * ElectronDensity * ReferenceDensity;
+
+		if ( ::fabs( ParallelCurrent( guess ) ) <  ThresholdCurrent )
 		{
-			std::cerr << "Unable to find root of j_|| = 0, using approximation" << std::endl;
-			return CentrifugalPotential() + Correction/2.0;
+			return guess;
+		}
+
+
+		double eps = 0.05;
+		double l_bracket = std::min( guess*( 1.0 - eps ), guess*( 1.0 + eps ) );
+		double u_bracket = std::max( guess*( 1.0 - eps ), guess*( 1.0 + eps ) );
+		if ( ParallelCurrent( l_bracket )*ParallelCurrent( u_bracket ) < 0 ) {
+
+			auto [ Phi_l, Phi_u ] = boost::math::tools::toms748_solve( ParallelCurrent, l_bracket, u_bracket, tol, iters );
+			AmbipolarPhi = ( Phi_l + Phi_u )/2.0;
+
+		} else {
+
+			auto [ Phi_l, Phi_u ] = boost::math::tools::bracket_and_solve_root( ParallelCurrent, guess, 1.2, false, tol, iters );
+			AmbipolarPhi = ( Phi_l + Phi_u )/2.0;
+
+			if ( ::fabs( Phi_u - Phi_l )/2.0 > ::fabs( 0.05*AmbipolarPhi ) ) {
+				std::cerr << "Unable to find root of j_|| = 0, using approximation" << std::endl;
+				return CentrifugalPotential() + Correction/2.0;
+			}
 		}
 	}
 
 	return AmbipolarPhi;
 }
+
+void MirrorPlasma::UpdatePhi()
+{
+	StoredPhi = AmbipolarPhi();
+}
+	
 
 double MirrorPlasma::ParallelKineticEnergyLoss() const
 {
