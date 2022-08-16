@@ -22,6 +22,7 @@ CrossSection protonImpactIonization( protonImpactIonizationCrossSection, 200, 1e
 CrossSection HydrogenChargeExchange( HydrogenChargeExchangeCrossSection, 0.1, 1e6, Proton, NeutralHydrogen );
 CrossSection electronImpactIonization( electronImpactIonizationCrossSection, 13.6, 1e6, Electron, NeutralHydrogen );
 
+/* We don't actually use this....
 double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
 	// E and T in eV, sigma in cm^2
@@ -54,6 +55,7 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 	return HotRateCoeff;
 
 }
+*/
 
 double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
