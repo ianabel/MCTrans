@@ -47,6 +47,7 @@ int ARKStep_TemperatureSolve( realtype t, N_Vector u, N_Vector uDot, void* voidP
 		return 3;
 	}
 	plasmaPtr->SetMachFromVoltage();
+	plasmaPtr->UpdatePhi();
 	plasmaPtr->ComputeSteadyStateNeutrals();
 #if defined( DEBUG ) && defined( SUNDIALS_DEBUG ) && defined( INTERNAL_RK_DEBUG )
 	std::cerr << "t = " << t << " ; T_i = " << plasmaPtr->IonTemperature << " ; T_e = " << plasmaPtr->ElectronTemperature << " MachNumber " << plasmaPtr->MachNumber << std::endl;
@@ -76,6 +77,7 @@ int ARKStep_TemperatureSolve( realtype t, N_Vector u, N_Vector uDot, void* voidP
 	plasmaPtr->IonTemperature = TiOld;
 	plasmaPtr->ElectronTemperature = TeOld;
 	plasmaPtr->SetMachFromVoltage();
+	plasmaPtr->UpdatePhi();
 	plasmaPtr->ComputeSteadyStateNeutrals();
 
 	return ARK_SUCCESS;
@@ -123,6 +125,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 
 	plasma.SetTime( t0 );
 	plasma.SetMachFromVoltage();
+	plasma.UpdatePhi();
 	plasma.ComputeSteadyStateNeutrals();
 
 
@@ -138,8 +141,6 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian, sunctx );
 
 	ArkodeErrorWrapper( ARKStepSetLinearSolver( arkMem, LS, Jacobian ), "ARKStepSetLinearSolver" );
-	
-	
 
 	double abstol = plasma.SundialsAbsTol;
 	double reltol = plasma.SundialsRelTol;
@@ -165,7 +166,14 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 
 	ArkodeErrorWrapper( ARKStepSetConstraints( arkMem, positivityEnforcement ), "ARKStepSetConstraints" );
 
-	const unsigned long MaxSteps = 1e4;
+	// Because the scheme is 4th order, we request cubic hermite interpolation between
+	// internal timesteps, and don't allow the timestep to exceed 5*dt where dt is the
+	// time between outputs.
+
+	ArkodeErrorWrapper( ARKStepSetInterpolantDegree( arkMem, 3 ) )
+	ArkodeErrorWrapper( ARKStepSetMaxStep( arkMem, OutputDeltaT*5 ), "ARKStepSetMaxStep" );
+
+	const unsigned long MaxSteps = 1e5;
 	ArkodeErrorWrapper( ARKStepSetMaxNumSteps( arkMem, MaxSteps ), "ARKStepSetMaxNumSteps" );
 
 	realtype t,tRet = 0;	
@@ -196,12 +204,15 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 			break;
 		}
 
+		// ARKStep has evolved us to t = tRet, update the plasma object and write it out.
+		plasma.SetTime( tRet );
 		plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 		plasma.IonTemperature = ION_TEMPERATURE( initialCondition );
-		plasma.SetTime( tRet );
 		plasma.SetMachFromVoltage();
+		plasma.UpdatePhi();
 		plasma.ComputeSteadyStateNeutrals();
 		plasma.WriteTimeslice( tRet );
+
 #if defined( DEBUG )
 		std::cerr << "Writing timeslice at t = " << tRet << std::endl;
 #endif
@@ -222,24 +233,18 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 #if defined( DEBUG )
 	std::cerr << "Steady state reached at time " << tRet << " with T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
 #endif
-			plasma.SetTime( tRet );
 			break;
 		}
 
 	}
-
-	// We've solved and found the answer. Update the plasma object
-
-	plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
-	plasma.IonTemperature      =      ION_TEMPERATURE( initialCondition );
-	
 
 #ifdef DEBUG
 	long nSteps = 0,nfeEvals = 0,nfiEvals = 0;
 	ArkodeErrorWrapper( ARKStepGetNumSteps( arkMem, &nSteps ), "ARKGetNumSteps" );
 	ArkodeErrorWrapper( ARKStepGetNumRhsEvals( arkMem, &nfeEvals, &nfiEvals ), "ARKGetNumRhsEvals" );
 	std::cerr << "SUNDIALS Timestepping took " << nSteps << " internal timesteps resulting in " << nfiEvals << " implicit function evaluations" << std::endl;
-#endif 
+#endif
+
 	// Teardown 
 	{
 		SUNLinSolFree( LS );
@@ -247,9 +252,6 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 		N_VDestroy( initialCondition );
 		ARKStepFree( &arkMem );
 	}
-
-	plasma.SetMachFromVoltage();
-	plasma.ComputeSteadyStateNeutrals();
 }
 
 // e.g. Feedback Control of Voltage on Te

@@ -6,10 +6,18 @@ import sys
 
 filename = ""
 
-if len(sys.argv) == 2:
+# Generate a time trace that goes from t=0 to t=t_1 at V_1, then linearly 
+# up to V_2 at t_2, then constant to t_end
+
+if len(sys.argv) == 7:
     filename = sys.argv[1]
+    V1 = float(sys.argv[2])
+    V2 = float(sys.argv[3])
+    t1 = float(sys.argv[4])
+    t2 = float(sys.argv[5])
+    t_end = float(sys.argv[6])
 else:
-    print("Usage: ./GenerateVoltageTrace.py <netcdf filename>")
+    print("Usage: ./GenerateVoltageTrace.py <netcdf filename> <start voltage> <end voltage> <ramp start> <ramp end> <end time>")
     sys.exit()
 
 nc_root = Dataset(filename, "w", format="NETCDF4")
@@ -19,15 +27,6 @@ TimeVar = nc_root.createVariable("Time","f8",("Time",));
 
 VoltageVar = nc_root.createVariable("Voltage","f8",("Time",));
 
-# Generate a time trace that goes from t=0 to t=t_1 at V_1, then linearly 
-# up to V_2 at t_2, then constant to t_end
-
-t1 = 0.0050
-t2 = 0.0550
-t_end = 0.505
-
-V1 = 10000
-V2 =100000
 
 N_points = 15001
 

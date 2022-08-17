@@ -62,7 +62,7 @@ j_var = nc_root.variables["Current"]
 ax4 = ax3.twinx()
 ax4.set_ylabel("A")
 ax4.tick_params(axis='y', labelcolor='tab:blue')
-ax4.plot(t_var[t_start_idx:],j_var[t_start_idx:],label = 'Current',color = 'tab:blue')
+ax4.plot(t_var[t_start_idx:],j_var[t_start_idx:],label = 'Current',color = 'tab:red')
 ax4.legend(loc='lower right')
 
 
