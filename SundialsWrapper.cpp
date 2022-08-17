@@ -82,6 +82,7 @@ int ARKStep_TemperatureSolve( realtype t, N_Vector u, N_Vector uDot, void* voidP
 		return 3;
 	}
 	plasmaPtr->SetMachFromVoltage();
+	plasmaPtr->UpdatePhi();
 	plasmaPtr->ComputeSteadyStateNeutrals();
 #if defined( DEBUG ) && defined( SUNDIALS_DEBUG ) && defined( INTERNAL_RK_DEBUG )
 	std::cerr << "t = " << t << " ; T_i = " << plasmaPtr->IonTemperature << " ; T_e = " << plasmaPtr->ElectronTemperature << " MachNumber " << plasmaPtr->MachNumber << std::endl;
@@ -111,6 +112,7 @@ int ARKStep_TemperatureSolve( realtype t, N_Vector u, N_Vector uDot, void* voidP
 	plasmaPtr->IonTemperature = TiOld;
 	plasmaPtr->ElectronTemperature = TeOld;
 	plasmaPtr->SetMachFromVoltage();
+	plasmaPtr->UpdatePhi();
 	plasmaPtr->ComputeSteadyStateNeutrals();
 
 	return ARK_SUCCESS;
@@ -248,6 +250,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	plasma.ElectronTemperature = InitialTemperature;
 	plasma.IonTemperature = InitialTemperature;
 	plasma.SetMachFromVoltage();
+	plasma.UpdatePhi();
 	plasma.ComputeSteadyStateNeutrals();
 
 	plasma.InitialiseNetCDF();
@@ -288,9 +291,9 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 
 	ArkodeErrorWrapper( ARKStepSetConstraints( arkMem, positivityEnforcement ), "ARKStepSetConstraints" );
 
-	ArkodeErrorWrapper( ARKStepSetMaxStep( arkMem, OutputDeltaT*10 ), "ARKStepSetMaxStep" );
+	ArkodeErrorWrapper( ARKStepSetMaxStep( arkMem, OutputDeltaT*5 ), "ARKStepSetMaxStep" );
 
-	const unsigned long MaxSteps = 1e4;
+	const unsigned long MaxSteps = 1e5;
 	ArkodeErrorWrapper( ARKStepSetMaxNumSteps( arkMem, MaxSteps ), "ARKStepSetMaxNumSteps" );
 
 	realtype t,tRet = 0;	
@@ -319,11 +322,13 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 			break;
 		}
 
+		plasma.SetTime( tRet );
 		plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 		plasma.IonTemperature = ION_TEMPERATURE( initialCondition );
 		plasma.SetMachFromVoltage();
+		plasma.UpdatePhi();
 		plasma.ComputeSteadyStateNeutrals();
-		plasma.WriteTimeslice( t );
+		plasma.WriteTimeslice( tRet );
 #if defined( DEBUG )
 		std::cerr << "Writing timeslice at t = " << t << std::endl;
 #endif
