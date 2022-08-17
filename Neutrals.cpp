@@ -22,6 +22,7 @@ CrossSection protonImpactIonization( protonImpactIonizationCrossSection, 200, 1e
 CrossSection HydrogenChargeExchange( HydrogenChargeExchangeCrossSection, 0.1, 1e6, Proton, NeutralHydrogen );
 CrossSection electronImpactIonization( electronImpactIonizationCrossSection, 13.6, 1e6, Electron, NeutralHydrogen );
 
+/* We don't actually use this....
 double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
 	// E and T in eV, sigma in cm^2
@@ -42,10 +43,10 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 		return Energy * ElectronCharge * sigmaM2 * ::exp( -Energy * ElectronCharge / temperature ) * Jacobian;
 	};
 
-	constexpr double tolerance = 1e-7;
+	constexpr double tolerance = 1e-6;
 	constexpr unsigned MaxDepth = 10;
 	double HotRateCoeff = 4.0 / ( ::sqrt(2 * M_PI * sigma.Particle.Mass * temperature) * temperature )
-	         * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
+	         * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
 	std::cerr << "Computing a hot rate coefficient at T = " << plasma.ElectronTemperature/1000 << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << HotRateCoeff  << std::endl;
@@ -54,6 +55,7 @@ double neutralsRateCoefficientHot( CrossSection const & sigma, MirrorPlasma cons
 	return HotRateCoeff;
 
 }
+*/
 
 double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma const & plasma )
 {
@@ -76,17 +78,35 @@ double neutralsRateCoefficientCold( CrossSection const & sigma, MirrorPlasma con
 	double thermalSpeed = ::sqrt( 2.0 * temperature / sigma.Particle.Mass );
 	double thermalMachNumber = plasma.MachNumber * plasma.SoundSpeed() / thermalSpeed;
 
+	// Needs Energy in electronVolts
 	auto integrand = [&]( double Energy ) {
 		double velocity = ::sqrt( 2.0 * Energy * ElectronCharge / sigma.Particle.Mass );
 		double Jacobian = ElectronCharge / ( sigma.Particle.Mass * velocity ); // The integral is over Energy, which is in units of electronvolts, so transform the integrand back to eV, including change of variables from dvelocity to dE
 		double sigmaM2 = sigma( Energy ) * 1e-4; // sigma is in cm^2, we need m^2
-		return ::pow( velocity, 2 ) * sigmaM2 * ( ::exp( -::pow( thermalMachNumber - velocity / thermalSpeed, 2 ) ) - ::exp( -::pow( thermalMachNumber + velocity / thermalSpeed, 2 ) ) ) * Jacobian;
+		double MV1 = thermalMachNumber - velocity / thermalSpeed;
+		double MV2 = thermalMachNumber + velocity / thermalSpeed;
+		return velocity * velocity * sigmaM2 * ( ::exp( - MV1*MV1 ) - ::exp( -MV2*MV2 ) ) * Jacobian;
 	};
 
-	constexpr double tolerance = 1e-7;
-	constexpr unsigned MaxDepth = 15;
-	double ColdRateCoeff = 1 / ( thermalMachNumber * ::pow( thermalSpeed, 2 ) * ::sqrt(M_PI) * ( 1 + delta_ns ) )
-	        * boost::math::quadrature::gauss_kronrod<double, 255>::integrate( integrand, sigma.MinEnergy, sigma.MaxEnergy, MaxDepth, tolerance );
+	constexpr double tolerance = 1e-6;
+	constexpr unsigned MaxDepth = 10;
+
+
+	double min_sqrt = 4;
+	// Velocity such that Exp( -(M-v)^2 ) is negligibly small;
+	double min_velocity;
+	if ( thermalMachNumber <= min_sqrt )
+		min_velocity = 0;
+	else 
+		min_velocity = thermalMachNumber - min_sqrt;
+	double max_velocity;
+	max_velocity = thermalMachNumber + min_sqrt;
+
+	double minEnergy = std::max( sigma.MinEnergy, min_velocity*min_velocity * temperature / ElectronCharge );
+	double maxEnergy = std::min( sigma.MaxEnergy, max_velocity * max_velocity * temperature / ElectronCharge );
+
+	double ColdRateCoeff = 1 / ( thermalMachNumber * thermalSpeed * thermalSpeed * ::sqrt(M_PI) * ( 1 + delta_ns ) )
+	        * boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand, minEnergy, maxEnergy, MaxDepth, tolerance );
 
 #if defined( DEBUG ) && defined( ATOMIC_PHYSICS_DEBUG )
 	std::cerr << "Computing a cold rate coefficient at T = " << 1000*temperature/ReferenceTemperature  << " eV and M = " << plasma.MachNumber << " gave <sigma v> = " << ColdRateCoeff  << std::endl;
