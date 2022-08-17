@@ -354,6 +354,7 @@ double MirrorPlasma::AmbipolarPhi() const
 		double Sigma = 1.0 + Zeff;
 		double R = MirrorRatio;
 		double Correction = ::log( (  ElectronCollisionTime() / IonCollisionTime() ) * ( ::log( R*Sigma ) / ( Sigma * ::log( R ) ) ) );
+		AmbipolarPhi += Correction/2.0;
 
 		// This gives us a first-order guess for the Ambipolar potential. Now we solve j_|| = 0 to get the better answer.
 		//
@@ -373,6 +374,9 @@ double MirrorPlasma::AmbipolarPhi() const
 			}
 		};
 
+
+		double ThresholdCurrent = 1e-6 * ElectronDensity * ReferenceDensity;
+
 		boost::uintmax_t iters = 1000;
 		boost::math::tools::eps_tolerance<double> tol( 25 );
 
@@ -380,9 +384,8 @@ double MirrorPlasma::AmbipolarPhi() const
 		if ( StoredPhi != 0 )
 			guess = StoredPhi;
 		else
-			guess = AmbipolarPhi + Correction/2.0;
+			guess = AmbipolarPhi;
 
-		double ThresholdCurrent = 1e-10 * ElectronDensity * ReferenceDensity;
 
 		if ( ::fabs( ParallelCurrent( guess ) ) <  ThresholdCurrent )
 		{

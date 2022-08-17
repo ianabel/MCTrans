@@ -291,9 +291,9 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 
 	ArkodeErrorWrapper( ARKStepSetConstraints( arkMem, positivityEnforcement ), "ARKStepSetConstraints" );
 
-	ArkodeErrorWrapper( ARKStepSetMaxStep( arkMem, OutputDeltaT*10 ), "ARKStepSetMaxStep" );
+	ArkodeErrorWrapper( ARKStepSetMaxStep( arkMem, OutputDeltaT*5 ), "ARKStepSetMaxStep" );
 
-	const unsigned long MaxSteps = 1e4;
+	const unsigned long MaxSteps = 1e5;
 	ArkodeErrorWrapper( ARKStepSetMaxNumSteps( arkMem, MaxSteps ), "ARKStepSetMaxNumSteps" );
 
 	realtype t,tRet = 0;	
@@ -322,12 +322,13 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 			break;
 		}
 
+		plasma.SetTime( tRet );
 		plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 		plasma.IonTemperature = ION_TEMPERATURE( initialCondition );
 		plasma.SetMachFromVoltage();
 		plasma.UpdatePhi();
 		plasma.ComputeSteadyStateNeutrals();
-		plasma.WriteTimeslice( t );
+		plasma.WriteTimeslice( tRet );
 #if defined( DEBUG )
 		std::cerr << "Writing timeslice at t = " << t << std::endl;
 #endif
