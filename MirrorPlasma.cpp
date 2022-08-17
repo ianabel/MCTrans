@@ -672,10 +672,13 @@ double MirrorPlasma::RadialCurrent() const
 	else
 		Inertia = 0.0;
 
-	double Losses = TotalAngularMomentumLosses();
-	// R J_R = (<Torque> + <ParallelLosses> + <Inertia>)/B_z
+	// R J_R = (<Viscous Torque> + <ParallelLosses> + <Inertia>)/B_z
 	// I_R = 2*Pi*R*L*J_R
-	double I_radial = 2.0 * M_PI * PlasmaLength * ( Inertia - Losses ) / CentralCellFieldStrength;
+	//
+	// TotalAngularMomentumLosses = -(<Viscous Torque> + <ParallelLosses>) 
+	// (sign is because positive Losses *decreases* the velocity)
+	double Losses = TotalAngularMomentumLosses();
+	double I_radial = 2.0 * M_PI * PlasmaLength * ( Inertia + Losses ) / CentralCellFieldStrength;
 	return I_radial;
 }
 

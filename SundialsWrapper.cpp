@@ -170,7 +170,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	// internal timesteps, and don't allow the timestep to exceed 5*dt where dt is the
 	// time between outputs.
 
-	ArkodeErrorWrapper( ARKStepSetInterpolantDegree( arkMem, 3 ) )
+	ArkodeErrorWrapper( ARKStepSetInterpolantDegree( arkMem, 3 ), "ARKStepSetInterpolantDegree" );
 	ArkodeErrorWrapper( ARKStepSetMaxStep( arkMem, OutputDeltaT*5 ), "ARKStepSetMaxStep" );
 
 	const unsigned long MaxSteps = 1e5;
