@@ -202,9 +202,7 @@ double electronImpactIonizationCrossSection( double Energy )
 		double x = 1.0 - ionizationEnergy / Energy;
 		if ( x <= 0 )
 			return 0.0;
-		for ( size_t n = 0; n < fittingParamB.size(); n++ ) {
-	      sum += fittingParamB.at( n ) * ::pow( x, n+1 );
-	   }
+	   sum = x * ( fittingParamB[ 0 ] + x * ( fittingParamB[ 1 ] + x * ( fittingParamB[ 2 ] + x * ( fittingParamB[ 3 ] + x * fittingParamB[ 4 ] ) ) ) );
 		sigma = ( 1.0e-13 / ( ionizationEnergy * Energy ) ) * ( fittingParamA * ::log( Energy / ionizationEnergy ) + sum );
 		return sigma;
 	}
