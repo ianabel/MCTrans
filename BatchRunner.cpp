@@ -169,7 +169,27 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	readParameterFromFile(batch, "Voltage", ImposedVoltageVals, false, 0.0);
 
 	// External resistance for spin-down simulations
-	readParameterFromFile(batch, "ExternalResistance", ExternalResistanceVals, false, 0.0);
+	if ( batch.count( "ExternalResistance" ) == 1 ) {
+		readParameterFromFile(batch, "ExternalResistance", ExternalResistanceVals, false, 0.0);
+		if ( batch.count( "Voltage" ) != 1 ) {
+			throw std::invalid_argument( "When running a spin-down simulation the initial voltage must be set using the \"Voltage\" parameter" );
+		}
+	}
+
+
+
+	// Cap Bank driven run
+	if ( batch.count( "CapBank" ) == 1 ) {
+		if ( batch.count( "ExternalResistance" ) != 0 )
+			throw std::invalid_argument( "[error] Cannot set both a Capacitor Bank and an External Resistance" );
+		if ( batch.count( "Voltage" ) != 1 ) {
+			throw std::invalid_argument( "When running a cap-bank-driven simulation the initial voltage must be set using the \"Voltage\" parameter" );
+		}
+		readParameterFromFile( batch, "CapBank.Capacitance", CBCapVals, true );
+		readParameterFromFile( batch, "CapBank.InternalResistance", CBRVals, true );
+		readParameterFromFile( batch, "CapBank.LineResistance", CBLineRVals, true );
+		readParameterFromFile( batch, "CapBank.LineInductance", CBLineLVals, true );
+	}
 
 	// Wall Radius
 	readParameterFromFile(batch, "WallRadius", WallRadiusVals, true);

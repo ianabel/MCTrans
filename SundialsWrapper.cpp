@@ -150,12 +150,8 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 #endif
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
 
-	ArkodeErrorWrapper( ARKStepSetMaxCFailGrowth( arkMem, 0.01 ), "ARKStepSetMaxCFailGrowth" );
-	ArkodeErrorWrapper( ARKStepSetMaxEFailGrowth( arkMem, 0.01 ), "ARKStepSetMaxEFailGrowth" );
-	ArkodeErrorWrapper( ARKStepSetMaxGrowth( arkMem, 100.0 ), "ARKStepSetMaxGrowth" );
-
 	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, ARKSTEP_NULL_STEPPER ), "ARKStepSetTableNum" );
-	
+
 	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 
 
@@ -180,7 +176,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	int errorFlag;
 
 #ifdef DEBUG
-	std::cerr << "Solving from t = 0 to t = " << EndTime << std::endl;
+	std::cerr << "Solving from t = " << plasma.time << " to t = " << EndTime << std::endl;
 	std::cerr << "Writing output every " << OutputDeltaT << std::endl;
 #endif 
 	ArkodeErrorWrapper( ARKStepSetStopTime( arkMem, EndTime ), "ARKStepSetStopTime" );

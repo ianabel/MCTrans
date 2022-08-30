@@ -41,31 +41,38 @@ class MCTransConfig {
 			bool MachSolve = ( ReferencePlasmaState->ElectronTemperature > 0.0 );
 			bool TempSolve = ( ReferencePlasmaState->ImposedVoltage > 0.0 );
 			bool FWSolve = ( ReferencePlasmaState->ExternalResistance > 0.0 );
-			if ( MachSolve && !TempSolve )
-				Type = SteadyStateMachSolve;
-			else if ( !MachSolve && TempSolve )
-				Type = SteadyStateTempSolve;
-			else if ( MachSolve && TempSolve )
-				throw std::invalid_argument( "[error] Cannot specify both temperature and voltage." );
-			else if ( !MachSolve && !TempSolve ) {
-				if ( FWSolve )
-					Type = FreewheelSolve;
-				else
-					throw std::invalid_argument( "[error] Must specify at least one of ElectronTemperature or Voltage." );
-			}
+			bool CBSolve = ( ReferencePlasmaState->CapBank );
 
-			if ( FWSolve ) {
-				if ( MachSolve )
-					throw std::invalid_argument( "[error] If external resistance is specificed, a decaying simulation is assumed - neither the imposed voltage nor the temperature can be specified. The initial Voltage and initial temperature should be specified with appropriate options" );
-				else
-					Type = FreewheelSolve;
+			if ( CBSolve )
+				Type = CapBankSolve;
+			else {
+				if ( MachSolve && !TempSolve )
+					Type = SteadyStateMachSolve;
+				else if ( !MachSolve && TempSolve )
+					Type = SteadyStateTempSolve;
+				else if ( MachSolve && TempSolve )
+					throw std::invalid_argument( "[error] Cannot specify both temperature and voltage." );
+				else if ( !MachSolve && !TempSolve ) {
+					if ( FWSolve )
+						Type = FreewheelSolve;
+					else
+						throw std::invalid_argument( "[error] Must specify at least one of ElectronTemperature or Voltage." );
+				}
+
+				if ( FWSolve ) {
+					if ( MachSolve )
+						throw std::invalid_argument( "[error] If external resistance is specificed, a decaying simulation is assumed - neither the imposed voltage nor the temperature can be specified. The initial Voltage and initial temperature should be specified with appropriate options" );
+					else
+						Type = FreewheelSolve;
+				}
 			}
 		};
 
 		enum SolveType {
 			SteadyStateMachSolve,
 			SteadyStateTempSolve,
-			FreewheelSolve
+			FreewheelSolve,
+			CapBankSolve
 		} Type;
 
 		std::shared_ptr<MirrorPlasma> Solve();
@@ -75,6 +82,7 @@ class MCTransConfig {
 		void doTempSolve( MirrorPlasma& plasma ) const;
 		void doFixedTeSolve( MirrorPlasma& plasma ) const;
 		void doFreeWheel( MirrorPlasma& plasma ) const;
+		void doCircuitModel( MirrorPlasma& plasma ) const;
 
 		void InitialisePlasma() const;
 

@@ -224,6 +224,10 @@ class MirrorPlasma {
 		bool isTimeDependent;
 
 		double ExternalResistance;
+
+		bool CapBank;
+		double CBCapacitance,CBInternalResistance;
+		double CBLineInductance,CBLineResistance;
 };
 
 

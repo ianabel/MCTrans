@@ -1,43 +1,34 @@
+#include "SundialsWrapper.hpp" 
 
-#include <arkode/arkode_arkstep.h>     /* access to ARKode func., consts. */
-#include <nvector/nvector_serial.h>    /* access to serial N_Vector       */
-#include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix       */
-#include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver */
-#include <sundials/sundials_types.h>   /* defs. of realtype, sunindextype */
 
-// Number of equations/unknowns in system
-#define N_DIMENSIONS 2 
+/*
+ *
+ * When doing a freewheeling plasma the time-dependent variables are 
+ * V ( or equivalently the Mach number ), T_i, T_e
+ *
+ */
 
-#define ION_TEMP_IDX 0
-#define ELEC_TEMP_IDX 1
-#define DENSITY_IDX 2
+#define N_DIMS_CIRCUITMODEL 5 /* I, V_cap, T_i, T_e, V_plasma */
 
-#define MACH_IDX 0 
+#define V_CAP_IDX 3
+#define I_CAP_IDX 4
+#define V_CAP( u ) NV_Ith_S( u, DENSITY_IDX )
+#define I_CAP( u ) NV_Ith_S( u, DENSITY_IDX )
+#define V_CAP_EQN( F ) NV_Ith_S( F, V_CAP_IDX )
+#define I_CAP_EQN( F ) NV_Ith_S( F, I_CAP_IDX )
 
-#define ION_TEMPERATURE( u ) NV_Ith_S( u, ION_TEMP_IDX )
-#define ELECTRON_TEMPERATURE( u ) NV_Ith_S( u, ELEC_TEMP_IDX )
-#define DENSITY( u ) NV_Ith_S( u, DENSITY_IDX )
 
-#define MACH_NUMBER( u ) NV_Ith_S( u, MACH_IDX )
 
-#define ION_HEAT_BALANCE( F ) NV_Ith_S( F, ION_TEMP_IDX )
-#define ELECTRON_HEAT_BALANCE( F ) NV_Ith_S( F, ELEC_TEMP_IDX )
-#define PARTICLE_BALANCE( F ) NV_Ith_S( F, DENSITY_IDX )
-
-#include "Config.hpp"
-#include "MirrorPlasma.hpp"
-#include <exception>
-#include <iostream>
-#include <iomanip>
-
-extern void ArkodeErrorWrapper( int , std::string&& );
-
-int ARKStep_FreeWheel_TimeAdvance( realtype t, N_Vector u, N_Vector uDot, void* voidPlasma )
+int ARKStep_CircuitModel( realtype t, N_Vector u, N_Vector uDot, void* voidPlasma )
 {
 	MirrorPlasma* plasmaPtr = reinterpret_cast<MirrorPlasma*>( voidPlasma );
 
+	// External circuit parameters.
+	double C_cap,R_cap,L_line,R_line;
+
 	double TiOld = plasmaPtr->IonTemperature;
 	double TeOld = plasmaPtr->ElectronTemperature;
+	double VOld = plasmaPtr->ImposedVoltage;
 
 	if ( ION_TEMPERATURE( u ) < 0.0 ) {
 #if defined( DEBUG )
@@ -52,11 +43,11 @@ int ARKStep_FreeWheel_TimeAdvance( realtype t, N_Vector u, N_Vector uDot, void* 
 		return 2;
 	}
 
+	// We're now evolving the voltage with time 
 	plasmaPtr->IonTemperature = ION_TEMPERATURE( u );
 	plasmaPtr->ElectronTemperature = ELECTRON_TEMPERATURE( u );
-	//plasma->ElectronDensity = DENSITY( u );
-	//plasma->SetIonDensity() // Set n_i from n_e, Z_i
-	
+	plasmaPtr->ImposedVoltage = VOLTAGE( u );
+
 	try {
 		plasmaPtr->SetTime(t);
 	} catch ( std::domain_error &e ) {
@@ -66,12 +57,20 @@ int ARKStep_FreeWheel_TimeAdvance( realtype t, N_Vector u, N_Vector uDot, void* 
 #endif
 		return 3;
 	}
+
 	plasmaPtr->SetMachFromVoltage();
+	plasmaPtr->UpdatePhi();
 	plasmaPtr->ComputeSteadyStateNeutrals();
+
 #if defined( DEBUG ) && defined( SUNDIALS_DEBUG ) && defined( INTERNAL_RK_DEBUG )
 	std::cerr << "t = " << t << " ; T_i = " << plasmaPtr->IonTemperature << " ; T_e = " << plasmaPtr->ElectronTemperature << " MachNumber " << plasmaPtr->MachNumber << std::endl;
 #endif
 
+	// I d omega / dt = ( Change in Angular Momentum )
+	// I d omega / dt = ( MomentumToVoltage )^(-1) dV/dt
+	// so dV/dt = MtoV * ( Change in Angular Momentum )
+	
+	double MomentumToVoltage = plasmaPtr->PlasmaColumnWidth * plasmaPtr->PlasmaCentralRadius() * plasmaPtr->CentralCellFieldStrength / plasmaPtr->MomentOfInertia();
 
 	try {
 		double IonHeating  = plasmaPtr->IonHeating();
@@ -86,7 +85,15 @@ int ARKStep_FreeWheel_TimeAdvance( realtype t, N_Vector u, N_Vector uDot, void* 
 
 		ION_HEAT_BALANCE( uDot )      = ( IonHeating - IonHeatLoss );
 		ELECTRON_HEAT_BALANCE( uDot ) = ( ElectronHeating - ElectronHeatLoss );
-//		PARTICLE_BALANCE( uDot ) = ParticleBalance; 
+
+		// Should be negative to decelerate the plasma
+		double AngularMomentumInjection = plasmaPtr->InjectedTorque( I_CAP( u ) );
+		double AngularMomentumLoss = plasmaPtr->TotalAngularMomentumLosses();
+
+		MOMENTUM_BALANCE( uDot ) = ( MomentumToVoltage ) * ( AngularMomentumInjection - AngularMomentumLoss );
+
+		V_CAP_EQN( uDot ) = I_CAP( u )/C_cap - V_CAP( u )/( R_cap * C_cap );
+		I_CAP_EQN( uDot ) = ( V_CAP( u ) - VOLTAGE( u ) - R_line * I_CAP( u ) ) / L_line;
 
 
 	} catch ( std::exception& e ) {
@@ -95,46 +102,40 @@ int ARKStep_FreeWheel_TimeAdvance( realtype t, N_Vector u, N_Vector uDot, void* 
 
 	plasmaPtr->IonTemperature = TiOld;
 	plasmaPtr->ElectronTemperature = TeOld;
+	plasmaPtr->ImposedVoltage = VOld;
 	plasmaPtr->SetMachFromVoltage();
+	plasmaPtr->UpdatePhi();
 	plasmaPtr->ComputeSteadyStateNeutrals();
 
 	return ARK_SUCCESS;
 }
 
-void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
+// Let the plasma decay through a resistor
+void MCTransConfig::doCircuitModel( MirrorPlasma& plasma ) const
 {
-	
-	sunindextype NDims = N_DIMENSIONS;
-	N_Vector initialCondition = N_VNew_Serial( NDims );
+	sundials::Context sunctx;	
+	sunindextype NDims = N_DIMS_CIRCUITMODEL;
+	N_Vector initialCondition = N_VNew_Serial( NDims, sunctx );
 
-	double InitialTemperature = plasma.InitialTemp;
-	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
-	ELECTRON_TEMPERATURE( initialCondition ) = InitialTemperature;
+	ION_TEMPERATURE( initialCondition ) = plasma.IonTemperature;
+	ELECTRON_TEMPERATURE( initialCondition ) = plasma.ElectronTemperature;
+	VOLTAGE( initialCondition ) = plasma.ImposedVoltage;
 
-	plasma.ElectronTemperature = InitialTemperature;
-	plasma.IonTemperature = InitialTemperature;
-	plasma.SetMachFromVoltage();
-	plasma.ComputeSteadyStateNeutrals();
+	realtype t0 = plasma.time;
 
-	plasma.InitialiseNetCDF();
-
-	realtype t0 = 0;
-
-	void *arkMem = ARKStepCreate( nullptr, ARKStep_TemperatureSolve, t0, initialCondition );
+	void *arkMem = ARKStepCreate( nullptr, ARKStep_CircuitModel, t0, initialCondition, sunctx );
 
 	if ( arkMem == nullptr ) {
 		throw std::runtime_error( "Cannot allocate ARKStep Working Memory" );
 	}
 
 	// Dummy Jacobian, will be filled by ARKStep with finite-difference approximations
-	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims );
+	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims, sunctx );
 	// Small system, direct solve is fastest
-	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian );
+	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian, sunctx );
 
 	ArkodeErrorWrapper( ARKStepSetLinearSolver( arkMem, LS, Jacobian ), "ARKStepSetLinearSolver" );
 	
-	
-
 	double abstol = plasma.SundialsAbsTol;
 	double reltol = plasma.SundialsRelTol;
 
@@ -142,10 +143,23 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	std::cerr << "Using SundialsAbsTol = " << abstol << " and SundialsRelTol = " << reltol << std::endl;
 #endif
 	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
-	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, DEFAULT_DIRK_5, -1 ), "ARKStepSetTableNum" );
+	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, ARKSTEP_NULL_STEPPER ), "ARKStepSetTableNum" );
 	
 	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 
+	N_Vector positivityEnforcement = N_VNew_Serial( NDims, sunctx );
+	N_VConst( 0.0, positivityEnforcement ); // Default to no constraints
+	ION_TEMPERATURE( positivityEnforcement ) = 2.0;      // T_i > 0
+	ELECTRON_TEMPERATURE( positivityEnforcement ) = 2.0; // T_e > 0
+
+	ArkodeErrorWrapper( ARKStepSetConstraints( arkMem, positivityEnforcement ), "ARKStepSetConstraints" );
+
+	// Because the scheme is 4th order, we request cubic hermite interpolation between
+	// internal timesteps, and don't allow the timestep to exceed 5*dt where dt is the
+	// time between outputs.
+
+	ArkodeErrorWrapper( ARKStepSetInterpolantDegree( arkMem, 3 ), "ARKStepSetInterpolantDegree" );
+	ArkodeErrorWrapper( ARKStepSetMaxStep( arkMem, OutputDeltaT*5 ), "ARKStepSetMaxStep" );
 
 	const unsigned long MaxSteps = 1e4;
 	ArkodeErrorWrapper( ARKStepSetMaxNumSteps( arkMem, MaxSteps ), "ARKStepSetMaxNumSteps" );
@@ -154,53 +168,58 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	int errorFlag;
 
 #ifdef DEBUG
-	std::cerr << "Solving from t = 0 to t = " << EndTime << std::endl;
+	std::cerr << "Solving from t = " << plasma.time << " to t = " << EndTime << std::endl;
+	std::cerr << "Writing output every " << OutputDeltaT << std::endl;
 #endif 
 	ArkodeErrorWrapper( ARKStepSetStopTime( arkMem, EndTime ), "ARKStepSetStopTime" );
-	for ( t = OutputDeltaT; t < EndTime; t += OutputDeltaT )
+	for ( t = t0 + OutputDeltaT; t < EndTime; t += OutputDeltaT )
 	{
+#if defined( DEBUG )
+		double curTime;
+		ArkodeErrorWrapper( ARKStepGetCurrentTime( arkMem, &curTime ), "ARKStepGetCurrentTime" );
+#endif
+		if ( t > EndTime )
+			t = EndTime;
 		errorFlag = ARKStepEvolve( arkMem, t, initialCondition, &tRet, ARK_NORMAL );
 		switch ( errorFlag ) {
 			case ARK_SUCCESS:
+#if defined( DEBUG )
+				std::cerr << "Internal time is " << curTime << " Evolved to " << tRet << " with intent of reaching " << t << std::endl;
+#endif
 				break;
 			default:
 				throw std::runtime_error( "ARKStep failed with error " + std::to_string( errorFlag ) );
 			break;
 		}
 
+		// ARKStep has evolved us to t = tRet, update the plasma object and write it out.
+		plasma.SetTime( tRet );
 		plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 		plasma.IonTemperature = ION_TEMPERATURE( initialCondition );
+		plasma.ImposedVoltage = VOLTAGE( initialCondition );
 		plasma.SetMachFromVoltage();
 		plasma.ComputeSteadyStateNeutrals();
-		plasma.WriteTimeslice( t );
-#if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
-	std::cerr << "After evolving to " << tRet << " T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
+		plasma.WriteTimeslice( tRet );
+#if defined( DEBUG )
+		std::cerr << "Writing timeslice at t = " << tRet << std::endl;
 #endif
-
+#if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
+		std::cerr << "After evolving to " << tRet << " T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
+#endif
 		double RelativeIonRate = ::fabs( ( plasma.IonHeating() - plasma.IonHeatLosses() )/( plasma.IonDensity * plasma.IonTemperature * ReferenceTemperature * ReferenceDensity ) );
 		double RelativeElectronRate =::fabs( ( plasma.ElectronHeating() - plasma.ElectronHeatLosses() )/( plasma.ElectronDensity * plasma.ElectronTemperature * ReferenceTemperature * ReferenceDensity ) );
-#if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
-		std::cerr << " Relative Rate of Change in Ion Energy Density " << RelativeIonRate * 100 << " %/s" << std::endl;
-		std::cerr << " Relative Rate of Change in Electron Energy Density " << RelativeElectronRate * 100 << " %/s" << std::endl;
-#endif
-		if ( RelativeIonRate < plasma.RateThreshold &&
+		if ( !plasma.isTimeDependent &&
+		     RelativeIonRate < plasma.RateThreshold &&
 		     RelativeElectronRate < plasma.RateThreshold )
 		{
-#if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
-	std::cerr << "Steady state reached at time " << t << " with T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
+#if defined( DEBUG )
+	std::cerr << "Steady state reached at time " << tRet << " with T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
 #endif
 			break;
 		}
-
 	}
 
-	// We've solved and found the answer. Update the plasma object
-
-	plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
-	plasma.IonTemperature      =      ION_TEMPERATURE( initialCondition );
-	// plasma.SetTime( EndTime );
-
-#ifdef DEBUG
+	#ifdef DEBUG
 	long nSteps = 0,nfeEvals = 0,nfiEvals = 0;
 	ArkodeErrorWrapper( ARKStepGetNumSteps( arkMem, &nSteps ), "ARKGetNumSteps" );
 	ArkodeErrorWrapper( ARKStepGetNumRhsEvals( arkMem, &nfeEvals, &nfiEvals ), "ARKGetNumRhsEvals" );
@@ -213,7 +232,4 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 		N_VDestroy( initialCondition );
 		ARKStepFree( &arkMem );
 	}
-
-	plasma.SetMachFromVoltage();
-	plasma.ComputeSteadyStateNeutrals();
 }

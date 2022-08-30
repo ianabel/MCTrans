@@ -150,13 +150,25 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 
 	if ( parameterMap.find( "ExternalResistance" ) != parameterMap.end() )
 	{
+		std::cerr << "Performing spin-down run with an external resistor" << std::endl;
 		ExternalResistance = parameterMap.at( "ExternalResistance" );
 		if ( ExternalResistance > 0.0 ) {
-			std::cerr << "Warning: doing unsupported free-wheel" << std::endl;
 			isTimeDependent = true;
 			time = 0;
 		}
 	}
+
+	CapBank = false;
+	if ( parameterMap.find( "CapBank.Capacitance" ) != parameterMap.end() )
+	{
+		std::cerr << "Performing Cap-Bank run" << std::endl;
+		CBCapacitance        = parameterMap.at( "CapBank.Capacitance" );
+		CBInternalResistance = parameterMap.at( "CapBank.InternalResistance" );
+		CBLineInductance     = parameterMap.at( "CapBank.LineInductance" );
+		CBLineResistance     = parameterMap.at( "CapBank.LineResistance" );
+		CapBank = true;
+	}
+
 
 	StoredPhi = 0.0;
 }

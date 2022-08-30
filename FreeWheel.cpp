@@ -14,6 +14,7 @@ int ARKStep_FreeWheel( realtype t, N_Vector u, N_Vector uDot, void* voidPlasma )
 
 	double TiOld = plasmaPtr->IonTemperature;
 	double TeOld = plasmaPtr->ElectronTemperature;
+	double VOld = plasmaPtr->ImposedVoltage;
 
 	if ( ION_TEMPERATURE( u ) < 0.0 ) {
 #if defined( DEBUG )
@@ -44,8 +45,11 @@ int ARKStep_FreeWheel( realtype t, N_Vector u, N_Vector uDot, void* voidPlasma )
 #endif
 		return 3;
 	}
+
 	plasmaPtr->SetMachFromVoltage();
+	plasmaPtr->UpdatePhi();
 	plasmaPtr->ComputeSteadyStateNeutrals();
+
 #if defined( DEBUG ) && defined( SUNDIALS_DEBUG ) && defined( INTERNAL_RK_DEBUG )
 	std::cerr << "t = " << t << " ; T_i = " << plasmaPtr->IonTemperature << " ; T_e = " << plasmaPtr->ElectronTemperature << " MachNumber " << plasmaPtr->MachNumber << std::endl;
 #endif
@@ -84,7 +88,9 @@ int ARKStep_FreeWheel( realtype t, N_Vector u, N_Vector uDot, void* voidPlasma )
 
 	plasmaPtr->IonTemperature = TiOld;
 	plasmaPtr->ElectronTemperature = TeOld;
+	plasmaPtr->ImposedVoltage = VOld;
 	plasmaPtr->SetMachFromVoltage();
+	plasmaPtr->UpdatePhi();
 	plasmaPtr->ComputeSteadyStateNeutrals();
 
 	return ARK_SUCCESS;
@@ -116,8 +122,6 @@ void MCTransConfig::doFreeWheel( MirrorPlasma& plasma ) const
 
 	ArkodeErrorWrapper( ARKStepSetLinearSolver( arkMem, LS, Jacobian ), "ARKStepSetLinearSolver" );
 	
-	
-
 	double abstol = plasma.SundialsAbsTol;
 	double reltol = plasma.SundialsRelTol;
 
@@ -129,6 +133,19 @@ void MCTransConfig::doFreeWheel( MirrorPlasma& plasma ) const
 	
 	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
 
+	N_Vector positivityEnforcement = N_VNew_Serial( NDims, sunctx );
+	N_VConst( 0.0, positivityEnforcement ); // Default to no constraints
+	ION_TEMPERATURE( positivityEnforcement ) = 2.0;      // T_i > 0
+	ELECTRON_TEMPERATURE( positivityEnforcement ) = 2.0; // T_e > 0
+
+	ArkodeErrorWrapper( ARKStepSetConstraints( arkMem, positivityEnforcement ), "ARKStepSetConstraints" );
+
+	// Because the scheme is 4th order, we request cubic hermite interpolation between
+	// internal timesteps, and don't allow the timestep to exceed 5*dt where dt is the
+	// time between outputs.
+
+	ArkodeErrorWrapper( ARKStepSetInterpolantDegree( arkMem, 3 ), "ARKStepSetInterpolantDegree" );
+	ArkodeErrorWrapper( ARKStepSetMaxStep( arkMem, OutputDeltaT*5 ), "ARKStepSetMaxStep" );
 
 	const unsigned long MaxSteps = 1e4;
 	ArkodeErrorWrapper( ARKStepSetMaxNumSteps( arkMem, MaxSteps ), "ARKStepSetMaxNumSteps" );
@@ -137,42 +154,51 @@ void MCTransConfig::doFreeWheel( MirrorPlasma& plasma ) const
 	int errorFlag;
 
 #ifdef DEBUG
-	std::cerr << "Solving from t = 0 to t = " << EndTime << std::endl;
+	std::cerr << "Solving from t = " << plasma.time << " to t = " << EndTime << std::endl;
 	std::cerr << "Writing output every " << OutputDeltaT << std::endl;
 #endif 
 	ArkodeErrorWrapper( ARKStepSetStopTime( arkMem, EndTime ), "ARKStepSetStopTime" );
 	for ( t = t0 + OutputDeltaT; t < EndTime; t += OutputDeltaT )
 	{
+#if defined( DEBUG )
+		double curTime;
+		ArkodeErrorWrapper( ARKStepGetCurrentTime( arkMem, &curTime ), "ARKStepGetCurrentTime" );
+#endif
+		if ( t > EndTime )
+			t = EndTime;
 		errorFlag = ARKStepEvolve( arkMem, t, initialCondition, &tRet, ARK_NORMAL );
 		switch ( errorFlag ) {
 			case ARK_SUCCESS:
+#if defined( DEBUG )
+				std::cerr << "Internal time is " << curTime << " Evolved to " << tRet << " with intent of reaching " << t << std::endl;
+#endif
 				break;
 			default:
 				throw std::runtime_error( "ARKStep failed with error " + std::to_string( errorFlag ) );
 			break;
 		}
 
+		// ARKStep has evolved us to t = tRet, update the plasma object and write it out.
+		plasma.SetTime( tRet );
 		plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 		plasma.IonTemperature = ION_TEMPERATURE( initialCondition );
+		plasma.ImposedVoltage = VOLTAGE( initialCondition );
 		plasma.SetMachFromVoltage();
 		plasma.ComputeSteadyStateNeutrals();
 		plasma.WriteTimeslice( tRet );
-		plasma.SetTime( tRet );
 #if defined( DEBUG )
-		std::cerr << "Writing timeslice at t = " << t << std::endl;
+		std::cerr << "Writing timeslice at t = " << tRet << std::endl;
 #endif
 #if defined( DEBUG ) && defined( SUNDIALS_DEBUG )
-	std::cerr << "After evolving to " << tRet << " T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
+		std::cerr << "After evolving to " << tRet << " T_i = " << ION_TEMPERATURE( initialCondition ) << " ; T_e = " << ELECTRON_TEMPERATURE( initialCondition ) << std::endl;
 #endif
+		if ( plasma.IonTemperature < 1e-2 && plasma.ElectronTemperature < 1e-2 ) {
+			std::cerr << "Stopping decaying plasma simulation, plasma is now cold (below 10eV)" << std::endl;
+			break;
+		}
 	}
 
-	// We've solved and found the answer. Update the plasma object
-
-	plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
-	plasma.IonTemperature      =      ION_TEMPERATURE( initialCondition );
-	plasma.ImposedVoltage      =              VOLTAGE( initialCondition );
-
-#ifdef DEBUG
+	#ifdef DEBUG
 	long nSteps = 0,nfeEvals = 0,nfiEvals = 0;
 	ArkodeErrorWrapper( ARKStepGetNumSteps( arkMem, &nSteps ), "ARKGetNumSteps" );
 	ArkodeErrorWrapper( ARKStepGetNumRhsEvals( arkMem, &nfeEvals, &nfiEvals ), "ARKGetNumRhsEvals" );
@@ -185,7 +211,4 @@ void MCTransConfig::doFreeWheel( MirrorPlasma& plasma ) const
 		N_VDestroy( initialCondition );
 		ARKStepFree( &arkMem );
 	}
-
-	plasma.SetMachFromVoltage();
-	plasma.ComputeSteadyStateNeutrals();
 }
