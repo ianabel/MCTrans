@@ -154,7 +154,7 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 		ExternalResistance = parameterMap.at( "ExternalResistance" );
 		if ( ExternalResistance > 0.0 ) {
 			isTimeDependent = true;
-			time = 0;
+			time = 0.0;
 		}
 	}
 
@@ -168,6 +168,8 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 		CBLineResistance     = parameterMap.at( "LineResistance" );
 		CBChargedVoltage     = parameterMap.at( "ChargedVoltage" );
 		CapBank = true;
+		isTimeDependent = true;
+		time = 0.0;
 	}
 
 	StoredPhi = 0.0;
