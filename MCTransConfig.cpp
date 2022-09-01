@@ -38,6 +38,23 @@ std::shared_ptr<MirrorPlasma> MCTransConfig::Solve()
 			doFreeWheel( plasma );
 			plasma.FinaliseNetCDF();
 			break;
+		case SolveType::CapBankSolve:
+			// Set initial conditions
+			InitialisePlasma();
+			plasma.InitialiseNetCDF();
+			if ( ReferencePlasmaState->ImposedVoltage > 0.0 ) {
+				std::cerr << "Evolving to steady state before decaying" << std::endl;
+				plasma.isTimeDependent = false; // Just get a steady state
+				doTempSolve( plasma );
+			} else {
+				throw std::invalid_argument( "Currently the Cap-Bank sovler requires the plasma to run to a steady state first, then decay. Please set ImposedVoltage for the initial quasi-steady phase of the simulation" );
+			}
+			// Let the plasma spin down
+			plasma.isTimeDependent = true; // Now run for the prescribed time
+			EndTime += plasma.time; // So the time runs from 0 -> steady-state-time -> s-s-t + Endtime, giving a full 'EndTime' of cap bank
+			doCircuitModel( plasma );
+			plasma.FinaliseNetCDF();
+			break;
 		default:
 			throw std::invalid_argument( "Unknown Solve Type" );
 	}

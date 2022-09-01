@@ -159,17 +159,16 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 	}
 
 	CapBank = false;
-	if ( parameterMap.find( "CapBank.Capacitance" ) != parameterMap.end() )
+	if ( parameterMap.find( "Capacitance" ) != parameterMap.end() )
 	{
 		std::cerr << "Performing Cap-Bank run" << std::endl;
-		CBCapacitance        = parameterMap.at( "CapBank.Capacitance" );
-		CBInternalResistance = parameterMap.at( "CapBank.InternalResistance" );
-		CBLineInductance     = parameterMap.at( "CapBank.LineInductance" );
-		CBLineResistance     = parameterMap.at( "CapBank.LineResistance" );
-		CBChargedVoltage     = parameterMap.at( "CapBank.ChargedVoltage" );
+		CBCapacitance        = parameterMap.at( "Capacitance" );
+		CBInternalResistance = parameterMap.at( "InternalResistance" );
+		CBLineInductance     = parameterMap.at( "LineInductance" );
+		CBLineResistance     = parameterMap.at( "LineResistance" );
+		CBChargedVoltage     = parameterMap.at( "ChargedVoltage" );
 		CapBank = true;
 	}
-
 
 	StoredPhi = 0.0;
 }
@@ -406,7 +405,7 @@ double MirrorPlasma::AmbipolarPhi() const
 		}
 
 
-		double eps = 0.05;
+		double eps = 0.1;
 		double l_bracket = std::min( guess*( 1.0 - eps ), guess*( 1.0 + eps ) );
 		double u_bracket = std::max( guess*( 1.0 - eps ), guess*( 1.0 + eps ) );
 		if ( ParallelCurrent( l_bracket )*ParallelCurrent( u_bracket ) < 0 ) {

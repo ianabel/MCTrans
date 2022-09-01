@@ -12,8 +12,8 @@
 
 #define V_CAP_IDX 3
 #define I_CAP_IDX 4
-#define V_CAP( u ) NV_Ith_S( u, DENSITY_IDX )
-#define I_CAP( u ) NV_Ith_S( u, DENSITY_IDX )
+#define V_CAP( u ) NV_Ith_S( u, V_CAP_IDX )
+#define I_CAP( u ) NV_Ith_S( u, I_CAP_IDX )
 #define V_CAP_EQN( F ) NV_Ith_S( F, V_CAP_IDX )
 #define I_CAP_EQN( F ) NV_Ith_S( F, I_CAP_IDX )
 
@@ -24,7 +24,10 @@ int ARKStep_CircuitModel( realtype t, N_Vector u, N_Vector uDot, void* voidPlasm
 	MirrorPlasma* plasmaPtr = reinterpret_cast<MirrorPlasma*>( voidPlasma );
 
 	// External circuit parameters.
-	double C_cap,R_cap,L_line,R_line;
+	double C_cap = plasmaPtr->CBCapacitance;
+	double R_cap = plasmaPtr->CBInternalResistance;
+	double L_line = plasmaPtr->CBLineInductance;
+	double R_line = plasmaPtr->CBLineResistance;
 
 	double TiOld = plasmaPtr->IonTemperature;
 	double TeOld = plasmaPtr->ElectronTemperature;

@@ -185,11 +185,12 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		if ( batch.count( "Voltage" ) != 1 ) {
 			throw std::invalid_argument( "When running a cap-bank-driven simulation the initial voltage must be set using the \"Voltage\" parameter" );
 		}
-		readParameterFromFile( batch, "CapBank.Capacitance", CBCapVals, true );
-		readParameterFromFile( batch, "CapBank.InternalResistance", CBRVals, true );
-		readParameterFromFile( batch, "CapBank.LineResistance", CBLineRVals, true );
-		readParameterFromFile( batch, "CapBank.LineInductance", CBLineLVals, true );
-		readParameterFromFile( batch, "CapBank.ChargedVoltage", CBVoltageVals, true );
+		auto CB = batch.at( "CapBank" );
+		readParameterFromFile( CB, "Capacitance", CBCapVals, true );
+		readParameterFromFile( CB, "InternalResistance", CBRVals, true );
+		readParameterFromFile( CB, "LineResistance", CBLineRVals, true );
+		readParameterFromFile( CB, "LineInductance", CBLineLVals, true );
+		readParameterFromFile( CB, "ChargedVoltage", CBVoltageVals, true );
 	}
 
 	// Wall Radius
