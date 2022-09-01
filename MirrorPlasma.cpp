@@ -166,6 +166,7 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 		CBInternalResistance = parameterMap.at( "CapBank.InternalResistance" );
 		CBLineInductance     = parameterMap.at( "CapBank.LineInductance" );
 		CBLineResistance     = parameterMap.at( "CapBank.LineResistance" );
+		CBChargedVoltage     = parameterMap.at( "CapBank.ChargedVoltage" );
 		CapBank = true;
 	}
 

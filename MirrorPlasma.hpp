@@ -228,6 +228,7 @@ class MirrorPlasma {
 		bool CapBank;
 		double CBCapacitance,CBInternalResistance;
 		double CBLineInductance,CBLineResistance;
+		double CBChargedVoltage;
 };
 
 

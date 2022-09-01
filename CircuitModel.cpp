@@ -120,6 +120,8 @@ void MCTransConfig::doCircuitModel( MirrorPlasma& plasma ) const
 	ION_TEMPERATURE( initialCondition ) = plasma.IonTemperature;
 	ELECTRON_TEMPERATURE( initialCondition ) = plasma.ElectronTemperature;
 	VOLTAGE( initialCondition ) = plasma.ImposedVoltage;
+	V_CAP( initialCondition ) = plasma.CBChargedVoltage;
+	I_CAP( initialCondition ) = 0.0; 
 
 	realtype t0 = plasma.time;
 

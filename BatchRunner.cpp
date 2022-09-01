@@ -189,6 +189,7 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		readParameterFromFile( batch, "CapBank.InternalResistance", CBRVals, true );
 		readParameterFromFile( batch, "CapBank.LineResistance", CBLineRVals, true );
 		readParameterFromFile( batch, "CapBank.LineInductance", CBLineLVals, true );
+		readParameterFromFile( batch, "CapBank.ChargedVoltage", CBVoltageVals, true );
 	}
 
 	// Wall Radius
