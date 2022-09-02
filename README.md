@@ -21,7 +21,7 @@ To compile and use MCTrans++ you will need a system with the following
  - A C++20 compliant C++ compiler.
  - The Boost C++ Template Library
  - The TOML11 library
- - The SUNDIALS library, Version 5.7.0 or 5.8.0 -- **SUNDIALS v6.0.0 is unsupported at this time, please use v5.8.0 until this bug is fixed**
+ - The SUNDIALS library, Version 6.0.0 or newer -- **SUNDIALS v5.8.0 is no longer supported, please upgrade from 5.x.y to 6.0.0 or newer**
  - NETCDF C and NETCDF C++ 4.3 or newer (depends upon netcdf C interface 4.6.0 or newer)
 
 Precise dependencies have not been exhaustively tested. Running on Windows requires the installation of [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install) (WSL) and installing the following programs on an administrator bash shell. MacOS requies [python3](https://www.python.org/downloads/) and of [miniconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/macos.html).

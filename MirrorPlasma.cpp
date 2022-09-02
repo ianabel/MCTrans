@@ -150,12 +150,26 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 
 	if ( parameterMap.find( "ExternalResistance" ) != parameterMap.end() )
 	{
+		std::cerr << "Performing spin-down run with an external resistor" << std::endl;
 		ExternalResistance = parameterMap.at( "ExternalResistance" );
 		if ( ExternalResistance > 0.0 ) {
-			std::cerr << "Warning: doing unsupported free-wheel" << std::endl;
 			isTimeDependent = true;
-			time = 0;
+			time = 0.0;
 		}
+	}
+
+	CapBank = false;
+	if ( parameterMap.find( "Capacitance" ) != parameterMap.end() )
+	{
+		std::cerr << "Performing Cap-Bank run" << std::endl;
+		CBCapacitance        = parameterMap.at( "Capacitance" );
+		CBInternalResistance = parameterMap.at( "InternalResistance" );
+		CBLineInductance     = parameterMap.at( "LineInductance" );
+		CBLineResistance     = parameterMap.at( "LineResistance" );
+		CBChargedVoltage     = parameterMap.at( "ChargedVoltage" );
+		CapBank = true;
+		isTimeDependent = true;
+		time = 0.0;
 	}
 
 	StoredPhi = 0.0;
@@ -393,7 +407,7 @@ double MirrorPlasma::AmbipolarPhi() const
 		}
 
 
-		double eps = 0.05;
+		double eps = 0.1;
 		double l_bracket = std::min( guess*( 1.0 - eps ), guess*( 1.0 + eps ) );
 		double u_bracket = std::max( guess*( 1.0 - eps ), guess*( 1.0 + eps ) );
 		if ( ParallelCurrent( l_bracket )*ParallelCurrent( u_bracket ) < 0 ) {
@@ -666,16 +680,19 @@ double MirrorPlasma::RadialCurrent() const
 	// Inertial term = m_i n_i R^2 d omega / dt ~= m_i n_i R^2 d  / dt ( E/ ( R*B) )
 	//					~= m_i n_i (R/B) * d/dt ( V / a )
 	double Inertia;
-	if ( isTimeDependent )
-		Inertia = IonSpecies.Mass * ProtonMass * IonDensity * ( PlasmaCentralRadius() / CentralCellFieldStrength )
+	if ( isTimeDependent && VoltageFunction )
+		Inertia = IonSpecies.Mass * ProtonMass * ReferenceDensity * IonDensity * ( PlasmaCentralRadius() / CentralCellFieldStrength )
 		            * VoltageFunction->prime( time );
 	else
 		Inertia = 0.0;
 
-	double Losses = TotalAngularMomentumLosses();
-	// R J_R = (<Torque> + <ParallelLosses> + <Inertia>)/B_z
+	// R J_R = (<Viscous Torque> + <ParallelLosses> + <Inertia>)/B_z
 	// I_R = 2*Pi*R*L*J_R
-	double I_radial = 2.0 * M_PI * PlasmaLength * ( Inertia - Losses ) / CentralCellFieldStrength;
+	//
+	// TotalAngularMomentumLosses = -(<Viscous Torque> + <ParallelLosses>) 
+	// (sign is because positive Losses *decreases* the velocity)
+	double Losses = TotalAngularMomentumLosses();
+	double I_radial = 2.0 * M_PI * PlasmaLength * ( Inertia + Losses ) / CentralCellFieldStrength;
 	return I_radial;
 }
 
@@ -702,7 +719,7 @@ void MirrorPlasma::UpdateVoltage()
 {
 	if ( !isTimeDependent )
 		return;
-	else
+	else if ( VoltageFunction )
 		ImposedVoltage = ( *VoltageFunction )( time );
 }
 
@@ -717,5 +734,5 @@ double MirrorPlasma::MomentOfInertia() const
 {
 	double R1 = PlasmaInnerRadius();
 	double R2 = PlasmaOuterRadius();
-	return 0.5 * ( PlasmaVolume() * IonDensity * IonSpecies.Mass * ProtonMass ) * ( R1*R1 + R2*R2 );
+	return 0.5 * ( PlasmaVolume() * IonDensity * ReferenceDensity * IonSpecies.Mass * ProtonMass ) * ( R1*R1 + R2*R2 );
 }

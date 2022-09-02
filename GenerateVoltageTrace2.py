@@ -27,19 +27,18 @@ TimeVar = nc_root.createVariable("Time","f8",("Time",));
 
 VoltageVar = nc_root.createVariable("Voltage","f8",("Time",));
 
-
 N_points = 15001
 
 delta_t = t_end / ( N_points - 1 )
 
+def sigmoid(x):
+    sig = np.where(x < 0, np.exp(x)/(1 + np.exp(x)), 1/(1 + np.exp(-x)))
+    return sig
+
+
 for i in range(0,N_points):
     time = delta_t * i;
     TimeVar[i] = time;
-    if time <= t1:
-        VoltageVar[i] = V1;
-    if time > t1 and time <= t2:
-        VoltageVar[i] = V1 + ( V2 - V1 ) * ( time - t1 ) / ( t2 - t1 )
-    if time > t2:
-        VoltageVar[i] = V2
+    VoltageVar[i] = V1 + ( V2 - V1 ) * sigmoid( 10*(time - (t1+t2)/2.0)/(t2-t1) );
 
 nc_root.close()

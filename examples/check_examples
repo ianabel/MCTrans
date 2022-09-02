@@ -34,8 +34,24 @@ function fileout_test_case {
 	fi
 }
 
+function netcdf_test_case {
+	local INPUT="$CASE.conf"
+	local OUTPUT="$CASE.out"
+	local OUTPUT_NC="$CASE.nc"
+	local REF_NC="$CASE.ref.nc"
+	$MCTRANS $INPUT >/dev/null 2>/dev/null;
+	if ./nc_compare $OUTPUT_NC $REF_NC > /dev/null;
+	then
+		rm -f $OUTPUT $OUTPUT_NC;
+		return 0;
+	else
+		return 1;
+	fi
+}
+
 STDOUT_CASES=(Mirror_1keV Mirror_100kV Breakeven)
 FILEOUT_CASES=(Mirror_1keV_CX Mirror_100kV_CX)
+NETCDF_CASES=(Reactor FreeWheel)
 
 for CASE in ${STDOUT_CASES[@]}; do
 	if stdout_test_case;
@@ -53,6 +69,16 @@ for CASE in ${FILEOUT_CASES[@]}; do
 		echo "Reference input $CASE.conf produces expected output";
 	else
 		echo "Reference input $CASE.conf failed to produce correct output; Failing output retained as $CASE.out";
+		exit 1;
+	fi
+done
+
+for CASE in ${NETCDF_CASES[@]}; do
+	if netcdf_test_case;
+	then
+		echo "Reference input $CASE.conf produces expected output";
+	else
+		echo "Reference input $CASE.conf failed to produce correct output; Failing output retained as $CASE.nc and possibly $CASE.out";
 		exit 1;
 	fi
 done
