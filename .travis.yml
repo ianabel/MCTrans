@@ -7,11 +7,12 @@ matrix:
      addons:
        apt:
          packages:
-            libboost-dev
-            libnetcdf-c++4-dev
-            libnetcdf-dev
-            cmake
-            g++-11
+           libboost-dev
+           libnetcdf-c++4-dev
+           libnetcdf-dev
+           cmake
+           g++-11
+           python3-netcdf4
      env:
        - MATRIX_EVAL="CXX=g++-11"
 
@@ -25,6 +26,7 @@ matrix:
            libnetcdf-dev
            cmake
            clang++-14
+           python3-netcdf4
      env:
        - MATRIX_EVAL="CXX=clang++-14"
 

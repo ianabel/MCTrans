@@ -7,7 +7,7 @@ jobs:
     steps:
       - checkout
       - run:
-          command: apt-get update && apt-get install --quiet --yes g++-10 libboost-dev cmake libnetcdf-dev libnetcdf-c++4-dev
+          command: apt-get update && apt-get install --quiet --yes g++-10 libboost-dev cmake libnetcdf-dev libnetcdf-c++4-dev python3-netcdf4
       - run:
           command: git clone https://github.com/ToruNiina/toml11.git toml11/
       - run:
@@ -26,7 +26,7 @@ jobs:
     steps:
       - checkout
       - run:
-          command: apt-get update && apt-get install --quiet --yes g++-10 libboost-dev cmake libnetcdf-dev libnetcdf-c++4-dev
+          command: apt-get update && apt-get install --quiet --yes g++-10 libboost-dev cmake libnetcdf-dev libnetcdf-c++4-dev python3-netcdf4
       - run:
           command: git clone https://github.com/ToruNiina/toml11.git toml11/
       - run:
@@ -48,6 +48,8 @@ jobs:
       - checkout
       - run: brew install coreutils boost sundials netcdf cmake
       - run: BUILD_NETCDFCXX=Y HDF5_DIR="/usr/local/opt/hdf5" NETCDF_DIR="/usr/local/opt/netcdf" ./build_netcdf_cxx
+      - run: git clone https://github.com/Unidata/netcdf4-python.git
+      - run: HDF5_DIR="/usr/local/opt/hdf5" pip install ./netcdf4-python
       - run: git clone https://github.com/ToruNiina/toml11.git toml11/
       - run: cp Makefile.local.circleci_osx Makefile.local
       - run: make
