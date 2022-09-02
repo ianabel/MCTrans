@@ -9,6 +9,7 @@ std::shared_ptr<MirrorPlasma> MCTransConfig::Solve()
 {
 	MirrorPlasma& plasma = *ReferencePlasmaState;
 
+	double targetTime = EndTime;
 
 
 	switch ( Type ) {
@@ -25,16 +26,16 @@ std::shared_ptr<MirrorPlasma> MCTransConfig::Solve()
 			// Set initial conditions
 			InitialisePlasma();
 			plasma.InitialiseNetCDF();
+			targetTime = EndTime + 5*OutputDeltaT;
 			if ( ReferencePlasmaState->ImposedVoltage > 0.0 ) {
 				std::cerr << "Evolving to steady state before decaying" << std::endl;
-				plasma.isTimeDependent = false; // Just get a steady state
+				EndTime = 5*OutputDeltaT;
 				doTempSolve( plasma );
 			} else {
 				throw std::invalid_argument( "Currently the way Free-wheel decay works is to run to a steady state first, then decay. Please set ImposedVoltage for the quasi-steady phase of the simulation" );
 			}
 			// Let the plasma spin down
-			plasma.isTimeDependent = true; // Now run for the prescribed time
-			EndTime += plasma.time; // So the time runs from 0 -> steady-state-time -> s-s-t + Endtime, giving a full 'EndTime' of decay
+			EndTime = targetTime; // So the time runs from 0 -> steady-state-time -> s-s-t + Endtime, giving a full 'EndTime' of decay
 			doFreeWheel( plasma );
 			plasma.FinaliseNetCDF();
 			break;
