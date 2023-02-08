@@ -100,7 +100,7 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 	if( parameterMap.find("ElectronDensity") != parameterMap.end())
 		ElectronDensity = parameterMap.at("ElectronDensity");
 
-	IonDensity = ElectronDensity / IonSpecies.Charge; 
+	IonDensity = ElectronDensity / IonSpecies.Charge;
 
 	double TiTe = 0.0;
 	if( parameterMap.find("IonToElectronTemperatureRatio") != parameterMap.end())
@@ -302,6 +302,7 @@ double MirrorPlasma::ParallelIonPastukhovLossRate( double Chi_i ) const
 double MirrorPlasma::Chi_i( double Phi ) const
 {
 	return IonSpecies.Charge * Phi * ( ElectronTemperature/IonTemperature ) + 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/MirrorRatio ) * ( ElectronTemperature / IonTemperature );
+	// return IonSpecies.Charge * Phi + 0.5 * MachNumber * MachNumber;
 }
 
 double MirrorPlasma::Chi_i() const
@@ -434,7 +435,7 @@ void MirrorPlasma::UpdatePhi()
 {
 	StoredPhi = AmbipolarPhi();
 }
-	
+
 
 double MirrorPlasma::ParallelKineticEnergyLoss() const
 {
@@ -499,7 +500,7 @@ double MirrorPlasma::CyclotronLosses() const
 	double LambdaZero = ( 5.31e-4 / 3.21 ) * ( B_central / ElectronDensity );
 	double WallReflectivity = 0.95;
 	double OpticalThickness = ( PlasmaColumnWidth / ( 1.0 - WallReflectivity ) ) / LambdaZero;
-	// This is the Phi introduced by Trubnikov and later approximated by Tamor 
+	// This is the Phi introduced by Trubnikov and later approximated by Tamor
 	double TransparencyFactor = ::pow( ElectronTemperature, 1.5 ) / ( 200.0 * ::sqrt( OpticalThickness ) );
 	// Moderate the vacuum emission by the transparency factor
 	return P_vacuum * TransparencyFactor;
@@ -623,6 +624,10 @@ double MirrorPlasma::ElectronHeatLosses() const
 double MirrorPlasma::IonHeating() const
 {
 	double Heating = ViscousHeating();
+	if ( IncludeAlphaHeating ) {
+		// 1e6 as we are using W/m^3 and the formulary was in MW/m^3
+		Heating += 0.33 * AlphaHeating() * 1e6;
+	}
 
 	return Heating - IonToElectronHeatTransfer();
 }
@@ -632,7 +637,7 @@ double MirrorPlasma::ElectronHeating() const
 	double Heating = AuxiliaryHeating * 1e6 / PlasmaVolume(); // Auxiliary Heating stored as MW, heating is in W/m^3
 	if ( IncludeAlphaHeating ) {
 		// 1e6 as we are using W/m^3 and the formulary was in MW/m^3
-		Heating += AlphaHeating() * 1e6;
+		Heating += 0.66 * AlphaHeating() * 1e6;
 	}
 	// std::cout << "e-Heating comprises " << Heating << " of aux and " << IonToElectronHeatTransfer() << " transfer" << std::endl;
 	return Heating + IonToElectronHeatTransfer();
@@ -654,7 +659,7 @@ double MirrorPlasma::AngularMomentumPerParticle() const
 double MirrorPlasma::ParallelAngularMomentumLossRate() const
 {
 	double IonLoss = ParallelIonParticleLoss();
-	return IonLoss * AngularMomentumPerParticle(); 
+	return IonLoss * AngularMomentumPerParticle();
 }
 
 double MirrorPlasma::CXMomentumLosses() const
@@ -689,14 +694,14 @@ double MirrorPlasma::RadialCurrent() const
 	// R J_R = (<Viscous Torque> + <ParallelLosses> + <Inertia>)/B_z
 	// I_R = 2*Pi*R*L*J_R
 	//
-	// TotalAngularMomentumLosses = -(<Viscous Torque> + <ParallelLosses>) 
+	// TotalAngularMomentumLosses = -(<Viscous Torque> + <ParallelLosses>)
 	// (sign is because positive Losses *decreases* the velocity)
 	double Losses = TotalAngularMomentumLosses();
 	double I_radial = 2.0 * M_PI * PlasmaLength * ( Inertia + Losses ) / CentralCellFieldStrength;
 	return I_radial;
 }
 
-// Depending if we're solving with I_R(V_R) or V_R(I_R) we need the injected torque 
+// Depending if we're solving with I_R(V_R) or V_R(I_R) we need the injected torque
 // as a function of the radial current
 double MirrorPlasma::InjectedTorque( double I_Radial ) const
 {

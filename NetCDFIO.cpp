@@ -7,7 +7,7 @@
 
 using namespace netCDF;
 
-NetCDFIO::NetCDFIO() 
+NetCDFIO::NetCDFIO()
 {
 }
 
@@ -86,7 +86,7 @@ void MirrorPlasma::InitialiseNetCDF()
 {
 	if ( !isTimeDependent )
 		return;
-		
+
 	if ( NetcdfOutputFile == "" )
 		return;
 
@@ -108,6 +108,7 @@ void MirrorPlasma::InitialiseNetCDF()
 	nc_output.AddTimeSeries( "Current", "Radial current through the plasma","A", RadialCurrent() );
 	nc_output.AddTimeSeries( "ViscousTorque", "Viscous Torque","", ViscousTorque() );
 	nc_output.AddTimeSeries( "ParAngMomLoss", "Parallel Angular Momentum Loss","", ParallelAngularMomentumLossRate() );
+	nc_output.AddTimeSeries( "CXAngMomLoss", "Charge Exchange Angular Momentum Loss","", CXMomentumLosses() );
 
 	nc_output.AddTimeSeries( "ViscousHeating", "Viscous Heating","W/m^3", ViscousHeating() );
 	nc_output.AddTimeSeries( "ParIonHeatLoss", "Parallel Ion Heat Loss","W/m^3", ParallelIonHeatLoss() );
@@ -139,6 +140,7 @@ void MirrorPlasma::WriteTimeslice( double tNew )
 	nc_output.AppendToTimeSeries( "Current", RadialCurrent(), tIndex );
 	nc_output.AppendToTimeSeries( "ViscousTorque", ViscousTorque(), tIndex );
 	nc_output.AppendToTimeSeries( "ParAngMomLoss", ParallelAngularMomentumLossRate(), tIndex );
+	nc_output.AppendToTimeSeries( "CXAngMomLoss", CXMomentumLosses(), tIndex );
 
 	nc_output.AppendToTimeSeries( "ViscousHeating", ViscousHeating(), tIndex );
 	nc_output.AppendToTimeSeries( "ParIonHeatLoss", ParallelIonHeatLoss(), tIndex );
@@ -209,7 +211,7 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 	if( totalRuns > 1 && parameterMap != nullptr )
 	{
 		nc_output.AddScalarVariable( "BatchRunIndex","","",currentRun + 1.0 );
-		for (auto const &pair: *parameterMap) 
+		for (auto const &pair: *parameterMap)
 		{
 			nc_output.AddScalarVariable( pair.first, "Input Parameter","",pair.second );
 		}
@@ -236,7 +238,7 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 
 	nc_output.AddScalarVariable( "B_midplane", "Magnetic Field Strength in the Central Cell", "T", CentralCellFieldStrength );
 	nc_output.AddScalarVariable( "B_throat", "Magnetic Field Strength in the mirror throat", "T", CentralCellFieldStrength * MirrorRatio );
-	
+
 	nc_output.AddScalarVariable( "RhoIon", "Ion Larmor Radius in the central cell", "m", IonLarmorRadius() );
 	nc_output.AddScalarVariable( "a", "Typical plasma scale length", "m", PlasmaColumnWidth/2.0 );
 	nc_output.AddScalarVariable( "RhoStar", "Normalised larmor radius - rho_i/a", "", PlasmaColumnWidth / ( 2.0 * IonLarmorRadius() ) );
@@ -268,7 +270,7 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 	if ( IncludeCXLosses ) {
 		nc_output.AddScalarVariable( "CXLosses", "Heat loss due to charge exchange with neutrals", "W", CXHeatLosses()*PlasmaVolume() );
 	}
-		
+
 	nc_output.AddScalarVariable( "Voltage", "Total potential difference across the plasma","V",ElectricPotential() );
 
 	double JRadial = ::fabs( RadialCurrent() );
@@ -280,7 +282,7 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 
 	if (  IncludeCXLosses ) {
 		nc_output.AddScalarVariable( "CXRotationLosses","Rotational power loss from charge exchange", "W", CXMomentumLosses()*omega*PlasmaVolume() );
-	} 
+	}
 
 	double KineticStoredEnergy = KineticEnergy();
 	double ThermalStoredEnergy = ThermalEnergy();
@@ -289,7 +291,7 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 	nc_output.AddScalarVariable( "StoredEnergy", "Total stored energy", "J", KineticStoredEnergy + ThermalStoredEnergy );
 
 	nc_output.AddScalarVariable( "TauE", "Energy Confinement Time", "s", EnergyConfinementTime() );
-	
+
 	double ParallelConfinementTime = ( 1.5  * ElectronDensity * ElectronTemperature + 1.5 * IonDensity * IonTemperature ) * (  ReferenceDensity * ReferenceTemperature )/( ParallelElectronHeatLoss() + ParallelIonHeatLoss() );
 	double PerpConfinementTime = ( 1.5  * IonDensity * IonTemperature * ReferenceDensity * ReferenceTemperature )/ClassicalIonHeatLoss();
 	double CXConfinementTime = IonDensity*ReferenceDensity / CXLossRate();
@@ -322,7 +324,7 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 		nc_output.AddScalarVariable( "CXRate","Rate of charge-exchange reactions","s^-1", CXR );
 		nc_output.AddScalarVariable( "CXHeatLoss","Thermal energy loss from charge-exchange","W", CXR * IonTemperature * ReferenceTemperature );
 
-	} 
+	}
 
 	double Resistance = ElectricPotential() / JRadial;
 	double Capacitance = 2.0*KineticStoredEnergy / ( ElectricPotential() * ElectricPotential() );
@@ -333,10 +335,10 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 	nc_output.AddScalarVariable( "Beta","Plasma beta","%",Beta()*100 );
 	nc_output.AddScalarVariable( "IonCollisionality","Ratio of ion collision frequency to ion bounce time","",NuStar() );
 	nc_output.AddScalarVariable( "HallParameter","Ratio of ion collision frequency to cyclotron frequency ( Omega_i * tau_ii)","",IonCyclotronFrequency()*IonCollisionTime() );
-	
+
 	double TripleProduct = IonDensity * ReferenceDensity * IonTemperature * EnergyConfinementTime();
 	nc_output.AddScalarVariable( "TripleProduct", "n_i T_i τ_E", "keV s/m^3", TripleProduct );
-	
+
 	if ( ReportThrust ) {
 			nc_output.AddScalarVariable( "IonThrust","Thrust provided by fuel ions lost from the central cell","", ParallelIonThrust() );
 			if ( IncludeAlphaHeating )
@@ -345,7 +347,7 @@ void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap
 
 	if ( ReportNuclearDiagnostics ) {
 		if ( IonSpecies.Name == "Deuterium" ) {
-			nc_output.AddScalarVariable( "DDNeutrons", "D/D Neutrons (2.45 MeV) per second","n/s", DDNeutronRate() ); 
+			nc_output.AddScalarVariable( "DDNeutrons", "D/D Neutrons (2.45 MeV) per second","n/s", DDNeutronRate() );
 			double Yield = ( 14.1/3.52 + 1.0 ) * FusionAlphaPowerDensity()*PlasmaVolume();
 			nc_output.AddScalarVariable( "DTEquivalentQ","Effective D/T Figure of Merit, assuming an identical plasma. Scientific D-T equivalent Q.","",Yield/( ElectricPotential()*JRadial ) );
 		} else if ( IonSpecies.Name == "Deuterium/Tritium Fuel" ) {
