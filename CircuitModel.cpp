@@ -95,7 +95,7 @@ int ARKStep_CircuitModel( realtype t, N_Vector u, N_Vector uDot, void* voidPlasm
 
 		MOMENTUM_BALANCE( uDot ) = ( MomentumToVoltage ) * ( AngularMomentumInjection - AngularMomentumLoss );
 
-		V_CAP_EQN( uDot ) = I_CAP( u )/C_cap - V_CAP( u )/( R_cap * C_cap );
+		V_CAP_EQN( uDot ) = -I_CAP( u )/C_cap - V_CAP( u )/( R_cap * C_cap );
 		I_CAP_EQN( uDot ) = ( V_CAP( u ) - VOLTAGE( u ) - R_line * I_CAP( u ) ) / L_line;
 
 
