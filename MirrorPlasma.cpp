@@ -302,7 +302,6 @@ double MirrorPlasma::ParallelIonPastukhovLossRate( double Chi_i ) const
 double MirrorPlasma::Chi_i( double Phi ) const
 {
 	return IonSpecies.Charge * Phi * ( ElectronTemperature/IonTemperature ) + 0.5 * MachNumber * MachNumber * ( 1.0 - 1.0/MirrorRatio ) * ( ElectronTemperature / IonTemperature );
-	// return IonSpecies.Charge * Phi + 0.5 * MachNumber * MachNumber;
 }
 
 double MirrorPlasma::Chi_i() const
@@ -527,7 +526,11 @@ double MirrorPlasma::DebyeLength() const
 
 double MirrorPlasma::NuStar() const
 {
-	return PlasmaLength / ( IonCollisionTime() * SoundSpeed() );
+	// Ion thermal speed
+	// v_th_i = sqrt(2 * k_B T_i / m_i)
+	double IonMass = IonSpecies.Mass * ProtonMass;
+	double v_th_i = ::sqrt( 2 * IonTemperature * ReferenceTemperature / IonMass );
+	return PlasmaLength / ( IonCollisionTime() * v_th_i );
 }
 
 
@@ -624,11 +627,6 @@ double MirrorPlasma::ElectronHeatLosses() const
 double MirrorPlasma::IonHeating() const
 {
 	double Heating = ViscousHeating();
-	if ( IncludeAlphaHeating ) {
-		// 1e6 as we are using W/m^3 and the formulary was in MW/m^3
-		Heating += 0.33 * AlphaHeating() * 1e6;
-	}
-
 	return Heating - IonToElectronHeatTransfer();
 }
 
@@ -637,7 +635,7 @@ double MirrorPlasma::ElectronHeating() const
 	double Heating = AuxiliaryHeating * 1e6 / PlasmaVolume(); // Auxiliary Heating stored as MW, heating is in W/m^3
 	if ( IncludeAlphaHeating ) {
 		// 1e6 as we are using W/m^3 and the formulary was in MW/m^3
-		Heating += 0.66 * AlphaHeating() * 1e6;
+		Heating += AlphaHeating() * 1e6;
 	}
 	// std::cout << "e-Heating comprises " << Heating << " of aux and " << IonToElectronHeatTransfer() << " transfer" << std::endl;
 	return Heating + IonToElectronHeatTransfer();
