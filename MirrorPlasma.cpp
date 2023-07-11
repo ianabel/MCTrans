@@ -617,7 +617,7 @@ double MirrorPlasma::IonHeatLosses() const
 
 double MirrorPlasma::ElectronHeatLosses() const
 {
-	return ParallelElectronHeatLoss() + RadiationLosses();
+	return ClassicalElectronHeatLoss() + ParallelElectronHeatLoss() + RadiationLosses();
 }
 
 double MirrorPlasma::IonHeating() const

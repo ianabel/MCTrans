@@ -21,44 +21,44 @@ Typical plasma scale lengths are ~ 0.1 m  = 9.3 rho_i
 No auxiliary heating was included in this calculation.
 
 
-Operating Mach number is 4.86
-Alfven Mach number is 0.727
+Operating Mach number is 4.87
+Alfven Mach number is 0.728
 
-Velocity is 1.5e+06 m/s
-Angular Velocity at the plasma centre (R = 0.25 m) is 6.02e+06 /s
+Velocity is 1.51e+06 m/s
+Angular Velocity at the plasma centre (R = 0.25 m) is 6.03e+06 /s
 
-Viscous Heating is 9.8 kW
+Viscous Heating is 9.83 kW
 Bremsstrahlung losses are 30.2 W
 Cyclotron emission losses are 587 µW
 Losses due to charge exchange were not included
 
-Total potential drop is 90.3 kV
-Radial Current Drawn from Power Supply 254 mA
-Power Required (at the plasma) to support rotation 22.9 kW
-	 Power Loss from viscous torque  9.8 kW
-	 Power Loss from parallel loss   13.1 kW
+Total potential drop is 90.4 kV
+Radial Current Drawn from Power Supply 252 mA
+Power Required (at the plasma) to support rotation 22.7 kW
+	 Power Loss from viscous torque  9.83 kW
+	 Power Loss from parallel loss   12.9 kW
 	 Power Loss from charge exchange was not included. 
 
-Total Stored Energy is 4.47 kJ
- of which 3.57 kJ is kinetic energy in the rotation
+Total Stored Energy is 4.48 kJ
+ of which 3.58 kJ is kinetic energy in the rotation
       and 906 J is thermal energy of the plasma
-Energy Confinement Time is 92.4 ms
+Energy Confinement Time is 92.2 ms
 Of which
-	Confinement time from parallel losses is	129 ms
-	Confinement time from perpendicular losses is	164 ms
+	Confinement time from parallel losses is	131 ms
+	Confinement time from perpendicular losses is	157 ms
 
-Particle (Ion) Confinement Time ~= 518 ms
+Particle (Ion) Confinement Time ~= 527 ms
 
 Ion-Electron Temperature Equilibration Time is 41.8 ms
 
-Plasma must be provided at a rate of 3.64e+18 electrons /s to maintain steady-state
+Plasma must be provided at a rate of 3.58e+18 electrons /s to maintain steady-state
 
-Neutral gas must be provided at a rate of 3.64e+18 particles/s to refuel the plasma
-This leads to a steady-state neutral density of 7.05e+13/m^3
+Neutral gas must be provided at a rate of 3.58e+18 particles/s to refuel the plasma
+This leads to a steady-state neutral density of 6.93e+13/m^3
 Steady-state charge exchange losses were not included.
 
 Electrical Properties of the Plasma:
-	Resistance  = 356 kΩ
+	Resistance  = 359 kΩ
 	Capacitance = 876 pF
 
 Dimensionless parameters:
@@ -68,6 +68,6 @@ Dimensionless parameters:
 	 Omega_i tau_ii = 7.28e+04
 
 Fusion Triple Product 
-	 n T τ = 9.24e+17 keV s /m^3
+	 n T τ = 9.22e+17 keV s /m^3
 
 No Nuclear Reaction Diagnostics for Ion species: Hydrogen
