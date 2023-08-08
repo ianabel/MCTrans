@@ -180,6 +180,9 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 		if ( ExhaustRadius == 0.0 ) {
 			ExhaustRadius = AxialGapDistance + PlasmaColumnWidth / 2.0;
 			std::cerr << "Running with default Exhaust radius (BatchRunner set it to 0) = " << ExhaustRadius << std::endl;
+		} else if ( ExhaustRadius < 0 ) {
+			ExhaustRadius = ( AxialGapDistance + PlasmaColumnWidth / 2.0 )/std::sqrt( MirrorRatio );
+			std::cerr << "ExhaustRadius was negative in input file, using ExhaustRadius = R_throat ~ R_mid / sqrt(R_mirror) = " << ExhaustRadius << std::endl;
 		} else {
 			std::cerr << "Running with manually-configured Exhaust radius = " << ExhaustRadius << std::endl;
 		}
