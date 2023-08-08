@@ -4,7 +4,7 @@ all: MCTrans++
 include Makefile.config
 
 
-SOURCES = MCTransConfig.cpp MirrorPlasma.cpp FusionYield.cpp Report.cpp AlphaHeating.cpp Neutrals.cpp SundialsWrapper.cpp NetCDFIO.cpp BatchRunner.cpp FreeWheel.cpp CircuitModel.cpp
+SOURCES = MCTrans.cpp MCTransConfig.cpp MirrorPlasma.cpp FusionYield.cpp Report.cpp AlphaHeating.cpp Neutrals.cpp SundialsWrapper.cpp NetCDFIO.cpp BatchRunner.cpp FreeWheel.cpp CircuitModel.cpp
 HEADERS = MirrorPlasma.hpp FusionYield.hpp Config.hpp Species.hpp PlasmaPhysics.hpp NetCDFIO.hpp AtomicPhysics.hpp BatchRunner.hpp SundialsWrapper.hpp
 OBJECTS = $(patsubst %.cpp,%.o,$(SOURCES))
 
@@ -12,8 +12,8 @@ OBJECTS = $(patsubst %.cpp,%.o,$(SOURCES))
 %.o: %.cpp Makefile Makefile.local $(HEADERS)
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-MCTrans++: MCTrans.o $(OBJECTS) $(HEADERS) Makefile Makefile.local
-	$(CXX) $(CXXFLAGS) -o MCTrans++ MCTrans.o $(OBJECTS) $(SUN_LINK_FLAGS) $(NETCDF_LINK_FLAGS)
+MCTrans++: $(OBJECTS) $(HEADERS) Makefile Makefile.local
+	$(CXX) $(CXXFLAGS) -o MCTrans++ $(OBJECTS) $(SUN_LINK_FLAGS) $(NETCDF_LINK_FLAGS)
 
 MCTrans.pdf: manual/Makefile manual/MCTrans.tex manual/macros.tex manual/references.bib
 	make -C manual MCTrans.pdf

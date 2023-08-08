@@ -172,6 +172,24 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 		time = 0.0;
 	}
 
+
+	if ( parameterMap.find( "ExhaustRadius" ) != parameterMap.end() )
+	{
+		ExhaustRadius = parameterMap.at( "ExhaustRadius" );
+
+		if ( ExhaustRadius == 0.0 ) {
+			ExhaustRadius = AxialGapDistance + PlasmaColumnWidth / 2.0;
+			std::cerr << "Running with default Exhaust radius (BatchRunner set it to 0) = " << ExhaustRadius << std::endl;
+		} else {
+			std::cerr << "Running with manually-configured Exhaust radius = " << ExhaustRadius << std::endl;
+		}
+	} else {
+		// Default to R at midplane which is a moderately pessimistic assumption
+		// Should't use member function PlamsaCentralRadius from constructor. (if it were virtual, disaster would ensue)
+		ExhaustRadius = AxialGapDistance + PlasmaColumnWidth / 2.0;
+		std::cerr << "Running with default Exhaust radius = " << ExhaustRadius << std::endl;
+	}
+
 	StoredPhi = 0.0;
 }
 
@@ -654,7 +672,10 @@ double MirrorPlasma::AngularMomentumPerParticle() const
 double MirrorPlasma::ParallelAngularMomentumLossRate() const
 {
 	double IonLoss = ParallelIonParticleLoss();
-	return IonLoss * AngularMomentumPerParticle(); 
+	// For parallel losses, the relevant angular momentum is found with fixed omega
+	// and the radius of the location where B.grad omega = 0 first fails.
+	double ExhaustRatio = ExhaustRadius / PlasmaCentralRadius();
+	return IonLoss * AngularMomentumPerParticle() * ( ExhaustRatio * ExhaustRatio );
 }
 
 double MirrorPlasma::CXMomentumLosses() const

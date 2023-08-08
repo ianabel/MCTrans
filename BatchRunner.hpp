@@ -47,6 +47,7 @@ private:
 	std::vector<double> NeutralDensityVals;
 	std::vector<double> ExternalResistanceVals;
 	std::vector<double> CBCapVals,CBRVals,CBLineRVals,CBLineLVals,CBVoltageVals;
+	std::vector<double> ExhaustRadiusVals;
 
 	std::optional<bool> IncludeAlphaHeating = std::nullopt;
 	std::optional<bool> ReportNuclearDiagnostics = std::nullopt;

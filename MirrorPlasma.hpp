@@ -229,6 +229,9 @@ class MirrorPlasma {
 		double CBCapacitance,CBInternalResistance;
 		double CBLineInductance,CBLineResistance;
 		double CBChargedVoltage;
+
+		double ExhaustRadius;
+
 };
 
 

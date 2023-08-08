@@ -238,6 +238,9 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	// Neutral Density
 	readParameterFromFile(batch, "NeutralDensity", NeutralDensityVals, false, 0.0, true);
 
+	// Exhaust Radius
+	readParameterFromFile( batch, "ExhaustRadius", ExhaustRadiusVals, false, 0.0, false);
+
 	// Voltage Trace
 	if ( batch.count( "VoltageTrace" ) == 1 ) {
 		VoltageTrace = batch.at( "VoltageTrace" ).as_string();
