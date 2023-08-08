@@ -6,7 +6,7 @@ eV2K = 11606
 ergsPerSecond2Watts = 1e-7
 
 temperature = np.logspace(1, 4.5, 100) # eV
-ne = 1e14 # cm^-3
+ne = 1e12 # cm^-3
 
 # Radiative Losses
 ionList = ['c_1', 'c_2', 'c_3', 'c_4', 'c_5', 'c_6'] # C VI
@@ -34,5 +34,6 @@ hydrogenLevels = ch.ion('h_1', temperature=temperature * eV2K, eDensity=ne)
 # Change x-axis to eV
 setattr(hydrogenLevels, 'Temperature', hydrogenLevels.Temperature / eV2K)
 hydrogenLevels.popPlot()
+plt.ylim(bottom=1e-2)
 plt.xlabel('Temperature (eV)')
 plt.savefig('hydrogenLevels.png', dpi=150)

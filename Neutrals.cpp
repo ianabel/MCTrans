@@ -396,6 +396,7 @@ void MirrorPlasma::ComputeSteadyStateNeutrals()
 
 	// Assume mix of neutrals is such that the particle densities are maintained so we just need to produce enough electrons from the source gas to balance the losses
 	double ElectronLossRate = ParallelElectronParticleLoss() + ClassicalElectronParticleLosses();
+	std::cerr << "Parallel electron loss rate " << ParallelElectronParticleLoss() << " and perp electron loss rate " << ClassicalElectronParticleLosses() << " particles/s/m^3"<<std::endl;
 	// Steady State requires
 	//		Losses = n_N * n_e * IonizationRateCoefficient * Volume
 	// so n_N = (Losses/Volume) / ( n_e * IonizationRateCoefficient )

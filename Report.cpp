@@ -21,7 +21,7 @@ void PrintWithUnit( std::ostream& out, double value, std::string const& unit )
 	return;
 }
 
-void MirrorPlasma::PrintReport(std::map<std::string, double>* parameterMap, int currentRun, int totalRuns)
+void MirrorPlasma::PrintReport(const std::map<std::string, double>* parameterMap, int currentRun, int totalRuns)
 {
 	std::ostream *p_out;
 	if ( OutputFile == "" )
@@ -120,14 +120,21 @@ void MirrorPlasma::PrintReport(std::map<std::string, double>* parameterMap, int 
 	}
 	else
 		out << "No radiation losses were included." << std::endl;
+	out << std::endl;
 
+	out << "Total heat losses is ";
+	double TotalHeatLosses = ElectronHeatLosses() + IonHeatLosses();
+	PrintWithUnit( out, TotalHeatLosses * PlasmaVolume(),"W" ); out << std::endl;
+	out << "\t Heat Loss from classical ion loss  "; PrintWithUnit( out, ClassicalIonHeatLoss()*PlasmaVolume(), "W" ); out << std::endl;
+	out << "\t Heat Loss from parallel ion loss  "; PrintWithUnit( out, ParallelIonHeatLoss()*PlasmaVolume(), "W" ); out << std::endl;
 	if ( IncludeCXLosses ) {
-		out << "Heat loss due to charge exchange with neutrals is ";
+		out << "\t Heat loss due to charge exchange with neutrals  ";
 		PrintWithUnit( out, CXHeatLosses()*PlasmaVolume(), "W" ); out << std::endl;
 	} else {
-		out << "Losses due to charge exchange were not included" << std::endl;
+		out << "\t Heat losses due to charge exchange were not included" << std::endl;
 	}
-
+	out << "\t Heat Loss from parallel electron loss  "; PrintWithUnit( out, ParallelElectronHeatLoss()*PlasmaVolume(), "W" ); out << std::endl;
+	out << "\t Heat Loss from radiation  "; PrintWithUnit( out, RadiationLosses()*PlasmaVolume(), "W" ); out << std::endl;	
 	out << std::endl;
 		
 	out << "Total potential drop is ";
@@ -160,7 +167,7 @@ void MirrorPlasma::PrintReport(std::map<std::string, double>* parameterMap, int 
 	out << "Of which" << std::endl;
 	
 	double ParallelConfinementTime = ( 1.5  * ElectronDensity * ElectronTemperature + 1.5 * IonDensity * IonTemperature ) * (  ReferenceDensity * ReferenceTemperature )/( ParallelElectronHeatLoss() + ParallelIonHeatLoss() );
-	double PerpConfinementTime = ( 1.5  * IonDensity * IonTemperature * ReferenceDensity * ReferenceTemperature )/ClassicalIonHeatLoss();
+	double PerpConfinementTime = ( 1.5  * IonDensity * IonTemperature * ReferenceDensity * ReferenceTemperature )/( ClassicalIonHeatLoss() + ClassicalElectronHeatLoss() );
 	double CXConfinementTime = IonDensity*ReferenceDensity / CXLossRate();
 	out << "\tConfinement time from parallel losses is\t"; PrintWithUnit( out, ParallelConfinementTime, "s" ); out << std::endl;
 	out << "\tConfinement time from perpendicular losses is\t"; PrintWithUnit( out, PerpConfinementTime, "s" ); out << std::endl;

@@ -30,7 +30,13 @@ Angular Velocity at the plasma centre (R = 0.25 m) is 6.67e+06 /s
 Viscous Heating is 10.2 kW
 Bremsstrahlung losses are 30.9 W
 Cyclotron emission losses are 660 µW
-Heat loss due to charge exchange with neutrals is 1.58 kW
+
+Total heat losses is 10.2 kW
+	 Heat Loss from classical ion loss  3.48 kW
+	 Heat Loss from parallel ion loss  2.14 kW
+	 Heat loss due to charge exchange with neutrals  1.58 kW
+	 Heat Loss from parallel electron loss  2.95 kW
+	 Heat Loss from radiation  30.9 W
 
 Total potential drop is 100 kV
 Radial Current Drawn from Power Supply 503 mA
@@ -45,7 +51,7 @@ Total Stored Energy is 5.53 kJ
 Energy Confinement Time is 113 ms
 Of which
 	Confinement time from parallel losses is	226 ms
-	Confinement time from perpendicular losses is	194 ms
+	Confinement time from perpendicular losses is	187 ms
 	Confinement time from charge-exchange losses is	286 ms
 
 Particle (Ion) Confinement Time ~= 214 ms

@@ -108,8 +108,8 @@ class MirrorPlasma {
 		double KineticEnergy() const;
 		double ThermalEnergy() const;
 
-		void PrintReport(std::map<std::string, double>* parameterMap = nullptr, int currentRun = 1, int totalRun = 1);
-		void WriteNetCDFReport(std::map<std::string, double>* parameterMap = nullptr, int currentRun = 1, int totalRun = 1);
+		void PrintReport(const std::map<std::string, double>* parameterMap = nullptr, int currentRun = 1, int totalRun = 1);
+		void WriteNetCDFReport(const std::map<std::string, double>* parameterMap = nullptr, int currentRun = 1, int totalRun = 1);
 
 		void InitialiseNetCDF();
 		void WriteTimeslice( double T );
@@ -229,6 +229,9 @@ class MirrorPlasma {
 		double CBCapacitance,CBInternalResistance;
 		double CBLineInductance,CBLineResistance;
 		double CBChargedVoltage;
+
+		double ExhaustRadius;
+
 };
 
 

@@ -292,7 +292,7 @@ void BatchRunner::runBatchSolve()
 
 	totalRuns = vectorOfMaps.size();
 
-	if ( totalRuns > 1 && OutputFile == "" )
+	if ( totalRuns > 1 && OutputFile == ""  && NetcdfOutputFile == "")
 		throw std::invalid_argument("[error] Output file name is needed when running a batch solve");
 
 	if ( totalRuns > 1 && isTimeDependent )
@@ -300,6 +300,7 @@ void BatchRunner::runBatchSolve()
 
 #ifdef USE_OPENMP
 	#pragma omp parallel for
+	std::cerr << "Using parallelization" << std::endl;
 #endif
 	for ( int n = 0; n < totalRuns; n++ )
 	{
