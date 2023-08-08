@@ -43,6 +43,10 @@ class MCTransConfig {
 			bool FWSolve = ( ReferencePlasmaState->ExternalResistance > 0.0 );
 			bool CBSolve = ( ReferencePlasmaState->CapBank );
 
+#ifdef DEBUG
+			std::cerr << "MachSolve = " << MachSolve << " ; TempSolve = " << TempSolve << " ; FWSolve = " << FWSolve << " ; CBSolve = " << CBSolve << std::endl;
+#endif
+
 			if ( CBSolve )
 				Type = CapBankSolve;
 			else {

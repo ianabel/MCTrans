@@ -156,6 +156,8 @@ MirrorPlasma::MirrorPlasma(const std::map<std::string, double>& parameterMap, st
 			isTimeDependent = true;
 			time = 0.0;
 		}
+	} else {
+		ExternalResistance = 0.0;
 	}
 
 	CapBank = false;

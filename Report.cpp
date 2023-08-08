@@ -21,7 +21,7 @@ void PrintWithUnit( std::ostream& out, double value, std::string const& unit )
 	return;
 }
 
-void MirrorPlasma::PrintReport(std::map<std::string, double>* parameterMap, int currentRun, int totalRuns)
+void MirrorPlasma::PrintReport(const std::map<std::string, double>* parameterMap, int currentRun, int totalRuns)
 {
 	std::ostream *p_out;
 	if ( OutputFile == "" )

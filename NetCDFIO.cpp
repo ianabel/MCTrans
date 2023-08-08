@@ -186,7 +186,7 @@ void MirrorPlasma::ReadVoltageFile( std::string const& fName )
 	VoltageFunction = std::make_unique<interpolant>( std::move( time_data ), std::move( volt_data ) );
 }
 
-void MirrorPlasma::WriteNetCDFReport(std::map<std::string, double>* parameterMap, int currentRun, int totalRuns)
+void MirrorPlasma::WriteNetCDFReport(const std::map<std::string, double>* parameterMap, int currentRun, int totalRuns)
 {
 
 	/*
