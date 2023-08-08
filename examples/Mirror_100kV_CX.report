@@ -2,7 +2,7 @@ The plasma is made up of electrons, Hydrogen and trace, radiating, impurities
 Electron Density is 1e+19 m^-3
 Ion Density is 1e+19 m^-3
 
-Electron Temperature is 1.05 keV
+Electron Temperature is 1.04 keV
 Ion Temperature is 1.49 keV
 Radius of central cell (first wall) is 0.5 m
 	 Inner radius of the plasma is 0.15 m
@@ -21,7 +21,7 @@ Typical plasma scale lengths are ~ 0.1 m  = 7.62 rho_i
 No auxiliary heating was included in this calculation.
 
 
-Operating Mach number is 5.26
+Operating Mach number is 5.28
 Alfven Mach number is 0.805
 
 Velocity is 1.67e+06 m/s
@@ -39,11 +39,11 @@ Total heat losses is 10.2 kW
 	 Heat Loss from radiation  30.9 W
 
 Total potential drop is 100 kV
-Radial Current Drawn from Power Supply 503 mA
-Power Required (at the plasma) to support rotation 50.3 kW
+Radial Current Drawn from Power Supply 495 mA
+Power Required (at the plasma) to support rotation 49.5 kW
 	 Power Loss from viscous torque  10.2 kW
-	 Power Loss from parallel loss   9.46 kW
-	 Power Loss from charge exchange 30.7 kW
+	 Power Loss from parallel loss   9.27 kW
+	 Power Loss from charge exchange 30.1 kW
 
 Total Stored Energy is 5.53 kJ
  of which 4.38 kJ is kinetic energy in the rotation
@@ -54,24 +54,24 @@ Of which
 	Confinement time from perpendicular losses is	187 ms
 	Confinement time from charge-exchange losses is	286 ms
 
-Particle (Ion) Confinement Time ~= 214 ms
+Particle (Ion) Confinement Time ~= 218 ms
 
-Ion-Electron Temperature Equilibration Time is 44.7 ms
+Ion-Electron Temperature Equilibration Time is 44.3 ms
 
-Plasma must be provided at a rate of 2.21e+18 electrons /s to maintain steady-state
+Plasma must be provided at a rate of 2.17e+18 electrons /s to maintain steady-state
 
-Neutral gas must be provided at a rate of 2.21e+18 particles/s to refuel the plasma
-This leads to a steady-state neutral density of 3.78e+13/m^3
-The level of charge-exchange losses due to the neutrals is 6.6e+18 particles/s lost
-	 This is equivalent to a heat loss rate of 1.58 kW
+Neutral gas must be provided at a rate of 2.17e+18 particles/s to refuel the plasma
+This leads to a steady-state neutral density of 3.71e+13/m^3
+The level of charge-exchange losses due to the neutrals is 6.48e+18 particles/s lost
+	 This is equivalent to a heat loss rate of 1.54 kW
 
 Electrical Properties of the Plasma:
-	Resistance  = 199 kΩ
+	Resistance  = 202 kΩ
 	Capacitance = 876 pF
 
 Dimensionless parameters:
-	 β  = 11.4%
-	 ν* = 0.000252 (ions) 
+	 β  = 11.3%
+	 ν* = 0.000426 (ions) 
 	 ρ* = 0.131
 	 Omega_i tau_ii = 1.28e+05
 

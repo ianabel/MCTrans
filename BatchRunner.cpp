@@ -174,6 +174,8 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 		if ( batch.count( "Voltage" ) != 1 ) {
 			throw std::invalid_argument( "When running a spin-down simulation the initial voltage must be set using the \"Voltage\" parameter" );
 		}
+	} else {
+		ExternalResistanceVals.clear();
 	}
 
 
@@ -238,6 +240,12 @@ BatchRunner::BatchRunner(std::string const& batchFile)
 	// Neutral Density
 	readParameterFromFile(batch, "NeutralDensity", NeutralDensityVals, false, 0.0, true);
 
+	// Exhaust Radius
+	if ( batch.count( "ExhaustRadius" ) == 1 ) 
+		readParameterFromFile( batch, "ExhaustRadius", ExhaustRadiusVals, false, 0.0, false);
+	else 
+		ExhaustRadiusVals.clear();
+
 	// Voltage Trace
 	if ( batch.count( "VoltageTrace" ) == 1 ) {
 		VoltageTrace = batch.at( "VoltageTrace" ).as_string();
@@ -291,20 +299,24 @@ void BatchRunner::runBatchSolve()
 	cartesianProduct(vectorOfMaps, currentMap, ptrsAndNamesToVectors.begin(), ptrsAndNamesToVectors.end());
 
 	totalRuns = vectorOfMaps.size();
+	if ( totalRuns == 1 ) {
+		// Special-case one run becaue of error checking and parallelisation
+		SolveIndividualMirrorPlasma(vectorOfMaps[0], 0);
+	} else {
 
-	if ( totalRuns > 1 && OutputFile == ""  && NetcdfOutputFile == "")
+	if ( OutputFile == "" )
 		throw std::invalid_argument("[error] Output file name is needed when running a batch solve");
 
-	if ( totalRuns > 1 && isTimeDependent )
+	if ( isTimeDependent )
 		throw std::invalid_argument( "[error] Multiple simultaneous time-dependent runs is not currently supported" );
 
 #ifdef USE_OPENMP
-	#pragma omp parallel for
-	std::cerr << "Using parallelization" << std::endl;
+#pragma omp parallel for
 #endif
-	for ( int n = 0; n < totalRuns; n++ )
-	{
-		SolveIndividualMirrorPlasma(vectorOfMaps[n], n);
+		for ( int n = 0; n < totalRuns; n++ )
+		{
+			SolveIndividualMirrorPlasma(vectorOfMaps[n], n);
+		}
 	}
 #ifdef DEBUG
 	std::cerr << "Total cases run:" << vectorOfMaps.size() << std::endl;
@@ -344,7 +356,7 @@ void BatchRunner::readParameterFromFile(toml::value batch, std::string configNam
 	ptrsAndNamesToVectors.push_back(std::make_pair(&parameterVector,configName));
 }
 
-void BatchRunner::SolveIndividualMirrorPlasma(std::map<std::string, double> parameterMap, int currentRun)
+void BatchRunner::SolveIndividualMirrorPlasma(std::map<std::string, double> const& parameterMap, int currentRun)
 {
 	std::shared_ptr< MirrorPlasma > pReferencePlasmaState = std::make_shared<MirrorPlasma>( parameterMap,FuelName,ReportThrust,IncludeAlphaHeating,ReportNuclearDiagnostics, AmbipolarPhi, Collisional, IncludeCXLosses, OutputFile, NetcdfOutputFile, VoltageTrace);
 	

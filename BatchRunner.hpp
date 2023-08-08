@@ -16,7 +16,7 @@ public:
 	void runBatchSolve();
 private:
 	// solving function. Builds the mirrorplasma object, excecutes a solve and prints the report
-	void SolveIndividualMirrorPlasma(std::map<std::string, double> parameterMap, int currentRun);
+	void SolveIndividualMirrorPlasma(std::map<std::string, double> const& parameterMap, int currentRun);
 
 	// Catchall function which takes parameters from the toml object and populates the parameter vectors
 	void readParameterFromFile(toml::value batch, std::string configName, std::vector<double>& parameterVector, bool mandatory = true, double defaultValue = 0.0, bool strictlyPositive = false);
@@ -47,6 +47,7 @@ private:
 	std::vector<double> NeutralDensityVals;
 	std::vector<double> ExternalResistanceVals;
 	std::vector<double> CBCapVals,CBRVals,CBLineRVals,CBLineLVals,CBVoltageVals;
+	std::vector<double> ExhaustRadiusVals;
 
 	std::optional<bool> IncludeAlphaHeating = std::nullopt;
 	std::optional<bool> ReportNuclearDiagnostics = std::nullopt;

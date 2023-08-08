@@ -2,6 +2,8 @@
 # A simple makefile for compiling on linux
 # if you are following the guide in the README
 
+# Use clang on OSX
+CXX = /usr/bin/clang++
 
 # Sundials from homebrew
 SUNDIALS_DIR = $(shell brew --prefix)/opt/sundials/
@@ -10,7 +12,19 @@ BOOST_DIR = $(shell brew --prefix)/opt/boost/
 # Netcdf from homebrew
 NETCDF_DIR = $(shell brew --prefix)/opt/netcdf/
 
+# Where we're going to compile it
+NETCDF_CXX_DIR = $(realpath ./netcdf-cxx4)
+NETCDF_CXX_LIB = netcdf-cxx4
+
 TOML11_DIR = ./toml11/
 
+# for OpenMP parallelism
+# first do 'brew install libomp'
+#
+# Uncomment following lines
+#
+# OMP_DIR = $(shell brew --prefix)/opt/libomp
+# CXXFLAGS += -DUSE_OPENMP -Xpreprocessor -fopenmp -I$(OMP_DIR)/include
+# EXTRA_LD_FLAGS = -Wl,-rpath,/usr/local/opt/libomp/lib -L$(OMP_DIR)/lib -lomp
 
 

@@ -47,7 +47,7 @@ Total potential drop is 7.5 MV
 Radial Current Drawn from Power Supply 271 mA
 Power Required (at the plasma) to support rotation 2.03 MW
 	 Power Loss from viscous torque  366 kW
-	 Power Loss from parallel loss   1.67 MW
+	 Power Loss from parallel loss   1.66 MW
 	 Power Loss from charge exchange was not included. 
 
 Total Stored Energy is 12.4 MJ
@@ -55,26 +55,26 @@ Total Stored Energy is 12.4 MJ
       and 1.47 MJ is thermal energy of the plasma
 Energy Confinement Time is 1.58 s
 Of which
-	Confinement time from parallel losses is	2.2 s
+	Confinement time from parallel losses is	2.21 s
 	Confinement time from perpendicular losses is	13.1 s
 
 Particle (Ion) Confinement Time ~= 13 s
 
 Ion-Electron Temperature Equilibration Time is 158 ms
 
-Plasma must be provided at a rate of 2.36e+19 electrons /s to maintain steady-state
+Plasma must be provided at a rate of 2.35e+19 electrons /s to maintain steady-state
 
-Neutral gas must be provided at a rate of 2.36e+19 particles/s to refuel the plasma
-This leads to a steady-state neutral density of 1.4e+12/m^3
+Neutral gas must be provided at a rate of 2.35e+19 particles/s to refuel the plasma
+This leads to a steady-state neutral density of 1.39e+12/m^3
 Steady-state charge exchange losses were not included.
 
 Electrical Properties of the Plasma:
-	Resistance  = 27.6 MΩ
+	Resistance  = 27.7 MΩ
 	Capacitance = 389 pF
 
 Dimensionless parameters:
 	 β  = 8.05%
-	 ν* = 0.000384 (ions) 
+	 ν* = 0.000548 (ions) 
 	 ρ* = 0.0181
 	 Omega_i tau_ii = 1.02e+06
 
@@ -87,5 +87,5 @@ Fusion Power Output as Alphas:   0.672 MW
 Neutron Wall Loading is 0.335 MW/m^2
 Total Thermal Power Output is 4.28 MW
  === Figures of Merit === 
-	 Q_scientific (not including Tritium Breeding or efficiencies ) = 1.65
+	 Q_scientific (not including Tritium Breeding or efficiencies ) = 1.66
 	 Q_engineering (including Tritium Breeding at TBR of 1.0 and assuming efficiency 0.75 for electric drive of rotation ) = 1.58

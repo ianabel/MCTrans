@@ -12,3 +12,4 @@ Makefile.local
 toml11/
 sundials/
 gmon.out
+unit_test_suite
