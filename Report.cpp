@@ -120,14 +120,21 @@ void MirrorPlasma::PrintReport(const std::map<std::string, double>* parameterMap
 	}
 	else
 		out << "No radiation losses were included." << std::endl;
+	out << std::endl;	
 
-	if ( IncludeCXLosses ) {
-		out << "Heat loss due to charge exchange with neutrals is ";
-		PrintWithUnit( out, CXHeatLosses()*PlasmaVolume(), "W" ); out << std::endl;
-	} else {
-		out << "Losses due to charge exchange were not included" << std::endl;
-	}
-
+	out << "Total heat losses is ";	
+	double TotalHeatLosses = ElectronHeatLosses() + IonHeatLosses();	
+	PrintWithUnit( out, TotalHeatLosses * PlasmaVolume(),"W" ); out << std::endl;	
+	out << "\t Heat Loss from classical ion loss  "; PrintWithUnit( out, ClassicalIonHeatLoss()*PlasmaVolume(), "W" ); out << std::endl;	
+	out << "\t Heat Loss from parallel ion loss  "; PrintWithUnit( out, ParallelIonHeatLoss()*PlasmaVolume(), "W" ); out << std::endl;	
+	if ( IncludeCXLosses ) {	
+		out << "\t Heat loss due to charge exchange with neutrals  ";	
+		PrintWithUnit( out, CXHeatLosses()*PlasmaVolume(), "W" ); out << std::endl;	
+	} else {	
+		out << "\t Heat losses due to charge exchange were not included" << std::endl;	
+	}	
+	out << "\t Heat Loss from parallel electron loss  "; PrintWithUnit( out, ParallelElectronHeatLoss()*PlasmaVolume(), "W" ); out << std::endl;	
+	out << "\t Heat Loss from radiation  "; PrintWithUnit( out, RadiationLosses()*PlasmaVolume(), "W" ); out << std::endl;
 	out << std::endl;
 		
 	out << "Total potential drop is ";

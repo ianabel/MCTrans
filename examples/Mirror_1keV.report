@@ -30,7 +30,13 @@ Angular Velocity at the plasma centre (R = 0.25 m) is 6.03e+06 /s
 Viscous Heating is 9.83 kW
 Bremsstrahlung losses are 30.2 W
 Cyclotron emission losses are 587 µW
-Losses due to charge exchange were not included
+
+Total heat losses is 9.83 kW
+	 Heat Loss from classical ion loss  2.76 kW
+	 Heat Loss from parallel ion loss  2.42 kW
+	 Heat losses due to charge exchange were not included
+	 Heat Loss from parallel electron loss  4.48 kW
+	 Heat Loss from radiation  30.2 W
 
 Total potential drop is 90.4 kV
 Radial Current Drawn from Power Supply 252 mA
