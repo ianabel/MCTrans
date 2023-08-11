@@ -549,7 +549,11 @@ double MirrorPlasma::DebyeLength() const
 
 double MirrorPlasma::NuStar() const
 {
-	return PlasmaLength / ( IonCollisionTime() * SoundSpeed() );
+	// Ion thermal speed
+	// v_th_i = sqrt(2 * k_B T_i / m_i)
+	double IonMass = IonSpecies.Mass * ProtonMass;
+	double ThermalIonSpeed = ::sqrt( 2 * IonTemperature * ReferenceTemperature / IonMass );
+	return PlasmaLength / ( IonCollisionTime() * ThermalIonSpeed );
 }
 
 

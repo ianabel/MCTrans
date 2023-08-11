@@ -8,6 +8,7 @@ Radius of central cell (first wall) is 0.5 m
 	 Inner radius of the plasma is 0.15 m
 	 Outer radius of the plasma is 0.35 m
 Outer Radius of the plasma at the mirror throat is 0.111 m
+Exhaust radius is  0.25 m
 
 Axial Length of the plasma is 0.6 m
 Plasma Volume is 0.188 m^3
@@ -69,7 +70,7 @@ Electrical Properties of the Plasma:
 
 Dimensionless parameters:
 	 β  = 12%
-	 ν* = 0.000378 (ions) 
+	 ν* = 0.000217 (ions) 
 	 ρ* = 0.136
 	 Omega_i tau_ii = 1.43e+05
 

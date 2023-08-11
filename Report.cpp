@@ -68,6 +68,7 @@ void MirrorPlasma::PrintReport(const std::map<std::string, double>* parameterMap
 	out << "\t Outer radius of the plasma is " << PlasmaColumnWidth + AxialGapDistance << " m" << std::endl;
 
 	out << "Outer Radius of the plasma at the mirror throat is " << (PlasmaColumnWidth + AxialGapDistance) /::sqrt( MirrorRatio ) << " m" << std::endl;
+	out << "Exhaust radius is  " << ExhaustRadius << " m" << std::endl;
 	out << std::endl;
 	out << "Axial Length of the plasma is " << PlasmaLength << " m" << std::endl;
 	out << "Plasma Volume is " << PlasmaVolume() << " m^3" << std::endl;
