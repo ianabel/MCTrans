@@ -311,7 +311,6 @@ void BatchRunner::runBatchSolve()
 		throw std::invalid_argument( "[error] Multiple simultaneous time-dependent runs is not currently supported" );
 
 #ifdef USE_OPENMP
-	std::cerr << "Running in parallel" << std::endl;
 #pragma omp parallel for
 #endif
 		for ( int n = 0; n < totalRuns; n++ )
