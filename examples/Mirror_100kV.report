@@ -2,8 +2,8 @@ The plasma is made up of electrons, Hydrogen and trace, radiating, impurities
 Electron Density is 1e+19 m^-3
 Ion Density is 1e+19 m^-3
 
-Electron Temperature is 1.06 keV
-Ion Temperature is 1.61 keV
+Electron Temperature is 1.05 keV
+Ion Temperature is 1.59 keV
 Radius of central cell (first wall) is 0.5 m
 	 Inner radius of the plasma is 0.15 m
 	 Outer radius of the plasma is 0.35 m
@@ -17,64 +17,64 @@ Magnetic Field in the Central Cell is 0.3 T
 Magnetic Field at the Mirror Throat is 3 T
 
 Ion Larmor Radius in the central cell is 0.0136 m 
-Typical plasma scale lengths are ~ 0.1 m  = 7.33 rho_i
+Typical plasma scale lengths are ~ 0.1 m  = 7.37 rho_i
 
 No auxiliary heating was included in this calculation.
 
 
-Operating Mach number is 5.22
+Operating Mach number is 5.25
 Alfven Mach number is 0.805
 
 Velocity is 1.67e+06 m/s
 Angular Velocity at the plasma centre (R = 0.25 m) is 6.67e+06 /s
 
-Viscous Heating is 9.85 kW
-Bremsstrahlung losses are 31.1 W
-Cyclotron emission losses are 682 µW
+Viscous Heating is 9.89 kW
+Bremsstrahlung losses are 31 W
+Cyclotron emission losses are 669 µW
 
-Total heat losses is 9.85 kW
-	 Heat Loss from classical ion loss  3.64 kW
-	 Heat Loss from parallel ion loss  2.59 kW
+Total heat losses is 9.89 kW
+	 Heat Loss from classical ion loss  3.81 kW
+	 Heat Loss from parallel ion loss  2.48 kW
 	 Heat losses due to charge exchange were not included
-	 Heat Loss from parallel electron loss  3.45 kW
-	 Heat Loss from radiation  31.1 W
+	 Heat Loss from parallel electron loss  3.3 kW
+	 Heat Loss from radiation  31 W
 
 Total potential drop is 100 kV
-Radial Current Drawn from Power Supply 210 mA
-Power Required (at the plasma) to support rotation 21 kW
-	 Power Loss from viscous torque  9.85 kW
-	 Power Loss from parallel loss   11.1 kW
+Radial Current Drawn from Power Supply 206 mA
+Power Required (at the plasma) to support rotation 20.6 kW
+	 Power Loss from viscous torque  9.89 kW
+	 Power Loss from parallel loss   10.7 kW
 	 Power Loss from charge exchange was not included. 
 
-Total Stored Energy is 5.59 kJ
+Total Stored Energy is 5.58 kJ
  of which 4.38 kJ is kinetic energy in the rotation
-      and 1.21 kJ is thermal energy of the plasma
-Energy Confinement Time is 123 ms
+      and 1.2 kJ is thermal energy of the plasma
+Energy Confinement Time is 121 ms
 Of which
-	Confinement time from parallel losses is	200 ms
-	Confinement time from perpendicular losses is	193 ms
+	Confinement time from parallel losses is	207 ms
+	Confinement time from perpendicular losses is	177 ms
 
-Particle (Ion) Confinement Time ~= 734 ms
+Particle (Ion) Confinement Time ~= 670 ms
 
-Ion-Electron Temperature Equilibration Time is 45.6 ms
+Ion-Electron Temperature Equilibration Time is 45 ms
 
-Plasma must be provided at a rate of 2.57e+18 electrons /s to maintain steady-state
+Plasma must be provided at a rate of 2.81e+18 electrons /s to maintain steady-state
 
-Neutral gas must be provided at a rate of 2.57e+18 particles/s to refuel the plasma
-This leads to a steady-state neutral density of 4.38e+13/m^3
+Neutral gas must be provided at a rate of 2.81e+18 particles/s to refuel the plasma
+This leads to a steady-state neutral density of 4.8e+13/m^3
 Steady-state charge exchange losses were not included.
 
 Electrical Properties of the Plasma:
-	Resistance  = 476 kΩ
+	Resistance  = 486 kΩ
 	Capacitance = 876 pF
 
 Dimensionless parameters:
-	 β  = 12%
-	 ν* = 0.000217 (ions) 
+	 β  = 11.8%
+	 ν* = 0.000222 (ions) 
 	 ρ* = 0.136
-	 Omega_i tau_ii = 1.43e+05
+	 Omega_i tau_ii = 1.41e+05
 
 Fusion Triple Product 
-	 n T τ = 1.98e+18 keV s /m^3
+	 n T τ = 1.93e+18 keV s /m^3
 
 No Nuclear Reaction Diagnostics for Ion species: Hydrogen

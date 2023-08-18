@@ -2,8 +2,8 @@ The plasma is made up of electrons, Hydrogen and trace, radiating, impurities
 Electron Density is 1e+19 m^-3
 Ion Density is 1e+19 m^-3
 
-Electron Temperature is 1.04 keV
-Ion Temperature is 1.49 keV
+Electron Temperature is 1.03 keV
+Ion Temperature is 1.46 keV
 Radius of central cell (first wall) is 0.5 m
 	 Inner radius of the plasma is 0.15 m
 	 Outer radius of the plasma is 0.35 m
@@ -16,67 +16,67 @@ Plasma Volume is 0.188 m^3
 Magnetic Field in the Central Cell is 0.3 T
 Magnetic Field at the Mirror Throat is 3 T
 
-Ion Larmor Radius in the central cell is 0.0131 m 
-Typical plasma scale lengths are ~ 0.1 m  = 7.62 rho_i
+Ion Larmor Radius in the central cell is 0.013 m 
+Typical plasma scale lengths are ~ 0.1 m  = 7.69 rho_i
 
 No auxiliary heating was included in this calculation.
 
 
-Operating Mach number is 5.28
+Operating Mach number is 5.3
 Alfven Mach number is 0.805
 
 Velocity is 1.67e+06 m/s
 Angular Velocity at the plasma centre (R = 0.25 m) is 6.67e+06 /s
 
 Viscous Heating is 10.2 kW
-Bremsstrahlung losses are 30.9 W
-Cyclotron emission losses are 650 µW
+Bremsstrahlung losses are 30.7 W
+Cyclotron emission losses are 634 µW
 
 Total heat losses is 10.2 kW
-	 Heat Loss from classical ion loss  3.48 kW
-	 Heat Loss from parallel ion loss  2.1 kW
-	 Heat loss due to charge exchange with neutrals  1.54 kW
-	 Heat Loss from parallel electron loss  2.88 kW
-	 Heat Loss from radiation  30.9 W
+	 Heat Loss from classical ion loss  3.62 kW
+	 Heat Loss from parallel ion loss  1.97 kW
+	 Heat loss due to charge exchange with neutrals  1.67 kW
+	 Heat Loss from parallel electron loss  2.7 kW
+	 Heat Loss from radiation  30.7 W
 
 Total potential drop is 100 kV
-Radial Current Drawn from Power Supply 495 mA
-Power Required (at the plasma) to support rotation 49.5 kW
+Radial Current Drawn from Power Supply 520 mA
+Power Required (at the plasma) to support rotation 52 kW
 	 Power Loss from viscous torque  10.2 kW
-	 Power Loss from parallel loss   9.27 kW
-	 Power Loss from charge exchange 30.1 kW
+	 Power Loss from parallel loss   8.71 kW
+	 Power Loss from charge exchange 33 kW
 
-Total Stored Energy is 5.53 kJ
+Total Stored Energy is 5.51 kJ
  of which 4.38 kJ is kinetic energy in the rotation
-      and 1.15 kJ is thermal energy of the plasma
-Energy Confinement Time is 113 ms
+      and 1.13 kJ is thermal energy of the plasma
+Energy Confinement Time is 110 ms
 Of which
-	Confinement time from parallel losses is	230 ms
-	Confinement time from perpendicular losses is	187 ms
-	Confinement time from charge-exchange losses is	291 ms
+	Confinement time from parallel losses is	242 ms
+	Confinement time from perpendicular losses is	171 ms
+	Confinement time from charge-exchange losses is	265 ms
 
-Particle (Ion) Confinement Time ~= 218 ms
+Particle (Ion) Confinement Time ~= 199 ms
 
-Ion-Electron Temperature Equilibration Time is 44.3 ms
+Ion-Electron Temperature Equilibration Time is 43.7 ms
 
-Plasma must be provided at a rate of 2.17e+18 electrons /s to maintain steady-state
+Plasma must be provided at a rate of 2.38e+18 electrons /s to maintain steady-state
 
-Neutral gas must be provided at a rate of 2.17e+18 particles/s to refuel the plasma
-This leads to a steady-state neutral density of 3.71e+13/m^3
-The level of charge-exchange losses due to the neutrals is 6.48e+18 particles/s lost
-	 This is equivalent to a heat loss rate of 1.54 kW
+Neutral gas must be provided at a rate of 2.38e+18 particles/s to refuel the plasma
+This leads to a steady-state neutral density of 4.07e+13/m^3
+The level of charge-exchange losses due to the neutrals is 7.11e+18 particles/s lost
+	 This is equivalent to a heat loss rate of 1.67 kW
 
 Electrical Properties of the Plasma:
-	Resistance  = 202 kΩ
+	Resistance  = 192 kΩ
 	Capacitance = 876 pF
 
 Dimensionless parameters:
-	 β  = 11.3%
-	 ν* = 0.000252 (ions) 
-	 ρ* = 0.131
-	 Omega_i tau_ii = 1.28e+05
+	 β  = 11.2%
+	 ν* = 0.00026 (ions) 
+	 ρ* = 0.13
+	 Omega_i tau_ii = 1.25e+05
 
 Fusion Triple Product 
-	 n T τ = 1.68e+18 keV s /m^3
+	 n T τ = 1.61e+18 keV s /m^3
 
 No Nuclear Reaction Diagnostics for Ion species: Hydrogen

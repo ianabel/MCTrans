@@ -476,7 +476,9 @@ double MirrorPlasma::ClassicalIonHeatLoss() const
 	double kappa_perp = 2.0 * IonDensity * IonTemperature * ReferenceTemperature * ReferenceDensity / ( IonMass * omega_ci * omega_ci * IonCollisionTime() );
 	double L_T = ( PlasmaColumnWidth / 2.0 );
 	// Power density in W/m^3
-	return kappa_perp * IonTemperature * ReferenceTemperature /( L_T * L_T );
+	double conductiveHeatLoss = kappa_perp * IonTemperature * ReferenceTemperature /( L_T * L_T );
+	double convectiveHeatLoss = ( 3.0/2.0 ) * IonTemperature * ReferenceTemperature * ClassicalIonParticleLosses();
+	return conductiveHeatLoss + convectiveHeatLoss;
 }
 
 double MirrorPlasma::ClassicalElectronHeatLoss() const
@@ -485,7 +487,9 @@ double MirrorPlasma::ClassicalElectronHeatLoss() const
 	double kappa_perp = 4.66 * ElectronDensity * ElectronTemperature * ReferenceTemperature * ReferenceDensity / ( ElectronMass * omega_ce * omega_ce * ElectronCollisionTime() );
 	double L_T = ( PlasmaColumnWidth / 2.0 );
 	// Power density in W/m^3
-	return kappa_perp * ElectronTemperature * ReferenceTemperature /( L_T * L_T );
+	double conductiveHeatLoss = kappa_perp * ElectronTemperature * ReferenceTemperature /( L_T * L_T );
+	double convectiveHeatLoss = ( 3.0/2.0 ) * ElectronTemperature * ReferenceTemperature * ClassicalElectronParticleLosses();
+	return conductiveHeatLoss + convectiveHeatLoss;
 }
 
 double MirrorPlasma::ClassicalHeatLosses() const
@@ -599,8 +603,10 @@ double MirrorPlasma::ClassicalElectronParticleLosses() const
 {
 	double omega_ce = ElectronCyclotronFrequency();
 	double L_n = ( PlasmaColumnWidth / 2.0 );
+	double L_Te = ( PlasmaColumnWidth / 2.0 );
+	double L_Ti = ( PlasmaColumnWidth / 2.0 );
 	double D = ElectronTemperature * ReferenceTemperature / ( ElectronMass * omega_ce * omega_ce * ElectronCollisionTime() );
-	return ( D / ( L_n * L_n ) ) * ElectronDensity * ReferenceDensity;
+	return ( D * ( ( 1.0 + IonTemperature / ( IonSpecies.Charge * ElectronTemperature ) ) * ( 1.0/L_n ) - 1.0 / ( 2.0*L_Te ) + 1.0 / ( IonSpecies.Charge * L_Ti ) ) / L_n ) * ElectronDensity * ReferenceDensity;
 }
 
 double MirrorPlasma::ClassicalIonParticleLosses() const
