@@ -13,12 +13,12 @@ from concurrent.futures import ProcessPoolExecutor
 # Change the font size for all plots
 mpl.rcParams.update({'lines.linewidth': 2})
 labelsize = 15
-reset = True
+reset = False
 
-name = 'reactor'
-variable = 'electronDensity'
+name = 'CMFX'
+variable = 'centralField'
 folder = f'/Users/Nick/programs/MCTrans/misc_runs/batch_runs/{name}/vary_{variable}'
-folder = f'/Users/Nick/programs/MCTrans/misc_runs/batch_runs/large_sweep_exhaust_throat'
+# folder = f'/Users/Nick/programs/MCTrans/misc_runs/batch_runs/large_sweep_exhaust_throat'
 files = [f'{folder}/{file}' for file in os.listdir(folder) if file.endswith('.out')]
 
 # for filename in files:
@@ -50,6 +50,7 @@ columns = ['voltage',
            'a',
            'L',
            'rmin',
+           'exhaustRadius',
            'tau_E',
            'Mach',
            'rho_star',
@@ -62,204 +63,210 @@ M_A_max = 1.25
 rho_star_max = 0.1
 nu_star_max = 0.1
 thermalPower_min = 50 # MW
-Qsci_min = 1
+Qsci_min = 5
 voltage_max = 5000
 
 def getResult(filepath):
     result = pd.DataFrame(columns=columns)
 
     with open(filepath, encoding = 'utf8') as f:
-        voltage, electronDensity, centralField, throatField, fieldRatio, rotationPower, viscousTorquePower, parallelLossPower, chargeExchangePower, totalHeatLoss, classicalIonHeatLoss, parallelIonHeatLoss, chargeExchangeHeatLoss, parallelElectronHeatLoss, radiationLoss, MachAlfven, Q_scientific, Q_scientific_equiv, ionTemperature, electronTemperature, temperatureRatio, rho_i, a, L, rmin, tau_E, Mach, rho_star, nu_star, tripleProduct, thermalPower = None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None
+        voltage, electronDensity, centralField, throatField, fieldRatio, rotationPower, viscousTorquePower, parallelLossPower, chargeExchangePower, totalHeatLoss, classicalIonHeatLoss, parallelIonHeatLoss, chargeExchangeHeatLoss, parallelElectronHeatLoss, radiationLoss, MachAlfven, Q_scientific, Q_scientific_equiv, ionTemperature, electronTemperature, temperatureRatio, rho_i, a, L, rmin, exhaustRadius, tau_E, Mach, rho_star, nu_star, tripleProduct, thermalPower = None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None
         lines = f.readlines()
         for line in lines:
-            line = line.strip()
+            try:
+                line = line.strip()
 
-            if 'Total potential drop is' in line:
-                voltage = float(line.split(' ')[4]) # MV
-                units = line.split(' ')[5]
-                if 'MV' in units:
-                    voltage *= 1000
+                if 'Total potential drop is' in line:
+                    voltage = float(line.split(' ')[4]) # MV
+                    units = line.split(' ')[5]
+                    if 'MV' in units:
+                        voltage *= 1000
 
-            elif 'Electron Density is' in line:
-                electronDensity = float(line.split(' ')[3]) # m^-3
+                elif 'Electron Density is' in line:
+                    electronDensity = float(line.split(' ')[3]) # m^-3
 
-            elif 'Magnetic Field in the Central Cell' in line:
-                centralField = float(line.split(' ')[7]) # T
+                elif 'Magnetic Field in the Central Cell' in line:
+                    centralField = float(line.split(' ')[7]) # T
 
-            elif 'Magnetic Field at the Mirror Throat' in line:
-                throatField = float(line.split(' ')[7]) # T
+                elif 'Magnetic Field at the Mirror Throat' in line:
+                    throatField = float(line.split(' ')[7]) # T
 
-            elif 'Power Required (at the plasma) to support rotation' in line:
-                rotationPower = float(line.split(' ')[8])
-                units = line.split(' ')[9].strip()
-                if units == 'W':
-                    rotationPower /= 1e3
-                elif units == 'kW':
-                    rotationPower /= 1e3
-                elif units != 'MW':
-                    print(units)
-
-            elif 'Power Loss from viscous torque' in line:
-                viscousTorquePower = float(line.split(' ')[6])
-                units = line.split(' ')[7].strip()
-                if units == 'W':
-                    viscousTorquePower /= 1e6
-                elif units == 'kW':
-                    viscousTorquePower /= 1e3
-                elif units != 'MW':
-                    print(units)
-
-            elif 'Power Loss from parallel loss' in line:
-                parallelLossPower = float(line.split(' ')[7])
-                units = line.split(' ')[8].strip()
-                if units == 'W':
-                    parallelLossPower /= 1e6
-                elif units == 'kW':
-                    parallelLossPower /= 1e3
-                elif units != 'MW':
-                    print(units)
-
-            elif 'Power Loss from charge exchange' in line:
-                if 'was not included' in line:
-                    chargeExchangePower = None
-                else:
-                    chargeExchangePower = float(line.split(' ')[5])
-                    units = line.split(' ')[6].strip()
+                elif 'Power Required (at the plasma) to support rotation' in line:
+                    rotationPower = float(line.split(' ')[8])
+                    units = line.split(' ')[9].strip()
                     if units == 'W':
-                        chargeExchangePower /= 1e6
+                        rotationPower /= 1e3
                     elif units == 'kW':
-                        chargeExchangePower /= 1e3
+                        rotationPower /= 1e3
                     elif units != 'MW':
                         print(units)
 
-            elif 'Total heat losses is' in line:
-                breakpoint()
-                totalHeatLoss = float(line.split(' ')[4])
-                units = line.split(' ')[5].strip()
-                if units == 'W':
-                    totalHeatLoss /= 1e6
-                elif units == 'kW':
-                    totalHeatLoss /= 1e3
-                elif units != 'MW':
-                    print(units)
-
-            elif 'Heat Loss from classical ion loss' in line:
-                classicalIonHeatLoss = float(line.split(' ')[8])
-                units = line.split(' ')[9].strip()
-                if units == 'W':
-                    classicalIonHeatLoss /= 1e6
-                elif units == 'kW':
-                    classicalIonHeatLoss /= 1e3
-                elif units != 'MW':
-                    print(units)
-
-            elif 'Heat Loss from parallel ion loss' in line:
-                parallelIonHeatLoss = float(line.split(' ')[8])
-                units = line.split(' ')[9].strip()
-                if units == 'W':
-                    parallelIonHeatLoss /= 1e6
-                elif units == 'kW':
-                    parallelIonHeatLoss /= 1e3
-                elif units != 'MW':
-                    print(units)
-
-            elif 'Heat loss due to charge exchange' in line:
-                if 'was not included' in line:
-                    chargeExchangeHeatLoss = None
-                else:
-                    chargeExchangeHeatLoss = float(line.split(' ')[9])
-                    units = line.split(' ')[10].strip()
+                elif 'Power Loss from viscous torque' in line:
+                    viscousTorquePower = float(line.split(' ')[6])
+                    units = line.split(' ')[7].strip()
                     if units == 'W':
-                        chargeExchangeHeatLoss /= 1e6
+                        viscousTorquePower /= 1e6
                     elif units == 'kW':
-                        chargeExchangeHeatLoss /= 1e3
+                        viscousTorquePower /= 1e3
                     elif units != 'MW':
                         print(units)
 
-            elif 'Heat Loss from parallel electron loss' in line:
-                parallelElectronHeatLoss = float(line.split(' ')[8])
-                units = line.split(' ')[9].strip()
-                if units == 'W':
-                    parallelElectronHeatLoss /= 1e6
-                elif units == 'kW':
-                    parallelElectronHeatLoss /= 1e3
-                elif units != 'MW':
-                    print(units)
+                elif 'Power Loss from parallel loss' in line:
+                    parallelLossPower = float(line.split(' ')[7])
+                    units = line.split(' ')[8].strip()
+                    if units == 'W':
+                        parallelLossPower /= 1e6
+                    elif units == 'kW':
+                        parallelLossPower /= 1e3
+                    elif units != 'MW':
+                        print(units)
 
-            elif 'Heat Loss from radiation' in line:
-                radiationLoss = float(line.split(' ')[6])
-                units = line.split(' ')[7].strip()
-                if units == 'W':
-                    radiationLoss /= 1e6
-                elif units == 'kW':
-                    radiationLoss /= 1e3
-                elif units != 'MW':
-                    print(units)
+                elif 'Power Loss from charge exchange' in line:
+                    if 'was not included' in line:
+                        chargeExchangePower = None
+                    else:
+                        chargeExchangePower = float(line.split(' ')[5])
+                        units = line.split(' ')[6].strip()
+                        if units == 'W':
+                            chargeExchangePower /= 1e6
+                        elif units == 'kW':
+                            chargeExchangePower /= 1e3
+                        elif units != 'MW':
+                            print(units)
 
-            elif 'Alfven Mach number is' in line:
-                MachAlfven = float(line.split(' ')[4])
+                elif 'Total heat losses is' in line:
+                    totalHeatLoss = float(line.split(' ')[-2])
+                    units = line.split(' ')[-1].strip()
+                    if units == 'W':
+                        totalHeatLoss /= 1e6
+                    elif units == 'kW':
+                        totalHeatLoss /= 1e3
+                    elif units != 'MW':
+                        print(units)
 
-            elif 'Q_scientific' in line:
-                Q_scientific = float(line.split(' ')[9])
+                elif 'Heat Loss from classical ion loss' in line:
+                    classicalIonHeatLoss = float(line.split(' ')[-2])
+                    units = line.split(' ')[-1].strip()
+                    if units == 'W':
+                        classicalIonHeatLoss /= 1e6
+                    elif units == 'kW':
+                        classicalIonHeatLoss /= 1e3
+                    elif units != 'MW':
+                        print(units)
 
-            elif ' Q_(Scientific DT equivalent)' in line:
-                Q_scientific_equiv = float(line.split(' ')[5])
+                elif 'Heat Loss from parallel ion loss' in line:
+                    parallelIonHeatLoss = float(line.split(' ')[-2])
+                    units = line.split(' ')[-1].strip()
+                    if units == 'W':
+                        parallelIonHeatLoss /= 1e6
+                    elif units == 'kW':
+                        parallelIonHeatLoss /= 1e3
+                    elif units != 'MW':
+                        print(units)
 
-            elif 'Ion Temperature is' in line:
-                ionTemperature = float(line.split(' ')[3]) # keV
-                units = line.split(' ')[4].strip()
-                if units == 'eV':
-                    ionTemperature /= 1000
-                elif units == 'MeV':
-                    ionTemperature *= 1000
+                elif 'Heat loss due to charge exchange' in line:
+                    if 'was not included' in line:
+                        chargeExchangeHeatLoss = None
+                    else:
+                        chargeExchangeHeatLoss = float(line.split(' ')[-2])
+                        units = line.split(' ')[-1].strip()
+                        if units == 'W':
+                            chargeExchangeHeatLoss /= 1e6
+                        elif units == 'kW':
+                            chargeExchangeHeatLoss /= 1e3
+                        elif units != 'MW':
+                            print(units)
 
-            elif 'Electron Temperature is' in line:
-                electronTemperature = float(line.split(' ')[3]) # keV
-                units = line.split(' ')[4].strip()
-                if units == 'eV':
-                    electronTemperature /= 1000
-                elif units == 'MeV':
-                    electronTemperature *= 1000
+                elif 'Heat Loss from parallel electron loss' in line:
+                    parallelElectronHeatLoss = float(line.split(' ')[-2])
+                    units = line.split(' ')[-1].strip()
+                    if units == 'W':
+                        parallelElectronHeatLoss /= 1e6
+                    elif units == 'kW':
+                        parallelElectronHeatLoss /= 1e3
+                    elif units != 'MW':
+                        print(units)
 
-            elif 'Ion Larmor Radius' in line:
-                rho_i = float(line.split(' ')[8])
+                elif 'Heat Loss from radiation' in line:
+                    radiationLoss = float(line.split(' ')[-2])
+                    units = line.split(' ')[-1].strip()
+                    if units == 'W':
+                        radiationLoss /= 1e6
+                    elif units == 'kW':
+                        radiationLoss /= 1e3
+                    elif units != 'MW':
+                        print(units)
 
-            elif 'Typical plasma scale lengths' in line:
-                a = float(line.split(' ')[6])
+                elif 'Alfven Mach number is' in line:
+                    MachAlfven = float(line.split(' ')[4])
 
-            elif 'Energy Confinement Time' in line:
-                tau_E = float(line.split(' ')[4])
-                units = line.split(' ')[5].strip()
-                if units == 'ms':
-                    tau_E /= 1000
+                elif 'Q_scientific' in line:
+                    Q_scientific = float(line.split(' ')[9])
 
-            elif 'PlasmaLength' in line:
-                L = float(line.split(' ')[1])
+                elif ' Q_(Scientific DT equivalent)' in line:
+                    Q_scientific_equiv = float(line.split(' ')[5])
 
-            elif 'Operating Mach number is' in line:
-                Mach = float(line.split(' ')[4])
+                elif 'Ion Temperature is' in line:
+                    ionTemperature = float(line.split(' ')[3]) # keV
+                    units = line.split(' ')[4].strip()
+                    if units == 'eV':
+                        ionTemperature /= 1000
+                    elif units == 'MeV':
+                        ionTemperature *= 1000
 
-            elif 'ρ*' in line:
-                rho_star = float(line.split(' ')[-1])
+                elif 'Electron Temperature is' in line:
+                    electronTemperature = float(line.split(' ')[3]) # keV
+                    units = line.split(' ')[4].strip()
+                    if units == 'eV':
+                        electronTemperature /= 1000
+                    elif units == 'MeV':
+                        electronTemperature *= 1000
 
-            elif 'ν*' in line:
-                nu_star = float(line.split(' ')[-2])
+                elif 'Ion Larmor Radius' in line:
+                    rho_i = float(line.split(' ')[8])
 
-            elif 'n T τ' in line:
-                tripleProduct = float(line.split(' ')[-4])
+                elif 'Typical plasma scale lengths' in line:
+                    a = float(line.split(' ')[6])
 
-            elif 'Total Thermal Power Output is' in line:
-                thermalPower = float(line.split(' ')[-2])
+                elif 'Energy Confinement Time' in line:
+                    tau_E = float(line.split(' ')[4])
+                    units = line.split(' ')[5].strip()
+                    if units == 'ms':
+                        tau_E /= 1000
 
-            elif 'Inner radius of the plasma' in line:
-                rmin = float(line.split(' ')[-2])
+                elif 'PlasmaLength' in line:
+                    L = float(line.split(' ')[1])
+
+                elif 'Operating Mach number is' in line:
+                    Mach = float(line.split(' ')[4])
+
+                elif 'ρ*' in line:
+                    rho_star = float(line.split(' ')[-1])
+
+                elif 'ν*' in line:
+                    nu_star = float(line.split(' ')[-2])
+
+                elif 'n T τ' in line:
+                    tripleProduct = float(line.split(' ')[-4])
+
+                elif 'Total Thermal Power Output is' in line:
+                    thermalPower = float(line.split(' ')[-2])
+
+                elif 'Inner radius of the plasma' in line:
+                    rmin = float(line.split(' ')[-2])
+
+                elif 'Exhaust radius is' in line:
+                    exhaustRadius = float(line.split(' ')[-2])
+
+            except ValueError:
+                print(line)
 
         # if rho_i/a < 0.25 and MachAlfven < 1.25 and centralField == 3 and Q_scientific > 3:
         #     print(filepath)
 
         fieldRatio = throatField / centralField
         temperatureRatio = ionTemperature / electronTemperature
-        result = pd.DataFrame([[voltage, electronDensity, centralField, throatField, fieldRatio, rotationPower, viscousTorquePower, parallelLossPower, chargeExchangePower, totalHeatLoss, classicalIonHeatLoss, parallelIonHeatLoss, chargeExchangeHeatLoss, parallelElectronHeatLoss, radiationLoss, MachAlfven, Q_scientific, Q_scientific_equiv, ionTemperature, electronTemperature, temperatureRatio, rho_i, a, L, rmin, tau_E, Mach, rho_star, nu_star, tripleProduct, thermalPower]], columns=columns)
+        result = pd.DataFrame([[voltage, electronDensity, centralField, throatField, fieldRatio, rotationPower, viscousTorquePower, parallelLossPower, chargeExchangePower, totalHeatLoss, classicalIonHeatLoss, parallelIonHeatLoss, chargeExchangeHeatLoss, parallelElectronHeatLoss, radiationLoss, MachAlfven, Q_scientific, Q_scientific_equiv, ionTemperature, electronTemperature, temperatureRatio, rho_i, a, L, rmin, exhaustRadius, tau_E, Mach, rho_star, nu_star, tripleProduct, thermalPower]], columns=columns)
         return result
 
 if __name__ == '__main__':
@@ -267,14 +274,14 @@ if __name__ == '__main__':
     results_list = []
     if reset:
         N = len(files)
-        for i, file in enumerate(files):
-            result = getResult(file)
-            results_list.append(result)
-            print(f'{i+1}/{N}')
-        # with ProcessPoolExecutor(max_workers=4) as executor:
-        #     for i, result in enumerate(executor.map(getResult, files)):
-        #         results_list.append(result)
-        #         print(f'{i+1}/{N}')
+        # for i, file in enumerate(files):
+        #     result = getResult(file)
+        #     results_list.append(result)
+        #     print(f'{i+1}/{N}')
+        with ProcessPoolExecutor(max_workers=4) as executor:
+            for i, result in enumerate(executor.map(getResult, files)):
+                results_list.append(result)
+                print(f'{i+1}/{N}')
         results = pd.concat(results_list)
         results['rho_star'] = results['rho_i'] / results['a']
 
@@ -286,242 +293,353 @@ if __name__ == '__main__':
     valid_results = results[(results['rho_star'] <= rho_star_max) & (results['MachAlfven'] <= M_A_max) & (results['Q_scientific'] >= Qsci_min) & (results['thermalPower'] >= thermalPower_min) & (results['nu_star'] <= nu_star_max) & (results['voltage'] <= voltage_max)]
     valid_results.to_csv(f'{folder}/results_filtered.csv', columns=columns, index=False)
 
-    # # Name of parameter and its y-label
-    # if name == 'CMFX':
-    #     plottingParameters = {'rotationPower': {'label': '$P_{in}$ (kW)','logy': False},
-    #         'MachAlfven': {'label': '$M_A$', 'logy': False},
-    #         'ionTemperature': {'label': '$T_i$ (keV)', 'logy': False},
-    #         'temperatureRatio': {'label': '$T_i / T_e$', 'logy': False}}
-    # elif name == 'reactor':
-    #     plottingParameters = {'Q_scientific': {'label': '$Q_{sci}$', 'logy': False},
-    #         'thermalPower': {'label': '$P_{thermal}$ (MW)', 'logy': True},
-    #         'ionTemperature': {'label': '$T_{i}$ (keV)', 'logy': False},
-    #         'temperatureRatio': {'label': '$T_i / T_e$', 'logy': False}}
-    # elif name == 'physics':
-    #     plottingParameters = {'tau_E': {'label': r'$\tau_E$', 'logy': False},
-    #         'rho_star': {'label': r'$\rho^*$', 'logy': False}}
+    # Name of parameter and its y-label
+    if name == 'CMFX':
+        plottingParameters = {'rotationPower': {'label': '$P_{in}$ (kW)','logy': False},
+            'MachAlfven': {'label': '$M_A$', 'logy': False},
+            'ionTemperature': {'label': '$T_i$ (keV)', 'logy': False},
+            'temperatureRatio': {'label': '$T_i / T_e$', 'logy': False}}
+    elif name == 'reactor':
+        plottingParameters = {'Q_scientific': {'label': '$Q_{sci}$', 'logy': False},
+            'thermalPower': {'label': '$P_{thermal}$ (MW)', 'logy': True},
+            'ionTemperature': {'label': '$T_{i}$ (keV)', 'logy': False},
+            'temperatureRatio': {'label': '$T_i / T_e$', 'logy': False}}
+    elif name == 'physics':
+        plottingParameters = {'tau_E': {'label': r'$\tau_E$', 'logy': False},
+            'rho_star': {'label': r'$\rho^*$', 'logy': False}}
 
-    # mpl.rcParams.update({'font.size': 20})
-    # fig, axes = plt.subplots(nrows=len(plottingParameters), sharex=True, figsize=(8, 16))
+    mpl.rcParams.update({'font.size': 20})
+    fig, axes = plt.subplots(nrows=len(plottingParameters), sharex=True, figsize=(8, 16))
 
-    # # Initialize dataframes to show limiting lines
-    # M_A_points = pd.DataFrame(columns=columns)
-    # rho_star_points = pd.DataFrame(columns=columns)
+    # Initialize dataframes to show limiting lines
+    M_A_points = pd.DataFrame(columns=columns)
+    rho_star_points = pd.DataFrame(columns=columns)
+    nu_star_points = pd.DataFrame(columns=columns)
 
-    # # We don't want to plot every single line, so only plot up to n_lines
-    # n_lines = 6
-    # n_variable = len(results.groupby(variable))
-    # i_list = np.linspace(0, n_variable - n_variable % n_lines, n_lines).astype('int')
-    # if variable == 'electronDensity':
-    #     if name == 'CMFX':
-    #         i_list = [0, 1, 4, 9, 13, 18]
-    #     elif name == 'reactor':
-    #         i_list = [0, 4, 9, 13, 18, 28]
-    # elif variable == 'centralField':
-    #     if name == 'CMFX':
-    #         i_list = [0, 5, 10, 15, 20]
-    #     elif name == 'reactor':
-    #         i_list = [10, 13, 16, 19, 22, 25]
+    # We don't want to plot every single line, so only plot up to n_lines
+    n_lines = 6
+    n_variable = len(results.groupby(variable))
+    i_list = np.linspace(0, n_variable - n_variable % n_lines, n_lines).astype('int')
+    if variable == 'electronDensity':
+        if name == 'CMFX':
+            i_list = [0, 2, 6, 18, 31, 38]
+        elif name == 'reactor':
+            i_list = [0, 8, 18, 25, 35, 55]
+    elif variable == 'centralField':
+        if name == 'CMFX':
+            i_list = [5, 10, 20, 30, 40]
+        elif name == 'reactor':
+            i_list = [20, 26, 32, 38, 44, 50]
 
-    # for i, (value, grp) in enumerate(results.groupby(variable)):
-    #     grp = grp.sort_values('voltage')
+    for i, (value, grp) in enumerate(results.groupby(variable)):
+        grp = grp.sort_values('voltage')
 
-    #     if name == 'reactor':
-    #         grp['voltage'] = grp['voltage'] / 1000
+        if name == 'reactor':
+            grp['voltage'] = grp['voltage'] / 1000
 
-    #     if name == 'CMFX':
-    #         grp['rotationPower'] = grp['rotationPower'] * 1000
+        if name == 'CMFX':
+            grp['rotationPower'] = grp['rotationPower'] * 1000
 
-    #     # Add lines where limits are crossed by finding first row at which limit is crossed
-    #     # MachAlfven first
-    #     M_A_filter = grp[grp['MachAlfven'] > M_A_max]
-    #     rho_star_filter = grp[grp['rho_star'] > rho_star_max]
-    #     if len(M_A_filter) > 0:
-    #         M_A_point = M_A_filter.iloc[0]
-    #         M_A_points = pd.concat([M_A_points, M_A_point.to_frame().T])
-    #     if len(rho_star_filter) > 0:
-    #         rho_star_point = rho_star_filter.iloc[0]
-    #         rho_star_points = pd.concat([rho_star_points, rho_star_point.to_frame().T])
-
-    #     # Only plot every nth loop...
-    #     if i not in i_list:
-    #         continue
-
-    #     # Filter results for plotting
-    #     grp = grp[(grp['rho_star'] < rho_star_max) & (grp['MachAlfven'] < M_A_max)]
-
-    #     for i, parameter in enumerate(plottingParameters):
-    #         if variable == 'centralField':
-    #             label = f'$B_{{min}}$ = {value:.2f} T'
-    #         elif variable == 'electronDensity':
-    #             label = f'$n_{{e}}$ = {value:.0e} m$^{{-3}}$'
-
-    #         grp.plot(ax=axes[i], x='voltage', y=parameter, logy=plottingParameters[parameter]['logy'], label=label, legend=False)
-
-    # # Plot the limiting lines
-    # for i, parameter in enumerate(plottingParameters):
-    #     if variable == 'electronDensity':
-    #         rho_star_points.plot(style='g--', ax=axes[i], x='voltage', y=parameter, label = '_nolegend_', logy=plottingParameters[parameter]['logy'], legend=False)
-    #         if parameter == 'MachAlfven':
-    #             axes[i].axhline(y=M_A_max, color='m', linestyle='--')
-    #         elif parameter != 'ionTemperature' and parameter != 'temperatureRatio' and parameter != 'Q_scientific':
-    #             M_A_points.plot(style='m--', ax=axes[i], x='voltage', y=parameter, label = '_nolegend_', logy=plottingParameters[parameter]['logy'], legend=False)
-    #     elif variable == 'centralField':
-    #         rho_star_points.plot(style='g--', ax=axes[i], x='voltage', y=parameter, label = '_nolegend_', logy=plottingParameters[parameter]['logy'], legend=False)
-    #         if parameter == 'MachAlfven':
-    #             axes[i].axhline(y=M_A_max, color='m', linestyle='--')
-    #         else:
-    #             M_A_points.plot(style='m--', ax=axes[i], x='voltage', y=parameter, label = '_nolegend_', logy=plottingParameters[parameter]['logy'], legend=False)
+        # Add lines where limits are crossed by finding first row at which limit is crossed
+        # MachAlfven first
+        M_A_filter = grp[grp['MachAlfven'] > M_A_max]
+        rho_star_filter = grp[grp['rho_star'] > rho_star_max]
+        nu_star_filter = grp[grp['nu_star'] > nu_star_max]
+        if len(M_A_filter) > 0:
+            M_A_point = M_A_filter.iloc[0]
+            M_A_points = pd.concat([M_A_points, M_A_point.to_frame().T])
+        if len(rho_star_filter) > 0:
+            rho_star_point = rho_star_filter.iloc[0]
+            rho_star_points = pd.concat([rho_star_points, rho_star_point.to_frame().T])
+        if len(nu_star_filter) > 0:
+            nu_star_point = nu_star_filter.iloc[-1]
+            nu_star_points = pd.concat([nu_star_points, nu_star_point.to_frame().T])
         
-    #     ylabel = plottingParameters[parameter]['label']
-    #     axes[i].set_ylabel(ylabel)
-    #     axes[i].grid('on')
-    #     axes[i].tick_params(axis='both', labelsize=labelsize)
+        # Only plot every nth loop...
+        if i not in i_list:
+            continue
+    
+        # Filter results for plotting
+        grp = grp[(grp['rho_star'] <= rho_star_max) & (grp['MachAlfven'] <= M_A_max) & (grp['nu_star'] <= nu_star_max)]
 
-    #     # if parameter == 'MachAlfven':
-    #     #     axes[i].axhline(y=1, color='r', linestyle='--')
-    #     # elif parameter == 'rho_star':
-    #     #     axes[i].axhline(y=rho_star_max, color='r', linestyle='--')
-    #     if parameter == 'thermalPower':
-    #         # Cut off low thermal power values
-    #         axes[i].set_ylim(bottom=1.0, auto=True)
+        for n, parameter in enumerate(plottingParameters):
+            if variable == 'centralField':
+                label = f'$B_{{min}}$ = {value:.2f} T'
+            elif variable == 'electronDensity':
+                label = f'$n_{{e}}$ = {value:.0e} m$^{{-3}}$'
 
-    # if name == 'reactor':
-    #     plt.xlabel('Voltage $\phi$ (MV)')
-    #     # if variable == 'electronDensity':
-    #         # plt.xlim([0.8, 10])
-    #         # axes[2].set_ylim(top=180)
-    #         # axes[3].set_ylim(top=10)
-    # elif name == 'CMFX':
-    #     plt.xlabel('Voltage $\phi$ (kV)')
-    #     if variable == 'electronDensity':
-    #         axes[0].set_ylim(top=1950)
-    #         axes[1].set_ylim(top=1.3)
+            grp.plot(ax=axes[n], x='voltage', y=parameter, logy=plottingParameters[parameter]['logy'], label=label, legend=False)
 
-    # # One legend for all plots
-    # handles, labels = axes[0].get_legend_handles_labels()
-    # bbox_to_anchor = (0.13, 0.81)
-    # if name == 'CMFX':
-    #     if variable == 'electronDensity':
-    #         bbox_to_anchor = (0.62, 0.81)
-    #     elif variable == 'centralField':
-    #         bbox_to_anchor = (0.65, 0.83)
-    # fig.legend(handles, labels, loc='center left', bbox_to_anchor=bbox_to_anchor, prop={'size': 12})
-    # plt.savefig(f'results_{name}_{variable}.png', dpi=400)
-    # plt.show()
+    # Plot the limiting lines
+    for i, parameter in enumerate(plottingParameters):
+        rho_star_points.plot(style='g--', ax=axes[i], x='voltage', y=parameter, label = '_nolegend_', logy=plottingParameters[parameter]['logy'], legend=False)
+        nu_star_points.plot(style='r--', ax=axes[i], x='voltage', y=parameter, label = '_nolegend_', logy=plottingParameters[parameter]['logy'], legend=False)
+        if variable == 'electronDensity':
+            if parameter == 'MachAlfven':
+                axes[i].axhline(y=M_A_max, color='m', linestyle='--')
+            elif parameter != 'ionTemperature' and parameter != 'temperatureRatio' and parameter != 'Q_scientific':
+                M_A_points.plot(style='m--', ax=axes[i], x='voltage', y=parameter, label = '_nolegend_', logy=plottingParameters[parameter]['logy'], legend=False)
+        elif variable == 'centralField':
+            if parameter == 'MachAlfven':
+                axes[i].axhline(y=M_A_max, color='m', linestyle='--')
+            else:
+                M_A_points.plot(style='m--', ax=axes[i], x='voltage', y=parameter, label = '_nolegend_', logy=plottingParameters[parameter]['logy'], legend=False)
+        
+        ylabel = plottingParameters[parameter]['label']
+        axes[i].set_ylabel(ylabel)
+        axes[i].grid('on')
+        axes[i].tick_params(axis='both', labelsize=labelsize)
 
-    # ### POWER COMPARISON ###
-    # folder = f'/Users/Nick/programs/MCTrans/misc_runs/batch_runs/power_comparison/{name}'
-    # files = [file for file in os.listdir(folder) if file.endswith('.out')]
-    # results = pd.DataFrame(columns=columns)
-    # N = len(files)
-    # for i, file in enumerate(files):
-    #     filepath = f'{folder}/{file}'
-    #     result = getResult(filepath)
-    #     results = pd.concat([results, result])
-    #     print(f'{i+1}/{N}')
+        # if parameter == 'MachAlfven':
+        #     axes[i].axhline(y=1, color='r', linestyle='--')
+        # elif parameter == 'rho_star':
+        #     axes[i].axhline(y=rho_star_max, color='r', linestyle='--')
+        if parameter == 'thermalPower':
+            # Cut off low thermal power values
+            axes[i].set_ylim(bottom=1.0, auto=True)
 
-    # results['rho_star'] = results['rho_i'] / results['a']
+    if name == 'reactor':
+        xlabel = 'Voltage $\phi$ (MV)'
+        if variable == 'electronDensity':
+            plt.xlim([0.8, 7.5])
+            axes[1].set_ylim(top=1e3)
+            axes[2].set_ylim(top=60)
+            axes[3].set_ylim(top=4)
+    elif name == 'CMFX':
+        xlabel = 'Voltage $\phi$ (kV)'
+        if variable == 'electronDensity':
+            axes[0].set_ylim(top=1550)
+            axes[1].set_ylim(top=1.3)
+            plt.xlim([20, 90])
 
-    # results.to_csv(f'{folder}/results.csv', columns=columns, index=False)
+    # One legend for all plots
+    handles, labels = axes[0].get_legend_handles_labels()
+    bbox_to_anchor = (0.15, 0.91)
+    if name == 'CMFX':
+        if variable == 'electronDensity':
+            bbox_to_anchor = (0.15, 0.91)
+        elif variable == 'centralField':
+            bbox_to_anchor = (0.65, 0.93)
+    fig.legend(handles, labels, loc='center left', bbox_to_anchor=bbox_to_anchor, prop={'size': 12})
+    plt.xlabel(xlabel)
+    plt.tight_layout()
+    plt.savefig(f'results_{name}_{variable}.png', dpi=400)
+    plt.show()
 
-    # # Don't plot non-physical results
-    # results = results[(results['MachAlfven'] <= M_A_max) & (results['rho_star'] <= rho_star_max)]
+    ### EXHAUST RADIUS ###
+    folder = f'/Users/Nick/programs/MCTrans/misc_runs/batch_runs/{name}/vary_exhaustRadius'
+    if reset:
+        files = [file for file in os.listdir(folder) if file.endswith('.out')]
+        results = pd.DataFrame(columns=columns)
+        results_list = []
+        N = len(files)
+        # for i, file in enumerate(files):
+        #     result = getResult(file)
+        #     results_list.append(result)
+        #     print(f'{i+1}/{N}')
+        with ProcessPoolExecutor(max_workers=4) as executor:
+            for i, result in enumerate(executor.map(getResult, files)):
+                results_list.append(result)
+                print(f'{i+1}/{N}')
+        results = pd.concat(results_list)
+        results['rho_star'] = results['rho_i'] / results['a']
 
-    # # Plot different sources of power draw for one curve
-    # results = results.sort_values('voltage')
+        results.to_csv(f'{folder}/results.csv', columns=columns, index=False)
 
-    # if name == 'reactor':
-    #     results['voltage'] = results['voltage'] / 1000
+    else:
+        results = pd.read_csv(f'{folder}/results.csv')
 
-    # heat_parameters = {'totalHeatLoss': 'Total', 'classicalIonHeatLoss': '$\perp$ Ion Loss', 'parallelIonHeatLoss': '|| Ion Loss', 'chargeExchangeHeatLoss': 'Charge Exchange', 'parallelElectronHeatLoss': '|| Electron Loss', 'radiationLoss': 'Radiation'}
-    # momentum_parameters = {'rotationPower': 'Total', 'viscousTorquePower': 'Viscous Torque', 'parallelLossPower': '|| Ion Loss', 'chargeExchangePower': 'Charge Exchange'}
+    fig, axes = plt.subplots(figsize=(8, 6))
 
-    # mpl.rcParams.update({'font.size': 15})
-    # fig, axes = plt.subplots(nrows=2, sharex=True, figsize=(8, 8))
-    # for key, label in momentum_parameters.items():
-    #     if name == 'CMFX':
-    #         results[key] = results[key] * 1000
-    #     results.plot(ax=axes[0], x='voltage', y=key, label=label)
+    if name == 'CMFX':
+        i_list = [0, 10, 20, 30, 40, 51]
+    elif name == 'reactor':
+        i_list = [0, 10, 20, 30, 40, 48]
 
-    # for key, label in heat_parameters.items():
-    #     if name == 'CMFX':
-    #         results[key] = results[key] * 1000
-    #     results.plot(ax=axes[1], x='voltage', y=key, label=label)
+    for i, (value, grp) in enumerate(results.groupby('exhaustRadius')):
+        grp = grp.sort_values('voltage')
 
-    # if name == 'reactor':
-    #     plt.xlabel('Voltage $\phi$ (MV)')
-    #     axes[0].set_ylabel('Momentum Loss (MW)')
-    #     axes[1].set_ylabel('Heat Loss (MW)')
-    # else:
-    #     plt.xlabel('Voltage $\phi$ (kV)')
-    #     axes[0].set_ylabel('Momentum Loss (kW)')
-    #     axes[1].set_ylabel('Heat Loss (kW)')
-    # plt.legend()
-    # axes[0].grid('on')
-    # axes[1].grid('on')
-    # axes[0].tick_params(axis='both', labelsize=labelsize)
-    # axes[1].tick_params(axis='both', labelsize=labelsize)
-    # plt.savefig(f'results_losses_{name}.png', dpi=400)
-    # plt.show()
+        if name == 'reactor':
+            grp['voltage'] = grp['voltage'] / 1000
+            parameter = 'Q_scientific'
+            ylabel = '$Q_{sci}$'
 
-    # ### PHYSICS UNDERSTANDING ###
-    # physicsFolder = '/Users/Nick/programs/MCTrans/misc_runs/batch_runs/physics'
-    # physicsFiles = [file for file in os.listdir(f'{physicsFolder}/{name}') if file.endswith('.out')]
-    # physicsResults = pd.DataFrame(columns=columns)
+        if name == 'CMFX':
+            grp['rotationPower'] = grp['rotationPower'] * 1000
+            parameter = 'rotationPower'
+            ylabel = '$P_{in}$ (kW)'
 
-    # CXBool = [True] * len(physicsFiles)
-    # PhiBool = [True] * len(physicsFiles)
-    # for i, file in enumerate(physicsFiles):
-    #     if 'noCX' in file:
-    #         CXBool[i] = False
-    #     if 'noPhi' in file:
-    #         PhiBool[i] = False
+        # Add lines where limits are crossed by finding first row at which limit is crossed
+        # MachAlfven first
+        M_A_filter = grp[grp['MachAlfven'] > M_A_max]
+        rho_star_filter = grp[grp['rho_star'] > rho_star_max]
+        if len(M_A_filter) > 0:
+            M_A_point = M_A_filter.iloc[0]
+            M_A_points = pd.concat([M_A_points, M_A_point.to_frame().T])
+        if len(rho_star_filter) > 0:
+            rho_star_point = rho_star_filter.iloc[0]
+            rho_star_points = pd.concat([rho_star_points, rho_star_point.to_frame().T])
+        
+        # Only plot every nth loop...
+        if i not in i_list:
+            continue
+    
+        # Filter results for plotting
+        grp = grp[(grp['rho_star'] <= rho_star_max) & (grp['MachAlfven'] <= M_A_max) & (grp['nu_star'] <= nu_star_max)]
 
-    #     filepath = f'{physicsFolder}/{name}/{file}'
-    #     result = getResult(filepath)
-    #     physicsResults = pd.concat([physicsResults, result])
+        unit = 'm'
+        if value < 0.2:
+            value *= 100
+            unit = 'cm'
+        if i == i_list[0]:
+            label = f'$R_{{exh}}$ = $R_{{min}}$ = {value:.2g} {unit}'
+        elif i == i_list[-1]:
+            label = f'$R_{{exh}}$ = $R_{{max}}$ = {value:.2g} {unit}'
+        else:
+            label = f'$R_{{exh}}$ = {value:.2g} {unit}'
 
-    # # Add columns to dataframe
-    # physicsResults['CX'] = CXBool
-    # physicsResults['Phi'] = PhiBool
+        grp.plot(ax=axes, x='voltage', y=parameter, logy=plottingParameters[parameter]['logy'], label=label, legend=False)
 
-    # if name == 'reactor':
-    #     physicsResults['voltage'] = physicsResults['voltage'] / 1000
+    fig.legend(loc='center left', bbox_to_anchor=(0.15, 0.75), prop={'size': 12})
+    axes.grid('on')
+    axes.tick_params(axis='both', labelsize=labelsize)
+    axes.set_xlabel(xlabel)
+    axes.set_ylabel(ylabel)
+    plt.tight_layout()
+    plt.savefig(f'results_{name}_exhaustRadius.png', dpi=400)
+    plt.show()
 
-    # physicsResults = physicsResults.sort_values('voltage')
-    # # Cut out non-physical results
-    # physicsResults = physicsResults[(physicsResults['MachAlfven'] <= M_A_max) & (physicsResults['rho_star'] <= rho_star_max)]
-    # physicsResults['rotationPower'] *= 1000
-    # resultsNormal = physicsResults[(physicsResults['Phi'] == True) & (physicsResults['CX'] == True)]
-    # resultsNoCX = physicsResults[(physicsResults['CX'] == False)]
-    # resultsNoPhi = physicsResults[(physicsResults['Phi'] == False)]
+    ### POWER COMPARISON ###
+    folder = f'/Users/Nick/programs/MCTrans/misc_runs/batch_runs/power_comparison/{name}'
+    files = [file for file in os.listdir(folder) if file.endswith('.out')]
+    results = pd.DataFrame(columns=columns)
+    N = len(files)
+    for i, file in enumerate(files):
+        filepath = f'{folder}/{file}'
+        result = getResult(filepath)
+        results = pd.concat([results, result])
+        print(f'{i+1}/{N}')
 
-    # mpl.rcParams.update({'font.size': 20})
-    # fig, axes = plt.subplots(nrows=len(plottingParameters), sharex=True, figsize=(8, 16))
+    results['rho_star'] = results['rho_i'] / results['a']
 
-    # for i, parameter in enumerate(plottingParameters):
-    #     resultsNormal.plot(ax=axes[i], x='voltage', y=parameter, logy=False, label='Normal', legend=False)
-    #     resultsNoCX.plot(ax=axes[i], x='voltage', y=parameter, logy=False, label='No CX', legend=False)
-    #     resultsNoPhi.plot(ax=axes[i], x='voltage', y=parameter, logy=False, label=r'No $\varphi$', legend=False)
-    #     ylabel = plottingParameters[parameter]['label']
-    #     axes[i].set_ylabel(ylabel)
-    #     axes[i].grid('on')
-    #     axes[i].tick_params(axis='both', labelsize=labelsize)
+    results.to_csv(f'{folder}/results.csv', columns=columns, index=False)
 
-    #     # if parameter == 'MachAlfven':
-    #     #     axes[i].axhline(y=1, color='r', linestyle='--')
-    #     # elif parameter == 'Q_scientific':
-    #     #     # Cut off low Q values
-    #     #     axes[i].set_ylim(bottom=0.1)
+    # Don't plot non-physical results
+    results = results[(results['MachAlfven'] <= M_A_max) & (results['rho_star'] <= rho_star_max) & (results['nu_star'] <= nu_star_max)]
 
-    # if name == 'reactor':
-    #     plt.xlabel('Voltage $\phi$ (MV)')
-    # else:
-    #     plt.xlabel('Voltage $\phi$ (kV)')
+    # Plot different sources of power draw for one curve
+    results = results.sort_values('voltage')
 
-    # # One legend for all plots
-    # handles, labels = axes[0].get_legend_handles_labels()
-    # fig.legend(handles, labels, loc='center left', bbox_to_anchor=(0.13, 0.8), prop={'size': 16})
-    # plt.savefig(f'physics_results_{name}.png', dpi=400)
-    # plt.show()
+    if name == 'reactor':
+        results['voltage'] = results['voltage'] / 1000
+
+    heat_parameters = {'totalHeatLoss': 'Total', 'classicalIonHeatLoss': '$\perp$ Ion Loss', 'parallelIonHeatLoss': '|| Ion Loss', 'chargeExchangeHeatLoss': 'Charge Exchange', 'parallelElectronHeatLoss': '|| Electron Loss', 'radiationLoss': 'Radiation'}
+    momentum_parameters = {'rotationPower': 'Total', 'viscousTorquePower': 'Viscous Torque', 'parallelLossPower': '|| Ion Loss', 'chargeExchangePower': 'Charge Exchange'}
+
+    mpl.rcParams.update({'font.size': 15})
+    fig, axes = plt.subplots(nrows=2, sharex=True, figsize=(8, 12))
+    for exhaustRadius, grp in results.groupby('exhaustRadius'):
+        for key, label in momentum_parameters.items():
+            if name == 'CMFX':
+                grp[key] = grp[key] * 1000
+            if exhaustRadius == min(results['exhaustRadius']):
+                if key == 'parallelLossPower':
+                    grp.plot(ax=axes[0], x='voltage', y=key, style='-', color='tab:red', label=f'{label} @ $R_{{exh}}$ = $R_{{min}}$')
+                elif key == 'rotationPower':
+                    grp.plot(ax=axes[0], x='voltage', y=key, style='-', color='tab:green', label=f'{label} @ $R_{{exh}}$ = $R_{{min}}$')  
+                else:
+                    grp.plot(ax=axes[0], x='voltage', y=key, label=label)
+            else:
+                if key == 'parallelLossPower':
+                    grp.plot(ax=axes[0], x='voltage', y=key, style='--', color='tab:red', label=f'{label} @ $R_{{exh}}$ = $R_{{max}}$')
+                elif key == 'rotationPower':
+                    grp.plot(ax=axes[0], x='voltage', y=key, style='--', color='tab:green', label=f'{label} @ $R_{{exh}}$ = $R_{{max}}$')                
+
+    for key, label in heat_parameters.items():
+        if name == 'CMFX':
+            results[key] = results[key] * 1000
+        results.plot(ax=axes[1], x='voltage', y=key, label=label)
+
+    if name == 'reactor':
+        plt.xlabel('Voltage $\phi$ (MV)')
+        axes[0].set_ylabel('Momentum Loss (MW)')
+        axes[1].set_ylabel('Heat Loss (MW)')
+    else:
+        plt.xlabel('Voltage $\phi$ (kV)')
+        axes[0].set_ylabel('Momentum Loss (kW)')
+        axes[1].set_ylabel('Heat Loss (kW)')
+    # Change order of legend
+    handles, labels = axes[0].get_legend_handles_labels()
+    order = [0, 4, 2, 5, 1, 3]
+    axes[0].legend([handles[idx] for idx in order],[labels[idx] for idx in order])
+    axes[1].legend()
+    axes[0].grid('on')
+    axes[1].grid('on')
+    axes[0].tick_params(axis='both', labelsize=labelsize)
+    axes[1].tick_params(axis='both', labelsize=labelsize)
+    plt.tight_layout()
+    plt.savefig(f'results_losses_{name}.png', dpi=400)
+    plt.show()
+
+    ### PHYSICS UNDERSTANDING ###
+    physicsFolder = '/Users/Nick/programs/MCTrans/misc_runs/batch_runs/physics'
+    physicsFiles = [file for file in os.listdir(f'{physicsFolder}/{name}') if file.endswith('.out')]
+    physicsResults = pd.DataFrame(columns=columns)
+
+    CXBool = [True] * len(physicsFiles)
+    PhiBool = [True] * len(physicsFiles)
+    for i, file in enumerate(physicsFiles):
+        if 'noCX' in file:
+            CXBool[i] = False
+        if 'noPhi' in file:
+            PhiBool[i] = False
+
+        filepath = f'{physicsFolder}/{name}/{file}'
+        result = getResult(filepath)
+        physicsResults = pd.concat([physicsResults, result])
+
+    # Add columns to dataframe
+    physicsResults['CX'] = CXBool
+    physicsResults['Phi'] = PhiBool
+
+    if name == 'reactor':
+        physicsResults['voltage'] = physicsResults['voltage'] / 1000
+
+    physicsResults = physicsResults.sort_values('voltage')
+    physicsResults.to_csv(f'{physicsFolder}/{name}/results.csv', columns=columns, index=False)
+    # Cut out non-physical results
+    physicsResults = physicsResults[(physicsResults['MachAlfven'] <= M_A_max) & (physicsResults['rho_star'] <= rho_star_max) & (physicsResults['nu_star'] <= nu_star_max)]
+    physicsResults['rotationPower'] *= 1000
+    resultsNormal = physicsResults[(physicsResults['Phi'] == True) & (physicsResults['CX'] == True)]
+    resultsNoCX = physicsResults[(physicsResults['CX'] == False)]
+    resultsNoPhi = physicsResults[(physicsResults['Phi'] == False)]
+
+    mpl.rcParams.update({'font.size': 20})
+    fig, axes = plt.subplots(nrows=len(plottingParameters), sharex=True, figsize=(8, 16))
+
+    for i, parameter in enumerate(plottingParameters):
+        resultsNormal.plot(ax=axes[i], x='voltage', y=parameter, logy=False, label='Normal', legend=False)
+        resultsNoCX.plot(ax=axes[i], x='voltage', y=parameter, logy=False, label='No CX', legend=False)
+        resultsNoPhi.plot(ax=axes[i], x='voltage', y=parameter, logy=False, label=r'No $\varphi$', legend=False)
+        ylabel = plottingParameters[parameter]['label']
+        axes[i].set_ylabel(ylabel)
+        axes[i].grid('on')
+        axes[i].tick_params(axis='both', labelsize=labelsize)
+
+        # if parameter == 'MachAlfven':
+        #     axes[i].axhline(y=1, color='r', linestyle='--')
+        # elif parameter == 'Q_scientific':
+        #     # Cut off low Q values
+        #     axes[i].set_ylim(bottom=0.1)
+
+    if name == 'reactor':
+        plt.xlabel('Voltage $\phi$ (MV)')
+    else:
+        plt.xlabel('Voltage $\phi$ (kV)')
+
+    # One legend for all plots
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='center left', bbox_to_anchor=(0.13, 0.9), prop={'size': 16})
+    plt.tight_layout()
+    plt.savefig(f'physics_results_{name}.png', dpi=400)
+    plt.show()
