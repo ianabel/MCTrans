@@ -52,7 +52,8 @@ class MirrorPlasma {
 			return M_PI * ( PlasmaColumnWidth + 2 * AxialGapDistance ) * PlasmaColumnWidth * PlasmaLength;
 		};
 		double WallArea() const {
-			return 2.0 * M_PI * WallRadius * PlasmaLength;
+            // Cylindrical shell + 2x ends
+			return 2.0 * M_PI * WallRadius * PlasmaLength + 2.0 * M_PI * WallRadius * WallRadius;
 		};
 
 		double ImposedVoltage;
