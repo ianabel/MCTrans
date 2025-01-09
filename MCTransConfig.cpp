@@ -14,7 +14,10 @@ std::shared_ptr<MirrorPlasma> MCTransConfig::Solve()
 
 	switch ( Type ) {
 		case SolveType::SteadyStateMachSolve:
+			InitialisePlasma();
+			plasma.InitialiseNetCDF();
 			doMachSolve( plasma );
+			plasma.FinaliseNetCDF();
 			break;
 		case SolveType::SteadyStateTempSolve:
 			InitialisePlasma();
