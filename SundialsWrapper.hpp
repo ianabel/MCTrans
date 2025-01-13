@@ -1,4 +1,5 @@
 
+#include <sundials/sundials_context.hpp>   /* defs. of SUNContext */
 #include <arkode/arkode_arkstep.h>     /* access to ARKode func., consts. */
 #include <nvector/nvector_serial.h>    /* access to serial N_Vector       */
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix       */

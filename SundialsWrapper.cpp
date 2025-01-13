@@ -7,12 +7,12 @@ void ArkodeErrorWrapper( int errorFlag, std::string&& fName )
 		return;
 	else
 	{
-		std::string errName = ARKStepGetReturnFlagName( errorFlag );
+		std::string errName = ARKodeGetReturnFlagName( errorFlag );
 		throw std::runtime_error( "Error " + errName + " returned from ARKode function: " + fName );
 	}
 }
 
-int ARKStep_TemperatureSolve( realtype t, N_Vector u, N_Vector uDot, void* voidPlasma )
+int ARKode_TemperatureSolve( sunrealtype t, N_Vector u, N_Vector uDot, void* voidPlasma )
 {
 	MirrorPlasma* plasmaPtr = reinterpret_cast<MirrorPlasma*>( voidPlasma );
 
@@ -85,7 +85,7 @@ int ARKStep_TemperatureSolve( realtype t, N_Vector u, N_Vector uDot, void* voidP
 
 // In this mode, Mach Number is u(0) and T_i is u(1)
 // but we still solve both the power-balance equations by running to steady state
-int ARKStep_FixedTeSolve( realtype t, N_Vector u, N_Vector F, void* voidPlasma )
+int ARKode_FixedTeSolve( sunrealtype t, N_Vector u, N_Vector F, void* voidPlasma )
 {
 	MirrorPlasma* plasmaPtr = reinterpret_cast<MirrorPlasma*>( voidPlasma );
 
@@ -121,7 +121,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	ION_TEMPERATURE( initialCondition ) = plasma.IonTemperature;
 	ELECTRON_TEMPERATURE( initialCondition ) = plasma.ElectronTemperature;
 	
-	realtype t0 = 0;
+	sunrealtype t0 = 0;
 
 	plasma.SetTime( t0 );
 	plasma.SetMachFromVoltage();
@@ -129,18 +129,18 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	plasma.ComputeSteadyStateNeutrals();
 
 
-	void *arkMem = ARKStepCreate( nullptr, ARKStep_TemperatureSolve, t0, initialCondition, sunctx );
+	void *arkMem = ARKStepCreate( nullptr, ARKode_TemperatureSolve, t0, initialCondition, sunctx );
 
 	if ( arkMem == nullptr ) {
-		throw std::runtime_error( "Cannot allocate ARKStep Working Memory" );
+		throw std::runtime_error( "Cannot allocate ARKode Working Memory" );
 	}
 
-	// Dummy Jacobian, will be filled by ARKStep with finite-difference approximations
+	// Dummy Jacobian, will be filled by ARKode with finite-difference approximations
 	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims, sunctx );
 	// Small system, direct solve is fastest
 	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian, sunctx );
 
-	ArkodeErrorWrapper( ARKStepSetLinearSolver( arkMem, LS, Jacobian ), "ARKStepSetLinearSolver" );
+	ArkodeErrorWrapper( ARKodeSetLinearSolver( arkMem, LS, Jacobian ), "ARKodeSetLinearSolver" );
 
 	double abstol = plasma.SundialsAbsTol;
 	double reltol = plasma.SundialsRelTol;
@@ -148,11 +148,11 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 #ifdef DEBUG
 	std::cerr << "Using SundialsAbsTol = " << abstol << " and SundialsRelTol = " << reltol << std::endl;
 #endif
-	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
+	ArkodeErrorWrapper( ARKodeSStolerances( arkMem, reltol, abstol ), "ARKodeSStolerances" );
 
-	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, ARKSTEP_NULL_STEPPER ), "ARKStepSetTableNum" );
+	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, ARKSTEP_NULL_STEPPER ), "ARKodeSetTableNum" );
 
-	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
+	ArkodeErrorWrapper( ARKodeSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKodeSetUserData" );
 
 
 	N_Vector positivityEnforcement = N_VNew_Serial( NDims, sunctx );
@@ -160,35 +160,35 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	ION_TEMPERATURE( positivityEnforcement ) = 2.0;      // T_i > 0
 	ELECTRON_TEMPERATURE( positivityEnforcement ) = 2.0; // T_e > 0
 
-	ArkodeErrorWrapper( ARKStepSetConstraints( arkMem, positivityEnforcement ), "ARKStepSetConstraints" );
+	ArkodeErrorWrapper( ARKodeSetConstraints( arkMem, positivityEnforcement ), "ARKodeSetConstraints" );
 
 	// Because the scheme is 4th order, we request cubic hermite interpolation between
 	// internal timesteps, and don't allow the timestep to exceed 5*dt where dt is the
 	// time between outputs.
 
-	ArkodeErrorWrapper( ARKStepSetInterpolantDegree( arkMem, 3 ), "ARKStepSetInterpolantDegree" );
-	ArkodeErrorWrapper( ARKStepSetMaxStep( arkMem, OutputDeltaT*5 ), "ARKStepSetMaxStep" );
+	ArkodeErrorWrapper( ARKodeSetInterpolantDegree( arkMem, 3 ), "ARKodeSetInterpolantDegree" );
+	ArkodeErrorWrapper( ARKodeSetMaxStep( arkMem, OutputDeltaT*5 ), "ARKodeSetMaxStep" );
 
 	const unsigned long MaxSteps = 1e5;
-	ArkodeErrorWrapper( ARKStepSetMaxNumSteps( arkMem, MaxSteps ), "ARKStepSetMaxNumSteps" );
+	ArkodeErrorWrapper( ARKodeSetMaxNumSteps( arkMem, MaxSteps ), "ARKodeSetMaxNumSteps" );
 
-	realtype t,tRet = 0;	
+	sunrealtype t,tRet = 0;	
 	int errorFlag;
 
 #ifdef DEBUG
 	std::cerr << "Solving from t = " << plasma.time << " to t = " << EndTime << std::endl;
 	std::cerr << "Writing output every " << OutputDeltaT << std::endl;
 #endif 
-	ArkodeErrorWrapper( ARKStepSetStopTime( arkMem, EndTime ), "ARKStepSetStopTime" );
+	ArkodeErrorWrapper( ARKodeSetStopTime( arkMem, EndTime ), "ARKodeSetStopTime" );
 	for ( t = OutputDeltaT; t < EndTime; t += OutputDeltaT )
 	{
 #if defined( DEBUG )
 		double curTime;
-		ArkodeErrorWrapper( ARKStepGetCurrentTime( arkMem, &curTime ), "ARKStepGetCurrentTime" );
+		ArkodeErrorWrapper( ARKodeGetCurrentTime( arkMem, &curTime ), "ARKodeGetCurrentTime" );
 #endif
 		if ( t > EndTime )
 			t = EndTime;
-		errorFlag = ARKStepEvolve( arkMem, t, initialCondition, &tRet, ARK_NORMAL );
+		errorFlag = ARKodeEvolve( arkMem, t, initialCondition, &tRet, ARK_NORMAL );
 		switch ( errorFlag ) {
 			case ARK_SUCCESS:
 #if defined( DEBUG )
@@ -196,11 +196,11 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 #endif
 				break;
 			default:
-				throw std::runtime_error( "ARKStep failed with error " + std::to_string( errorFlag ) );
+				throw std::runtime_error( "ARKode failed with error " + std::to_string( errorFlag ) );
 			break;
 		}
 
-		// ARKStep has evolved us to t = tRet, update the plasma object and write it out.
+		// ARKode has evolved us to t = tRet, update the plasma object and write it out.
 		plasma.SetTime( tRet );
 		plasma.ElectronTemperature = ELECTRON_TEMPERATURE( initialCondition );
 		plasma.IonTemperature = ION_TEMPERATURE( initialCondition );
@@ -235,9 +235,9 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 	}
 
 #ifdef DEBUG
-	long nSteps = 0,nfeEvals = 0,nfiEvals = 0;
-	ArkodeErrorWrapper( ARKStepGetNumSteps( arkMem, &nSteps ), "ARKGetNumSteps" );
-	ArkodeErrorWrapper( ARKStepGetNumRhsEvals( arkMem, &nfeEvals, &nfiEvals ), "ARKGetNumRhsEvals" );
+	long nSteps = 0,IMPLICIT_PARTITION = 1,nfiEvals = 0;
+	ArkodeErrorWrapper( ARKodeGetNumSteps( arkMem, &nSteps ), "ARKGetNumSteps" );
+	ArkodeErrorWrapper( ARKodeGetNumRhsEvals( arkMem, IMPLICIT_PARTITION, &nfiEvals ), "ARKGetNumRhsEvals" );
 	std::cerr << "SUNDIALS Timestepping took " << nSteps << " internal timesteps resulting in " << nfiEvals << " implicit function evaluations" << std::endl;
 #endif
 
@@ -246,7 +246,7 @@ void MCTransConfig::doTempSolve( MirrorPlasma& plasma ) const
 		SUNLinSolFree( LS );
 		SUNMatDestroy( Jacobian );
 		N_VDestroy( initialCondition );
-		ARKStepFree( &arkMem );
+		ARKodeFree( &arkMem );
 	}
 }
 
@@ -262,37 +262,37 @@ void MCTransConfig::doFixedTeSolve( MirrorPlasma& plasma ) const
 	ION_TEMPERATURE( initialCondition ) = InitialTemperature;
 	ELECTRON_TEMPERATURE( initialCondition ) = InitialTemperature;
 
-	realtype t0 = 0;
+	sunrealtype t0 = 0;
 
-	void *arkMem = ARKStepCreate( nullptr, ARKStep_TemperatureSolve, t0, initialCondition, sunctx );
+	void *arkMem = ARKStepCreate( nullptr, ARKode_TemperatureSolve, t0, initialCondition, sunctx );
 
 	if ( arkMem == nullptr ) {
-		throw std::runtime_error( "Cannot allocate ARKStep Working Memory" );
+		throw std::runtime_error( "Cannot allocate ARKode Working Memory" );
 	}
 
-	// Dummy Jacobian, will be filled by ARKStep with finite-difference approximations
+	// Dummy Jacobian, will be filled by ARKode with finite-difference approximations
 	SUNMatrix       Jacobian = SUNDenseMatrix( NDims, NDims, sunctx );
 	// Small system, direct solve is fastest
 	SUNLinearSolver  LS = SUNLinSol_Dense( initialCondition, Jacobian, sunctx );
 
-	ArkodeErrorWrapper( ARKStepSetLinearSolver( arkMem, LS, Jacobian ), "ARKStepSetLinearSolver" );
+	ArkodeErrorWrapper( ARKodeSetLinearSolver( arkMem, LS, Jacobian ), "ARKodeSetLinearSolver" );
 	
 	
 
 	double abstol = plasma.SundialsAbsTol;
 	double reltol = plasma.SundialsRelTol;
 
-	ArkodeErrorWrapper( ARKStepSStolerances( arkMem, reltol, abstol ), "ARKStepSStolerances" );
-	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, ARKSTEP_NULL_STEPPER ), "ARKStepSetTableNum" );
+	ArkodeErrorWrapper( ARKodeSStolerances( arkMem, reltol, abstol ), "ARKodeSStolerances" );
+	ArkodeErrorWrapper( ARKStepSetTableNum( arkMem, IRK_SCHEME, ARKSTEP_NULL_STEPPER ), "ARKodeSetTableNum" );
 	
-	ArkodeErrorWrapper( ARKStepSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKStepSetUserData" );
+	ArkodeErrorWrapper( ARKodeSetUserData( arkMem, reinterpret_cast<void*>( &plasma ) ), "ARKodeSetUserData" );
 
 
 	const unsigned long MaxSteps = 1e4;
-	ArkodeErrorWrapper( ARKStepSetMaxNumSteps( arkMem, MaxSteps ), "ARKStepSetMaxNumSteps" );
+	ArkodeErrorWrapper( ARKodeSetMaxNumSteps( arkMem, MaxSteps ), "ARKodeSetMaxNumSteps" );
 
-	realtype t,tRet;	
-	int errorFlag = ARKStepEvolve( arkMem, t, initialCondition, &tRet, ARK_NORMAL );
+	sunrealtype t,tRet;	
+	int errorFlag = ARKodeEvolve( arkMem, t, initialCondition, &tRet, ARK_NORMAL );
 	switch ( errorFlag ) {
 		case ARK_SUCCESS:
 			break;
@@ -311,7 +311,7 @@ void MCTransConfig::doFixedTeSolve( MirrorPlasma& plasma ) const
 		SUNLinSolFree( LS );
 		SUNMatDestroy( Jacobian );
 		N_VDestroy( initialCondition );
-		ARKStepFree( &arkMem );
+		ARKodeFree( &arkMem );
 	}
 
 	plasma.SetMachFromVoltage();

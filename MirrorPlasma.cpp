@@ -271,7 +271,7 @@ double MirrorPlasma::ParallelElectronParticleLoss() const
 		double MirrorThroatDensity = IonDensity * ReferenceDensity * ::exp( CentrifugalPotential() );
 #ifdef DEBUG
 		std::cout << "Electron parallel particle loss is " << SoundSpeed() * MirrorThroatDensity << "\t";
-		std::cout << "Collisionless parallel losse would have been " << ParallelElectronPastukhovLossRate( -AmbipolarPhi() );
+		std::cout << "Collisionless parallel losses would have been " << ParallelElectronPastukhovLossRate( -AmbipolarPhi() );
 #endif
 		return SoundSpeed() * MirrorThroatDensity;
 	}
